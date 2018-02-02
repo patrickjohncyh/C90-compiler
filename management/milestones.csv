@@ -1,2 +1,15 @@
 MilestoneID,             Dependencies, EstimatedEffort, Lead,  Completed, Description
-DefineInitialMilestones,             ,               1,    ?,           , Come up with initial milestones for getting started
+DefineInitialMilestones,             ,1,pjc316,this,Come up with initial milestones for getting started
+FlexBisonSetup,,1,pjc316,,setup flex and bison for very simple subset of C89 with makefile automation
+SimpleParser,FlexBisonSetup,2.5,pjc316,,lex a simple c source file;build an AST based on C89 grammar;reprint input in stdout
+TranslatorSetup,SimpleParser,1,pjc316,,setup framework for python translation
+SimpleTranslator,TranslatorSetup,1.5,pjc316,,translate simple c source file
+CodeGenSetup,SimpleParser,1.5,pjc316,,setup framework for codegen
+SimpleCodeGen,CodeGenSetup,3,pjc316,,codegen for simple c sourcefile
+TestbenchSetup,,1.5,,,determine structure for testbench and implement automation
+ExpandParser,,2,,,Specifics will be included in futuer commits
+ExpandCodeGen,,2,,,Specifics will be included in futuer commits
+ExpandParser_b,,2,,,Specifics will be included in futuer commits
+ExpandCodeGen_b,,2,,,Specifics will be included in futuer commits
+ExpandParser_c,,2,,,Specifics will be included in futuer commits
+ExpandCodeGen_c,,2,,,Specifics will be included in futuer commits
