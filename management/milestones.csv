@@ -1,6 +1,6 @@
 MilestoneID,             Dependencies, EstimatedEffort, Lead,  Completed, Description
 DefineInitialMilestones,             ,1,pjc316,this,Come up with initial milestones for getting started
-FlexBisonSetup,,1,pjc316,,setup flex and bison for very simple subset of C89 with makefile automation
+FlexBisonSetup,,1,pjc316,this,setup flex and bison for very simple subset of C89 with makefile automation
 SimpleParser,FlexBisonSetup,2.5,pjc316,,lex a simple c source file;build an AST based on C89 grammar;reprint input in stdout
 TranslatorSetup,SimpleParser,1,pjc316,,setup framework for python translation
 SimpleTranslator,TranslatorSetup,1.5,pjc316,,translate simple c source file
