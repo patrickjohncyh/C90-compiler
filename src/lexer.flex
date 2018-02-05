@@ -3,12 +3,31 @@
 %{
 #include "parser.tab.hpp"
 %}
+
+
+D	[0-9]
+L	[a-zA-Z_]
+
 %%
 
 
+int				{ return INT; 	 }
+return			{ return RETURN; }
+{L}({L}|{D})*	{ yylval.string = new std::string(yytext);  return IDENTIFIER;}
 
-[a-zA-Z]+	{yylval.string = new std::string(yytext); return T_STRING;}
 
+
+
+[(]				{ return ('(');	}
+[)]				{ return (')');	}
+[{]				{ return ('{'); }
+[}]				{ return ('}'); }
+[;]				{ return (';'); }
+
+
+[ \t\r\n]+		{;}
+
+.               { fprintf(stderr, "Invalid token\n"); exit(1); }
 
 %%
 

@@ -9,6 +9,7 @@
 
 #include "ast/ASTNode.hpp"
 #include "ast/declarations.hpp"
+#include "ast/statements.hpp"
 
 //extern const Expression *parseAST();
 extern const ASTNode* parse();

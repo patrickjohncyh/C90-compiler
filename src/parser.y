@@ -14,28 +14,59 @@ void yyerror(const char *);
 
 
 %union{
-	const ASTNode *declaration;
+	const ASTNode *node;
+	Statement *statement_node;
 	std::string *string;
 }
 
-%token T_STRING
+%token INT
+%token RETURN
+%token IDENTIFIER
 
-%type <declaration> translation_unit
-%type <declaration> external_declaration
-%type <string> T_STRING
+
+
+
+
+%type <node> translation_unit function_definition
+
+%type <statement_node> jump_statement statement statement_list compound_statement 
+
+%type <string> IDENTIFIER INT RETURN 
+%type <string> type_specifier identifier 
 
 %start ROOT
 
 %%
 
+ROOT : translation_unit	{ root = $1; }
 
-ROOT : translation_unit 	{ root = $1; }
+translation_unit 	 : function_definition					  { $$ = $1; }
+					 | translation_unit function_definition   { $$ = new TranslationUnit($1,$2); }
 
-translation_unit : external_declaration { $$ = $1; }
-				 | translation_unit external_declaration { $$ = new TranslationUnit($1,$2); }
 
-external_declaration :  T_STRING  { $$ = new ExternalDeclaration(*$1); }
+function_definition  : type_specifier identifier '(' parameter_list ')' compound_statement { $$ = new FunctionDefinition(*$1,*$2,$6); }
 
+
+parameter_list 		:
+
+
+compound_statement  : '{' statement_list '}'	{ $$ = $2; }
+					| '{' '}'					{ $$ = NULL;}
+
+
+statement_list 		: statement 				{ $$ = $1; }
+					| statement_list statement 	
+
+
+statement 			: jump_statement			{ $$ = $1; }
+					| compound_statement	
+				
+jump_statement		: RETURN ';'  {	$$ = new JumpStatement("return"); }
+
+
+type_specifier		 : INT 		  { $$ = new std::string("int"); }
+
+identifier 	  		 : IDENTIFIER { $$ = new std::string(*$1);   } 
 
 %%
 
