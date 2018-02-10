@@ -7,7 +7,6 @@ class Statement : public ASTNode{
 
 protected:
 	Statement *next;
-
 	Statement(Statement *_next = NULL):next(_next){} 
 
 };
@@ -17,12 +16,15 @@ protected:
 class CompoundStatement : public Statement{
 
 	private:
+		Statement *s_list;
 
 	public:
-		CompoundStatement( Statement* _s_list = NULL ){}
+		CompoundStatement( Statement* _s_list = NULL, Statement *_next = NULL ):Statement(_next),s_list(_s_list){}
 
 		virtual void print(std::ostream &dst) const override{
-			//dst << ;
+			dst << "CompoundStatement ( ";
+			s_list->print(dst);
+			dst << ")";
 		}
 
 

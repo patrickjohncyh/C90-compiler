@@ -27,12 +27,12 @@ void yyerror(const char *);
 
 
 
-%type <node> translation_unit function_definition
+%type <node> translation_unit global_declaration function_definition declaration
 
 %type <statement_node> jump_statement statement statement_list compound_statement 
 
 %type <string> IDENTIFIER INT RETURN 
-%type <string> type_specifier identifier 
+%type <string> type_specifier 
 
 %start ROOT
 
@@ -40,17 +40,21 @@ void yyerror(const char *);
 
 ROOT : translation_unit	{ root = $1; }
 
-translation_unit 	 : function_definition					  { $$ = $1; }
-					 | translation_unit function_definition   { $$ = new TranslationUnit($1,$2); }
+translation_unit 	 : global_declaration					  { $$ = $1; }
+					 | translation_unit global_declaration   { $$ = new TranslationUnit($1,$2); }
 
+global_declaration	 : function_definition
+					 | declaration
 
-function_definition  : type_specifier identifier '(' parameter_list ')' compound_statement { $$ = new FunctionDefinition(*$1,*$2,$6); }
+function_definition  : type_specifier IDENTIFIER '(' parameter_list ')' compound_statement { $$ = new FunctionDefinition(*$1,*$2,$6); }
 
+declaration			 : type_specifier ';'				{ $$ = new Declaration(*$1); }
+					 | type_specifier IDENTIFIER;
 
 parameter_list 		:
 
 
-compound_statement  : '{' statement_list '}'	{ $$ = $2; }
+compound_statement  : '{' statement_list '}'	{ $$ = new CompoundStatement($2); }
 					| '{' '}'					{ $$ = NULL;}
 
 
@@ -66,7 +70,6 @@ jump_statement		: RETURN ';'  {	$$ = new JumpStatement("return"); }
 
 type_specifier		 : INT 		  { $$ = new std::string("int"); }
 
-identifier 	  		 : IDENTIFIER { $$ = new std::string(*$1);   } 
 
 %%
 

@@ -42,21 +42,31 @@ class FunctionDefinition : public ExternalDeclaration{
 		}
 };
 
-
-
-/*
 class Declaration : public ExternalDeclaration{
 	private:
-		std::string str;
+		std::string type;
+		std::string id;
 
 	public:
-		Declaration(std::string _str): str(_str){}
+		Declaration(std::string _type, std::string _id = ""): type(_type),id(_id){}
 
 		virtual void print(std::ostream &dst) const override{
-			dst << str;
+			dst << "Declaration( Type( " << type << " ), " << "Identifier ( " << id << " ) )"; 
 		}
 };
-*/
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
