@@ -2,6 +2,7 @@
 #define DECLARATIONS_HPP
 
 #include "statements.hpp"
+#include "expressions.hpp"
 
 class TranslationUnit : public ASTNode{
 	protected:
@@ -37,7 +38,7 @@ class FunctionDefinition : public ExternalDeclaration{
 		FunctionDefinition(std::string _type, std::string _id, Statement *_s_ptr ): type(_type), id(_id), s_ptr(_s_ptr){}
 
 		virtual void print(std::ostream &dst) const override{
-			dst << "Type( " << type << " ) " << "Identifier( " << id << " )";
+			dst << "Type( " << type << " ) " << "Identifier( " << id << " )\n";
 			s_ptr->print(dst);
 		}
 };
@@ -46,12 +47,18 @@ class Declaration : public ExternalDeclaration{
 	private:
 		std::string type;
 		std::string id;
+		Expression *init_expr;
 
 	public:
-		Declaration(std::string _type, std::string _id = ""): type(_type),id(_id){}
+		Declaration(std::string _type, std::string _id = "", Expression *_init_expr = NULL): type(_type),id(_id),init_expr(_init_expr){}
 
 		virtual void print(std::ostream &dst) const override{
-			dst << "Declaration( Type( " << type << " ), " << "Identifier ( " << id << " ) )"; 
+			dst << "Declaration( Type( " << type << " ), " << "Identifier ( " << id << " ), " << " Init ( ";
+			if(init_expr != NULL){
+				init_expr->print(dst);
+				dst << " )";
+			}
+			dst << " )" ;
 		}
 };
 
