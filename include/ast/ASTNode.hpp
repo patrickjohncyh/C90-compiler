@@ -13,7 +13,7 @@ class ASTNode{
 	public:
 		virtual ~ASTNode(){}
 
-	virtual void print(std::ostream &dst) const =0;
+	virtual void print_struct(std::ostream &dst, int m) const =0;
 
 };
 

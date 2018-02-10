@@ -3,6 +3,7 @@
 
 #include "statements.hpp"
 #include "expressions.hpp"
+#include <iomanip>
 
 class TranslationUnit : public ASTNode{
 	protected:
@@ -14,16 +15,15 @@ class TranslationUnit : public ASTNode{
 	public:
 		TranslationUnit(astNodePtr _left, astNodePtr _right):left(_left),right(_right){}
 
-		virtual void print(std::ostream &dst) const override{
-				left->print(dst);
+		virtual void print_struct(std::ostream &dst, int m) const override{
+				left->print_struct(dst,m);
 				dst << "\n";
-				right->print(dst);
-
+				right->print_struct(dst,m);
 		}
 };
 
 class ExternalDeclaration : public ASTNode{
-	virtual void print(std::ostream &dst) const =0;
+	virtual void print_struct(std::ostream &dst, int m) const =0;
 };
 
 
@@ -37,11 +37,14 @@ class FunctionDefinition : public ExternalDeclaration{
 	public:
 		FunctionDefinition(std::string _type, std::string _id, Statement *_s_ptr ): type(_type), id(_id), s_ptr(_s_ptr){}
 
-		virtual void print(std::ostream &dst) const override{
-			dst << "Type( " << type << " ) " << "Identifier( " << id << " )\n";
-			s_ptr->print(dst);
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << "FunctionDefinition [ ";
+			dst << "Type( " << type << " ) " << "Identifier( " << id << " )" << std::endl ;
+			s_ptr->print_struct(dst,m+2);
+			dst << "]" << std::endl;
 		}
 };
+
 
 class Declaration : public ExternalDeclaration{
 	private:
@@ -49,26 +52,23 @@ class Declaration : public ExternalDeclaration{
 		std::string id;
 		Expression *init_expr;
 
-	public:
-		Declaration(std::string _type, std::string _id = "", Expression *_init_expr = NULL): type(_type),id(_id),init_expr(_init_expr){}
 
-		virtual void print(std::ostream &dst) const override{
-			dst << "Declaration( Type( " << type << " ), " << "Identifier ( " << id << " ), " << " Init ( ";
+	public:
+
+		Declaration *next;
+
+		Declaration(std::string _type, std::string _id = "", Expression *_init_expr = NULL, Declaration *_next = NULL)
+		:type(_type),id(_id),init_expr(_init_expr),next(_next){}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << "Declaration [ Type( " << type << " ), " << "Identifier ( " << id << " ), " << " InitExpr ( ";
 			if(init_expr != NULL){
-				init_expr->print(dst);
+				init_expr->print_struct(dst,m);
 				dst << " )";
 			}
-			dst << " )" ;
+			dst << " ]" ;
 		}
 };
-
-
-
-
-
-
-
-
 
 
 

@@ -1,12 +1,12 @@
 #ifndef PRIMITIVES_HPP
 #define PRIMITIVES_HPP
 
-
+#include <iomanip>
 
 #include <string>
 
 class Primitive : public Expression{
-	virtual void print(std::ostream &dst) const=0;
+	virtual void print_struct(std::ostream &dst, int m) const=0;
 
 };
 
@@ -16,7 +16,7 @@ class StringLiteral : public Primitive{
 	public:
 		StringLiteral(std::string _str):str(_str){}
 
-		virtual void print(std::ostream &dst) const override{
+		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << str;
 		}
 };
@@ -28,7 +28,7 @@ class Constant : public Primitive{
 	public:
 		Constant(int _val):val(_val){}
 
-		virtual void print(std::ostream &dst) const override{
+		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << val;
 		}
 };
@@ -40,7 +40,7 @@ class Identifier : public Primitive{
 	public:
 		Identifier(std::string _id):id(_id){}
 
-		virtual void print(std::ostream &dst) const override{
+		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << id;
 		}
 };

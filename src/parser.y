@@ -15,6 +15,7 @@ void yyerror(const char *);
 
 %union{
 	const ASTNode *node;
+	Declaration *declaration_node;
 	Statement *statement_node;
 	Expression *expression_node;
 	std::string *string;
@@ -28,7 +29,8 @@ void yyerror(const char *);
 
 
 
-%type <node> translation_unit global_declaration function_definition declaration
+%type <node> translation_unit global_declaration function_definition
+%type <declaration_node> declaration parameter_declaration parameter_list
 
 %type<expression_node> expression base_expression mult_expression add_expression
 
@@ -54,12 +56,19 @@ global_declaration	: function_definition
 
 function_definition	: type_specifier IDENTIFIER '(' parameter_list ')' compound_statement { $$ = new FunctionDefinition(*$1,*$2,$6); }
 
-parameter_list		:
-
 declaration 		: type_specifier ';'							{ $$ = new Declaration(*$1); }
 					| type_specifier IDENTIFIER ';'					{ $$ = new Declaration(*$1,*$2); }
 					| type_specifier IDENTIFIER '=' expression ';'	{ $$ = new Declaration(*$1,*$2,$4); }
 								
+
+
+
+
+parameter_declaration	: type_specifier IDENTIFIER { $$ = new Declaration(*$1,*$2); }		
+
+
+parameter_list		:	parameter_declaration				 { $$ = $1; }
+					|	parameter_declaration ',' parameter_list { $1->next = $3; $$ = $1; }
 
 
 
@@ -106,7 +115,10 @@ compound_statement  : '{' statement_list '}'	{ $$ = new CompoundStatement($2); }
 					| '{' '}'					{ $$ = new CompoundStatement();}
 				
 				
-jump_statement		: RETURN ';'		{ $$ = new JumpStatement("return"); }
+jump_statement		: RETURN ';'			{ $$ = new JumpStatement("return"); 	}
+					| RETURN expression ';'	{ $$ = new JumpStatement("return",$2);	}
+
+
 expr_statement		: expression ';'	{ $$ = new ExprStatement($1);		}
 
 
