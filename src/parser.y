@@ -25,12 +25,13 @@ void yyerror(const char *);
 %token INT
 %token RETURN
 %token IDENTIFIER CONSTANT LITERAL
+%token INC_OP
 
 
 
 
 %type <node> translation_unit global_declaration function_definition
-%type <declaration_node> declaration parameter_declaration parameter_list
+%type <declaration_node> declaration declaration_list parameter_declaration parameter_list
 
 %type<expression_node> expression base_expression mult_expression add_expression
 
@@ -48,26 +49,28 @@ void yyerror(const char *);
 
 ROOT : translation_unit	{ root = $1; }
 
-translation_unit	: global_declaration					 { $$ = $1; }
+translation_unit	: global_declaration					{ $$ = $1; }
 					| translation_unit global_declaration   { $$ = new TranslationUnit($1,$2); }
 
-global_declaration	: function_definition
-					| declaration
+global_declaration	: function_definition					{ $$ = $1; }
+					| declaration 							{ $$ = $1; }
 
-function_definition	: type_specifier IDENTIFIER '(' parameter_list ')' compound_statement { $$ = new FunctionDefinition(*$1,*$2,$6); }
+function_definition	: type_specifier IDENTIFIER '(' parameter_list ')' compound_statement { $$ = new FunctionDefinition(*$1,*$2,$4,$6); }
 
 declaration 		: type_specifier ';'							{ $$ = new Declaration(*$1); }
 					| type_specifier IDENTIFIER ';'					{ $$ = new Declaration(*$1,*$2); }
 					| type_specifier IDENTIFIER '=' expression ';'	{ $$ = new Declaration(*$1,*$2,$4); }
 								
 
-
+declaration_list	: declaration 					{ $$ = $1; }
+					| declaration declaration_list 	{ $1->next = $2; $$ = $1; }
 
 
 parameter_declaration	: type_specifier IDENTIFIER { $$ = new Declaration(*$1,*$2); }		
 
 
-parameter_list		:	parameter_declaration				 { $$ = $1; }
+parameter_list		:	 										 { $$ = NULL; }
+					|	parameter_declaration				     { $$ = $1; }
 					|	parameter_declaration ',' parameter_list { $1->next = $3; $$ = $1; }
 
 
@@ -99,9 +102,6 @@ base_expression		: CONSTANT			 { $$ = new Constant($1);    	}
 
 
 
-
-
-
 statement 			: jump_statement			{ $$ = $1; }
 					| compound_statement		{ $$ = $1; }
 					| expr_statement			{ $$ = $1; }
@@ -111,8 +111,11 @@ statement_list 		: statement 				{ $$ = $1; }
 					| statement statement_list 	{ $1->next = $2; $$ = $1; }
 
 
-compound_statement  : '{' statement_list '}'	{ $$ = new CompoundStatement($2); }
-					| '{' '}'					{ $$ = new CompoundStatement();}
+compound_statement  : '{' '}'									{ $$ = new CompoundStatement();	  		}
+					| '{' statement_list   					'}'	{ $$ = new CompoundStatement(NULL,$2);	}
+					| '{' declaration_list 					'}'	{ $$ = new CompoundStatement($2,NULL);	}
+					| '{' declaration_list statement_list 	'}'	{ $$ = new CompoundStatement($2,$3);	}
+					
 				
 				
 jump_statement		: RETURN ';'			{ $$ = new JumpStatement("return"); 	}
@@ -120,10 +123,6 @@ jump_statement		: RETURN ';'			{ $$ = new JumpStatement("return"); 	}
 
 
 expr_statement		: expression ';'	{ $$ = new ExprStatement($1);		}
-
-
-
-
 
 
 

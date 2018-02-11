@@ -1,15 +1,21 @@
 #ifndef DECLARATIONS_HPP
 #define DECLARATIONS_HPP
 
-#include "statements.hpp"
 #include "expressions.hpp"
 #include <iomanip>
+
+
+class Statement : public ASTNode{			//TEMPORARY FIX
+	protected:
+		Statement(Statement *_next = NULL):next(_next){} 
+	public:
+		Statement *next;
+};
 
 class TranslationUnit : public ASTNode{
 	protected:
 		astNodePtr left;
 		astNodePtr right;
-
 	private:
 
 	public:
@@ -27,46 +33,65 @@ class ExternalDeclaration : public ASTNode{
 };
 
 
-
-class FunctionDefinition : public ExternalDeclaration{
-	private:
-		std::string type;
-		std::string id;
-		Statement *s_ptr;
-
-	public:
-		FunctionDefinition(std::string _type, std::string _id, Statement *_s_ptr ): type(_type), id(_id), s_ptr(_s_ptr){}
-
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "FunctionDefinition [ ";
-			dst << "Type( " << type << " ) " << "Identifier( " << id << " )" << std::endl ;
-			s_ptr->print_struct(dst,m+2);
-			dst << "]" << std::endl;
-		}
-};
-
-
 class Declaration : public ExternalDeclaration{
 	private:
 		std::string type;
 		std::string id;
 		Expression *init_expr;
 
-
 	public:
-
-		Declaration *next;
+		Declaration *next;		//should this be private?
 
 		Declaration(std::string _type, std::string _id = "", Expression *_init_expr = NULL, Declaration *_next = NULL)
 		:type(_type),id(_id),init_expr(_init_expr),next(_next){}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "Declaration [ Type( " << type << " ), " << "Identifier ( " << id << " ), " << " InitExpr ( ";
+			dst <<  std::setw(m) << "";
+			dst << "Declaration [ Type( " << type << " ), " << "Identifier ( " << id << " )";
 			if(init_expr != NULL){
+				dst << ", InitExpr ( ";
 				init_expr->print_struct(dst,m);
 				dst << " )";
 			}
-			dst << " ]" ;
+			dst << " ]" << std::endl;
+			if(next != NULL){
+				next->print_struct(dst,m);
+			}
+
+		}
+};
+
+class FunctionDefinition : public ExternalDeclaration{
+	private:
+		std::string type;
+		std::string id;
+		Declaration *p_list;
+		Statement 	*s_ptr;
+
+	public:
+		FunctionDefinition(std::string _type, std::string _id, Declaration *_p_list , Statement *_s_ptr )
+		:type(_type), id(_id), p_list(_p_list), s_ptr(_s_ptr){}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << "FunctionDefinition [ " << std::endl;
+
+			dst <<  std::setw(m+2) << "";
+			dst << "Type( " << type << " )"<<  std::endl;
+
+			dst <<  std::setw(m+2) << "";
+			dst << "Identifier( " << id << " )" << std::endl ;
+
+			if(p_list != NULL){
+				dst <<  std::setw(m+2) << "";
+				dst << "ParameterList (" << std::endl;
+				p_list->print_struct(dst,m+4);
+			}
+
+			dst <<  std::setw(m+2) << "";
+			dst << ")" << std::endl;
+
+			s_ptr->print_struct(dst,m+2);
+			dst << "]" << std::endl;
 		}
 };
 
