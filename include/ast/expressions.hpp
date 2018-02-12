@@ -10,13 +10,38 @@ class Expression : public ASTNode{
 };
 
 class UnaryExpression : public Expression{
+	protected:
+		std::string id;
 
-	
+	public:
+		UnaryExpression(std::string _id):id(_id){}
+		//virtual void print_struct(std::ostream &dst, int m) const=0;
 
-
-
-	
 };
+
+
+class FunctionCallExpression : public UnaryExpression{
+	public:
+		Expression* a_list;
+
+		FunctionCallExpression(std::string _id, Expression* _a_list = NULL):
+		UnaryExpression(_id),a_list(_a_list){}
+		
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << "FunctionCallExpression [ Identifier ( " << id << " ) ";
+			if(a_list!=NULL){
+				dst << "Arguemnts ( ";
+				a_list->print_struct(dst,m);
+			}
+			dst << "]" << std::endl;
+		}
+
+
+};
+
+
+
+
 
 class BinaryExpression : public Expression{
 	protected:
@@ -85,9 +110,13 @@ class AssignmentExpression : public Expression{
 	private:
 		std::string id;
 		Expression* assign_expr;
+		
  		
 	public:
-		AssignmentExpression(std::string _id, Expression* _assign_expr):id(_id),assign_expr(_assign_expr){}
+		Expression* next;
+
+		AssignmentExpression(std::string _id, Expression* _assign_expr, Expression* _next = NULL)
+		:id(_id),assign_expr(_assign_expr),next(_next){}
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << "AssignmentExpression [ ";
 			dst << id << " = ";

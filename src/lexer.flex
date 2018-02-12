@@ -16,7 +16,7 @@ L	[a-zA-Z_]
 int								{ return INT; 	 }
 return							{ return RETURN; }
 {L}({L}|{D})*					{ yylval.string = new std::string(yytext);  return IDENTIFIER;	}
-{D}								{ yylval.int_num=strtod(yytext, 0); 		return CONSTANT;	}
+{D}+							{ yylval.int_num=strtod(yytext, 0); 		return CONSTANT;	}
 [L]?["](\\.|[^\\"\n])*["]		{ yylval.string = new std::string(yytext);	return LITERAL;		}
 
 [(]				{ return ('(');	}

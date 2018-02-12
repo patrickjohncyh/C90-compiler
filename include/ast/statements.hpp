@@ -67,7 +67,9 @@ class JumpStatement : public Statement{
 			dst << std::setw(m) << "";
 			dst << "JumpStatement [ " << str;
 			dst << " ";
-			expr->print_struct(dst,m);
+			if(expr!=NULL){
+				expr->print_struct(dst,m);
+			}
 			dst << "; ]" << std::endl;
 		}
 };

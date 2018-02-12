@@ -32,28 +32,61 @@ class ExternalDeclaration : public ASTNode{
 	virtual void print_struct(std::ostream &dst, int m) const =0;
 };
 
-
-class Declaration : public ExternalDeclaration{
+class Declarator  : public ExternalDeclaration{
 	private:
-		std::string type;
 		std::string id;
 		Expression *init_expr;
 
 	public:
-		Declaration *next;		//should this be private?
+		Declarator *next;
 
-		Declaration(std::string _type, std::string _id = "", Expression *_init_expr = NULL, Declaration *_next = NULL)
-		:type(_type),id(_id),init_expr(_init_expr),next(_next){}
+
+		std::string getId(){
+			return id;
+		}
+
+		Declarator(std::string _id = "", Expression *_init_expr = NULL)
+		:id(_id),init_expr(_init_expr){}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst <<  std::setw(m) << "";
-			dst << "Declaration [ Type( " << type << " ), " << "Identifier ( " << id << " )";
+			dst << "Declarator [ ";
+			dst << "Id ( " << id << " ) ";
 			if(init_expr != NULL){
 				dst << ", InitExpr ( ";
 				init_expr->print_struct(dst,m);
 				dst << " )";
 			}
 			dst << " ]" << std::endl;
+
+			if(next!=NULL){
+				next->print_struct(dst,m);
+			}
+		}
+};
+
+class Declaration : public ExternalDeclaration{
+	private:
+		std::string type;
+		Declarator *dec_list;
+
+	public:
+		Declaration *next;		//should this be private?
+
+		Declaration(std::string _type, Declarator *_dec_list = NULL, Declaration *_next = NULL)
+		:type(_type),dec_list(_dec_list),next(_next){}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst <<  std::setw(m) << "";
+			dst << "Declaration [" << std::endl;
+
+			dst <<  std::setw(m+2) << "";
+			dst << "Type( " << type << " ), " << std::endl;
+			if(dec_list != NULL){
+				dec_list->print_struct(dst,m+2);
+			}
+			dst <<  std::setw(m) << "";
+			dst << "]" << std::endl;
 			if(next != NULL){
 				next->print_struct(dst,m);
 			}
