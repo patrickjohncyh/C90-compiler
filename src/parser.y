@@ -22,6 +22,9 @@ void yyerror(const char *);
 	Expression *expression_node;
 	std::string *string;
 	int int_num;
+
+	std::vector<Expression *>* argument_list_vector;
+
 }
 
 %token INT
@@ -46,7 +49,8 @@ void yyerror(const char *);
 %type<expression_node> bw_shift_expression  compare_expression  equality_expression
 %type<expression_node> bitwise_expression logical_expression ternary_expression 
 %type<expression_node> assign_expression  expression 
-%type<expression_node> argument_list
+
+%type<argument_list_vector> argument_list
 
 
 
@@ -116,8 +120,9 @@ base_expression		: 	CONSTANT			{ $$ = new Constant($1);   		}
 					
 
 postfix_expression	:	base_expression	
-					|	base_expression	INC_OP	{ $$ = new PostIncrementExpression($1); $$->print_struct(std::cout,0);	}
-					|	base_expression	'(' ')'	{ $$ = new FunctionCallExpression($1) ; $$->print_struct(std::cout,0);	}
+					|	base_expression	INC_OP					{ $$ = new PostIncrementExpression($1); 	}
+					|	base_expression	'(' ')'					{ $$ = new FunctionCallExpression($1) ;		}
+					|	base_expression '(' argument_list ')'	{ $$ = new FunctionCallExpression($1,$3);	}
 					/* to implement more postfix expressions i.e. arrays */
 
 
@@ -143,7 +148,6 @@ equality_expression	: 	compare_expression
 					|	equality_expression EQ_OP compare_expression	{ $$ = new EqualityExpression($1,$3); 		}
 					|	equality_expression NE_OP compare_expression	{ $$ = new NotEqualityExpression($1,$3); 	}
 
-
 bitwise_expression	: 	equality_expression /* to expand into bitwise AND,XOR,OR for precedence */
 
 logical_expression	: 	bitwise_expression /* to expand into logical  AND,OR for precedence */
@@ -153,15 +157,10 @@ ternary_expression 	: 	logical_expression /* to implement conidtional expression
 assign_expression	: 	ternary_expression 
 					|	postfix_expression '=' assign_expression { $$ = new DirectAssignmentExpression($1,$3); }	
 
-expression 			:	 assign_expression
+expression 			:	assign_expression
 
-
-argument_list		: 	expression 						{ $$ = $1; 					}
-					| 	expression ',' argument_list  	{ static_cast<AssignmentExpression*>($1)->next = $3; $$ = $1; 	}
-
-
-
-
+argument_list		: 	expression 						{ $$ = new std::vector<Expression*>(1,$1);	}
+					| 	argument_list ',' expression 	{ $1->push_back($3); $$ = $1;		 		}
 
 
 

@@ -2,6 +2,7 @@
 #define EXPRESSIONS_HPP
 
 #include <iomanip>
+#include <vector>
 
 
 class Expression : public ASTNode{
@@ -35,16 +36,20 @@ class PostIncrementExpression : public UnaryExpression{
 
 class FunctionCallExpression : public UnaryExpression{
 	private:
-		Expression* a_list;
+		std::vector<Expression*>* a_list;
 
 	public:
 
-		FunctionCallExpression(Expression *_expr , Expression* _a_list = NULL)
+		FunctionCallExpression(Expression *_expr , std::vector<Expression*>* _a_list = NULL)
 		:UnaryExpression(_expr),a_list(_a_list){}
 		
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << "FunctionCallExpression [ Identifier ( ";  expr->print_struct(dst,m); dst << " ) ";
-			// TO IMPLEMENT ARUGMENT LIST
+			if(a_list->size() !=0){
+				for(auto it = a_list->begin(); it != a_list->end(); it++){
+					(*it)->print_struct(dst,m);
+				}
+			}
 			dst << "]" << std::endl;
 		}
 };
