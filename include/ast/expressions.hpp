@@ -9,40 +9,58 @@ class Expression : public ASTNode{
 		virtual void print_struct(std::ostream &dst, int m) const =0;
 };
 
+
+/********************** Unary Expressions ************************/
+
 class UnaryExpression : public Expression{
 	protected:
-		std::string id;
-
+		Expression* expr;
 	public:
-		UnaryExpression(std::string _id):id(_id){}
-		//virtual void print_struct(std::ostream &dst, int m) const=0;
+		UnaryExpression(Expression* _expr):expr(_expr){}
+};
 
+/********************** Post Fix Expressions *********/
+
+
+class PostIncrementExpression : public UnaryExpression{
+	public:
+		PostIncrementExpression(Expression* _expr):UnaryExpression(_expr){}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			expr->print_struct(dst,m);
+			dst << "++" << std::endl;
+		}
 };
 
 
 class FunctionCallExpression : public UnaryExpression{
-	public:
+	private:
 		Expression* a_list;
 
-		FunctionCallExpression(std::string _id, Expression* _a_list = NULL):
-		UnaryExpression(_id),a_list(_a_list){}
+	public:
+
+		FunctionCallExpression(Expression *_expr , Expression* _a_list = NULL)
+		:UnaryExpression(_expr),a_list(_a_list){}
 		
 		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "FunctionCallExpression [ Identifier ( " << id << " ) ";
-			if(a_list!=NULL){
-				dst << "Arguemnts ( ";
-				a_list->print_struct(dst,m);
-			}
+			dst << "FunctionCallExpression [ Identifier ( ";  expr->print_struct(dst,m); dst << " ) ";
+			// TO IMPLEMENT ARUGMENT LIST
 			dst << "]" << std::endl;
 		}
-
-
 };
 
 
+// TO IMPLEMENT OTHER POSTFIX EXPRESSIONS
+
+
+/********************** Pre Fix Expressions *********/
 
 
 
+
+
+
+/********************** Binary Expressions ************************/
 class BinaryExpression : public Expression{
 	protected:
 		Expression* left;
@@ -64,6 +82,9 @@ class BinaryExpression : public Expression{
 		}
 };
 
+
+/********* Arithmetic Binary Expressions *********/
+
 class MultExpression : public BinaryExpression{
 	public:
 		MultExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
@@ -71,9 +92,7 @@ class MultExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return "*";
 		}
-
 };
-
 
 class DivExpression : public BinaryExpression{
 	public:
@@ -91,8 +110,6 @@ class AddExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return "+";
 		}
-
-
 };
 
 class SubExpression : public BinaryExpression{
@@ -102,47 +119,113 @@ class SubExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return "-";
 		}
-
-
 };
 
-class AssignmentExpression : public Expression{
-	private:
-		std::string id;
-		Expression* assign_expr;
-		
- 		
-	public:
-		Expression* next;
+/********* Relational Binary Expressions *********/
 
-		AssignmentExpression(std::string _id, Expression* _assign_expr, Expression* _next = NULL)
-		:id(_id),assign_expr(_assign_expr),next(_next){}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "AssignmentExpression [ ";
-			dst << id << " = ";
-			assign_expr->print_struct(dst,m);
-			dst << " ]";
+class LessThanExpression : public BinaryExpression{
+	public:
+		LessThanExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual const char *getOpcode() const override{
+			return "<";
 		}
 };
 
-/*
-class MultExpression : public Expression{
+class MoreThanExpression : public BinaryExpression{
 	public:
-		virtual void print_struct(std::ostream &dst, int m) const override {}
+		MoreThanExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual const char *getOpcode() const override{
+			return ">";
+		}
+};
+
+class LessThanEqExpression : public BinaryExpression{
+	public:
+		LessThanEqExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual const char *getOpcode() const override{
+			return "<=";
+		}
+};
+
+class MoreThanEqExpression : public BinaryExpression{
+	public:
+		MoreThanEqExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual const char *getOpcode() const override{
+			return ">=";
+		}
+};
+
+class EqualityExpression : public BinaryExpression{
+	public:
+		EqualityExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual const char *getOpcode() const override{
+			return "==";
+		}
+};
+
+class NotEqualityExpression : public BinaryExpression{
+	public:
+		NotEqualityExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual const char *getOpcode() const override{
+			return "!=";
+		}
+};
+
+
+/********* Bitwise Binary Expressions *********/
+
+
+
+
+/********* Logical Binary Expressions *********/
+
+
+
+
+/********************** Assignment Expressions ************************/
+
+class AssignmentExpression : public Expression{
+	private:
+		Expression* lvalue;
+		Expression* expr;
+		
+ 		
+	public:
+		AssignmentExpression(Expression* _lvalue, Expression* _expr)
+		:lvalue(_lvalue),expr(_expr){}
+};
+
+
+
+class DirectAssignmentExpression : public AssignmentExpression{
+
+	public:
+		DirectAssignmentExpression(Expression* _lvalue, Expression* _expr)
+		: AssignmentExpression(_lvalue,_expr){}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << "DirectAssignemntExpression" << std::endl;
+		}
 
 };
 
-class MultExpression : public Expression{
-	public:
-		virtual void print_struct(std::ostream &dst, int m) const override {}
 
-};
-*/
+// TO IMPLMENET OTHER ASSIGNMENT I.E += ,-=, *= ETC
 
 
 
 
 
+
+/********************** Ternary Expressions ************************/
+
+// TO IMPLMENET CONDITIONAL EXPRESSION
 
 
 #endif

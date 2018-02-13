@@ -4,3 +4,4 @@ Date,Effort,Developers,Milestones
 2018-02-05,3,pjc316,SimpleParser
 2018-02-10,5,pjc316,SimpleParser;TranslatorSetup
 2018-02-11,3,pjc316,SimpleParser;TranslatorSetup;ExpandParser_b
+2018-02-12,3,pjc316,TranslatorSetup;ExpandParser_b

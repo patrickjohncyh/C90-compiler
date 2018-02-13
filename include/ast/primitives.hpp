@@ -2,12 +2,10 @@
 #define PRIMITIVES_HPP
 
 #include <iomanip>
-
 #include <string>
 
 class Primitive : public Expression{
 	virtual void print_struct(std::ostream &dst, int m) const=0;
-
 };
 
 class StringLiteral : public Primitive{
@@ -24,10 +22,8 @@ class StringLiteral : public Primitive{
 class Constant : public Primitive{
 	private:
 		int val;
-
 	public:
 		Constant(int _val):val(_val){}
-
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << val;
 		}
@@ -36,15 +32,11 @@ class Constant : public Primitive{
 class Identifier : public Primitive{
 	private:
 		std::string id;
-
 	public:
 		Identifier(std::string _id):id(_id){}
-
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << id;
 		}
 };
-
-
 
 #endif

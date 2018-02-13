@@ -32,7 +32,27 @@ return							{ return RETURN; }
 [/]				{ return ('/'); }
 [+]				{ return ('+'); }
 [-]				{ return ('-'); }
-\++				{ return INC_OP; }
+
+
+\==				{ return EQ_OP;	}
+\!=				{ return NE_OP;	}
+\<				{ return LT_OP;	}
+\>				{ return GT_OP; }
+\<=				{ return LE_OP; }
+\>=				{ return GE_OP; }
+
+
+
+
+
+\++				{ return INC_OP;}
+
+
+
+
+
+
+
 
 
 
