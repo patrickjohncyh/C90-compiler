@@ -23,7 +23,12 @@ void yyerror(const char *);
 	std::string *string;
 	int int_num;
 
-	std::vector<Expression *>* argument_list_vector;
+
+	
+
+	std::vector<Expression 	*>* argument_list_vector;
+	std::vector<Statement 	*>* statement_list_vector;
+	std::vector<Declaration *>* declaration_list_vector;
 
 }
 
@@ -40,9 +45,8 @@ void yyerror(const char *);
 %type <node> translation_unit global_declaration function_definition
 %type <declarator_node>	declarator init_declarator init_declarator_list
 
-%type <declaration_node> declaration declaration_list parameter_declaration parameter_list 
-
-
+%type <declaration_node> declaration parameter_declaration parameter_list 
+%type <declaration_list_vector> declaration_list
 
 
 %type<expression_node> base_expression postfix_expression mult_expression add_expression 
@@ -56,7 +60,10 @@ void yyerror(const char *);
 
 
 
-%type <statement_node> jump_statement statement statement_list compound_statement expr_statement
+%type <statement_node> jump_statement statement compound_statement expr_statement
+%type <statement_list_vector> statement_list
+
+
 
 %type <string> IDENTIFIER LITERAL INT RETURN 
 %type <string> type_specifier 
@@ -90,12 +97,12 @@ init_declarator_list: 	init_declarator 							{ $$ = $1; 				}
 					|	init_declarator ',' init_declarator_list	{ $1->next = $3; $$ =$1;}
 
 
-declaration 		:	 type_specifier ';'						{ $$ = new Declaration(*$1);	}
+declaration 		:	type_specifier ';'							{ $$ = new Declaration(*$1);	}
 					| 	type_specifier init_declarator_list ';' 	{ $$ = new Declaration(*$1,$2);	}
 								
 
-declaration_list	: 	declaration 						{ $$ = $1; }
-					| 	declaration declaration_list 		{ $1->next = $2; $$ = $1; }
+declaration_list	: 	declaration 						{ $$ = new std::vector<Declaration*>(1,$1); }
+					| 	declaration_list declaration  		{ $1->push_back($2);	$$ = $1; 				}
 
 
 parameter_declaration:	type_specifier declarator 	{ $$ = new Declaration(*$1,$2); }		
@@ -171,19 +178,19 @@ statement 			: 	jump_statement			{ $$ = $1; }
 					| 	expr_statement			{ $$ = $1; }
 
 
-statement_list 		: 	statement 				{ $$ = $1; }
-					| 	statement statement_list 	{ $1->next = $2; $$ = $1; }
+statement_list 		: 	statement 				{ $$ = new std::vector<Statement*>(1,$1);	}
+					| 	statement_list statement{ $1->push_back($2); $$ = $1; 				}
 
 
-compound_statement  : 	'{' '}'									{ $$ = new CompoundStatement();	  		}
+compound_statement  : 	'{' '}'										{ $$ = new CompoundStatement();	  		}
 					| 	'{' statement_list   					'}'	{ $$ = new CompoundStatement(NULL,$2);	}
 					| 	'{' declaration_list 					'}'	{ $$ = new CompoundStatement($2,NULL);	}
 					| 	'{' declaration_list statement_list 	'}'	{ $$ = new CompoundStatement($2,$3);	}
 					
 				
 				
-jump_statement		: 	RETURN ';'			{ $$ = new JumpStatement("return"); 	}
-					| 	RETURN expression ';'	{ $$ = new JumpStatement("return",$2);	}
+jump_statement		: 	RETURN ';'			{ $$ = new JumpStatement(); 	}
+					| 	RETURN expression ';'	{ $$ = new JumpStatement($2);	}
 
 
 expr_statement		: 	expression ';'	{ $$ = new ExprStatement($1);		}

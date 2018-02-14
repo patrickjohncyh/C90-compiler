@@ -6,10 +6,7 @@
 
 
 class Statement : public ASTNode{			//TEMPORARY FIX
-	protected:
-		Statement(Statement *_next = NULL):next(_next){} 
-	public:
-		Statement *next;
+
 };
 
 class TranslationUnit : public ASTNode{
