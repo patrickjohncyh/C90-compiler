@@ -24,7 +24,7 @@ void yyerror(const char *);
 	int int_num;
 
 
-	
+
 
 	std::vector<Expression 	*>* argument_list_vector;
 	std::vector<Statement 	*>* statement_list_vector;
@@ -34,6 +34,9 @@ void yyerror(const char *);
 
 %token INT
 %token RETURN
+%token IF
+%token ELSE
+
 %token IDENTIFIER CONSTANT LITERAL
 %token INC_OP
 
@@ -60,7 +63,7 @@ void yyerror(const char *);
 
 
 
-%type <statement_node> jump_statement statement compound_statement expr_statement
+%type <statement_node> jump_statement statement compound_statement expr_statement condition_statement iteration_statement
 %type <statement_list_vector> statement_list
 
 
@@ -113,11 +116,8 @@ parameter_list		:	 										 { $$ = NULL; 				}
 					|	parameter_declaration ',' parameter_list { $1->next = $3; $$ = $1;	}
 
 
-
-
-
-
-
+/*---------------------------------------------------------------------------------------------------------------------*/
+/* Expressions */
 
 
 base_expression		: 	CONSTANT			{ $$ = new Constant($1);   		}
@@ -171,11 +171,13 @@ argument_list		: 	expression 						{ $$ = new std::vector<Expression*>(1,$1);	}
 
 
 
-
+/*---------------------------------------------------------------------------------------------------------------------*/
+/* Statements */
 
 statement 			: 	jump_statement			{ $$ = $1; }
 					| 	compound_statement		{ $$ = $1; }
 					| 	expr_statement			{ $$ = $1; }
+					| 	condition_statement		
 
 
 statement_list 		: 	statement 				{ $$ = new std::vector<Statement*>(1,$1);	}
@@ -187,15 +189,24 @@ compound_statement  : 	'{' '}'										{ $$ = new CompoundStatement();	  		}
 					| 	'{' declaration_list 					'}'	{ $$ = new CompoundStatement($2,NULL);	}
 					| 	'{' declaration_list statement_list 	'}'	{ $$ = new CompoundStatement($2,$3);	}
 					
+
 				
-				
-jump_statement		: 	RETURN ';'			{ $$ = new JumpStatement(); 	}
+jump_statement		: 	RETURN ';'				{ $$ = new JumpStatement(); 	}
 					| 	RETURN expression ';'	{ $$ = new JumpStatement($2);	}
 
 
-expr_statement		: 	expression ';'	{ $$ = new ExprStatement($1);		}
+expr_statement		: 	expression ';'			{ $$ = new ExprStatement($1);	}
 
 
+condition_statement :	IF '(' expression ')' statement 				{ $$ = new ConditionIfStatement($3,$5); }	/*dangling else,*/
+																													/*else to nearest if */
+					|	IF '(' expression ')' statement ELSE statement 	{ $$ = new ConditionIfElseStatement($3,$5,$7); }
+
+
+iteration_staement	:
+
+
+/*---------------------------------------------------------------------------------------------------------------------*/
 
 type_specifier		:	 INT 		  { $$ = new std::string("int"); }
 

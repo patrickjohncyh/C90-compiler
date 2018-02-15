@@ -5,8 +5,7 @@
 #include <iomanip>
 
 
-class Statement : public ASTNode{			//TEMPORARY FIX
-
+class Statement : public ASTNode{			//TEMPORARY FIX might consider using inline in the future
 };
 
 class TranslationUnit : public ASTNode{

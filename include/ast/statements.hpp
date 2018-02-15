@@ -5,7 +5,6 @@
 #include "declarations.hpp"
 #include <iomanip>
 
-
 class ExprStatement : public Statement{
 	private:
 		Expression *expr;
@@ -49,8 +48,63 @@ class CompoundStatement : public Statement{
 		}
 };
 
-class JumpStatement : public Statement{
+class ConditionIfStatement : public Statement{
+	private:
+		Expression* cond_expr;
+		Statement* s_true;
+		
+	public:
+		ConditionIfStatement(Expression* _cond_expr, Statement* _s_true)
+		:cond_expr(_cond_expr),s_true(_s_true){}
 
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << std::setw(m) << "";
+			dst << "IfStatement [ " ;
+			cond_expr->print_struct(dst,m+2);
+			dst << std::endl;
+			s_true->print_struct(dst,m+2);
+			dst << std::setw(m) << "";
+			dst << " ]" << std::endl;
+		}
+
+};
+
+
+class ConditionIfElseStatement : public Statement{
+	private:
+		Expression* cond_expr;
+		Statement* s_true;
+		Statement* s_false;
+	public:
+		ConditionIfElseStatement(Expression* _cond_expr, Statement* _s_true, Statement* _s_false)
+		:cond_expr(_cond_expr),s_true(_s_true),s_false(_s_false){}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << std::setw(m) << "";
+			dst << "IfElseStatement [ " ;
+			cond_expr->print_struct(dst,m+2);
+			dst << std::endl;
+
+			dst << std::setw(m+2) << "";
+			dst << "ConditionTrue [ " << std::endl;
+			s_true->print_struct(dst,m+4);
+			dst << std::setw(m+2) << "";
+			dst << "]" << std::endl;
+
+			dst << std::setw(m+2) << "";
+			dst << "ConditionFalse [ " << std::endl;
+			s_false->print_struct(dst,m+4);
+			dst << std::setw(m+2) << "";
+			dst << "]" << std::endl;
+
+			dst << std::setw(m) << "";
+			dst << "]" << std::endl;
+		}
+
+
+};
+
+class JumpStatement : public Statement{
 	private:
 		Expression* expr;
 
