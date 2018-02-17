@@ -36,6 +36,9 @@ void yyerror(const char *);
 %token RETURN
 %token IF
 %token ELSE
+%token WHILE
+%token FOR
+
 
 %token IDENTIFIER CONSTANT LITERAL
 %token INC_OP
@@ -170,14 +173,14 @@ argument_list		: 	expression 						{ $$ = new std::vector<Expression*>(1,$1);	}
 					| 	argument_list ',' expression 	{ $1->push_back($3); $$ = $1;		 		}
 
 
-
 /*---------------------------------------------------------------------------------------------------------------------*/
 /* Statements */
 
 statement 			: 	jump_statement			{ $$ = $1; }
 					| 	compound_statement		{ $$ = $1; }
 					| 	expr_statement			{ $$ = $1; }
-					| 	condition_statement		
+					| 	condition_statement		{ $$ = $1; }
+					|	iteration_statement		{ $$ = $1; }
 
 
 statement_list 		: 	statement 				{ $$ = new std::vector<Statement*>(1,$1);	}
@@ -198,13 +201,12 @@ jump_statement		: 	RETURN ';'				{ $$ = new JumpStatement(); 	}
 expr_statement		: 	expression ';'			{ $$ = new ExprStatement($1);	}
 
 
-condition_statement :	IF '(' expression ')' statement 				{ $$ = new ConditionIfStatement($3,$5); }	/*dangling else,*/
-																													/*else to nearest if */
-					|	IF '(' expression ')' statement ELSE statement 	{ $$ = new ConditionIfElseStatement($3,$5,$7); }
+condition_statement :	IF '(' expression ')' statement 				{ $$ = new ConditionIfStatement($3,$5); 		}	
+					|	IF '(' expression ')' statement ELSE statement 	{ $$ = new ConditionIfElseStatement($3,$5,$7); 	}
 
 
-iteration_staement	:
-
+iteration_statement	:	WHILE '(' expression ')' statement 						{ $$ = new WhileStatement($3,$5);	}
+					|	FOR   '(' expression ';' expression ';' expression ')'	{ $$ = new ForStatement($3,$5,$7);	}
 
 /*---------------------------------------------------------------------------------------------------------------------*/
 

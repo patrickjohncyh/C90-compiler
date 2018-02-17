@@ -13,10 +13,12 @@ L	[a-zA-Z_]
 %%
 
 
-int								{ return INT; 	 }
-return							{ return RETURN; }
-if 								{ return IF;	}
-else							{ return ELSE; }
+int								{ return INT; 	 	}
+return							{ return RETURN;	}
+if 								{ return IF;		}
+else							{ return ELSE; 		}
+while							{ return WHILE; 	}
+for								{ return FOR;		}
 
 
 {L}({L}|{D})*					{ yylval.string = new std::string(yytext);  return IDENTIFIER;	}

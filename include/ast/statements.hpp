@@ -18,6 +18,11 @@ class ExprStatement : public Statement{
 			expr->print_struct(dst,m);
 			dst << " ]" << std::endl;
 		}
+
+		virtual void to_python(std::ostream &dst, std::string indent) const override{
+			expr->to_python(dst,indent);
+			dst << std::endl;
+		}
 };
 
 
@@ -29,6 +34,19 @@ class CompoundStatement : public Statement{
 	public:
 		CompoundStatement(std::vector<Declaration*>* _d_list = NULL ,std::vector<Statement*>* _s_list = NULL)
 		:s_list(_s_list),d_list(_d_list){}
+
+		virtual void to_python(std::ostream &dst, std::string indent) const override{
+			if(d_list != NULL){
+				for(auto it=d_list->begin();it!=d_list->end();it++){
+					(*it)->to_python(dst,indent);
+				}
+			}
+			if(s_list !=NULL){			//print statement list
+				for(auto it=s_list->begin();it!=s_list->end();it++){
+					(*it)->to_python(dst,indent);
+				}
+			}
+		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst <<  std::setw(m) << "";
@@ -57,6 +75,13 @@ class ConditionIfStatement : public Statement{
 		ConditionIfStatement(Expression* _cond_expr, Statement* _s_true)
 		:cond_expr(_cond_expr),s_true(_s_true){}
 
+
+		virtual void to_python(std::ostream &dst, std::string indent) const override{
+			dst << indent << "if (";
+			cond_expr->to_python(dst,"");
+			dst << "):" << std::endl;
+		}
+
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << std::setw(m) << "";
 			dst << "IfStatement [ " ;
@@ -66,7 +91,6 @@ class ConditionIfStatement : public Statement{
 			dst << std::setw(m) << "";
 			dst << " ]" << std::endl;
 		}
-
 };
 
 
@@ -100,9 +124,44 @@ class ConditionIfElseStatement : public Statement{
 			dst << std::setw(m) << "";
 			dst << "]" << std::endl;
 		}
+};
 
+class WhileStatement : public Statement{
+	private:
+		Expression* cond_expr;
+		Statement* s_true;
+		
+	public:
+		WhileStatement(Expression* _cond_expr, Statement* _s_true)
+		:cond_expr(_cond_expr),s_true(_s_true){}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << std::setw(m) << "";
+			dst << "WhileStatement [ " ;
+			cond_expr->print_struct(dst,m+2);
+			dst << std::endl;
+			s_true->print_struct(dst,m+2);
+			dst << std::setw(m) << "";
+			dst << " ]" << std::endl;
+		}
 
 };
+
+class ForStatement : public Statement{
+	private:
+		Expression* init_expr;
+		Expression* cond_expr;
+		Expression* update_expr;
+		
+	public:
+		ForStatement(Expression* _init_expr, Expression* _cond_expr, Expression* _update_expr)
+		:init_expr(_init_expr),cond_expr(_cond_expr),update_expr(_update_expr){}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << "ForStatement" << std::endl;
+		}
+};
+
 
 class JumpStatement : public Statement{
 	private:

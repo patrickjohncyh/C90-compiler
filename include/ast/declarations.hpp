@@ -6,7 +6,13 @@
 
 
 class Statement : public ASTNode{			//TEMPORARY FIX might consider using inline in the future
+	public:
+		virtual void to_python(std::ostream &dst, std::string indent) const override{
+			dst << "python" << std::endl;
+		}
 };
+
+
 
 class TranslationUnit : public ASTNode{
 	protected:
@@ -22,10 +28,17 @@ class TranslationUnit : public ASTNode{
 				dst << "\n";
 				right->print_struct(dst,m);
 		}
+
+		virtual void to_python(std::ostream &dst, std::string indent) const override{
+			dst << "python" << std::endl;
+		}
+
+
 };
 
 class ExternalDeclaration : public ASTNode{
 	virtual void print_struct(std::ostream &dst, int m) const =0;
+	virtual void to_python(std::ostream &dst, std::string indent) const=0;
 };
 
 class Declarator  : public ExternalDeclaration{
@@ -43,6 +56,10 @@ class Declarator  : public ExternalDeclaration{
 
 		Declarator(std::string _id = "", Expression *_init_expr = NULL)
 		:id(_id),init_expr(_init_expr){}
+
+		virtual void to_python(std::ostream &dst, std::string indent) const override{
+			dst << "python" << std::endl;
+		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst <<  std::setw(m) << "";
@@ -71,6 +88,11 @@ class Declaration : public ExternalDeclaration{
 
 		Declaration(std::string _type, Declarator *_dec_list = NULL, Declaration *_next = NULL)
 		:type(_type),dec_list(_dec_list),next(_next){}
+
+		virtual void to_python(std::ostream &dst, std::string indent) const override{
+			dst << "python" << std::endl;
+		}
+
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst <<  std::setw(m) << "";
@@ -101,6 +123,21 @@ class FunctionDefinition : public ExternalDeclaration{
 		FunctionDefinition(std::string _type, std::string _id, Declaration *_p_list , Statement *_s_ptr )
 		:type(_type), id(_id), p_list(_p_list), s_ptr(_s_ptr){}
 
+		virtual void to_python(std::ostream &dst, std::string indent) const override{
+			dst << indent << "def " << id << "(";
+			/*if(p_list != NULL){
+				for(auto it=p_list->begin();it!=p_list->end();it++){
+					(*it)->to_python(dst,indent+"  ");
+				}
+			}*/
+			dst << ")" << ":" << std::endl;
+			if(s_ptr != NULL){
+				s_ptr->to_python(dst,indent+"  ");	
+			}
+		}
+
+
+
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << "FunctionDefinition [ " << std::endl;
 
@@ -123,12 +160,6 @@ class FunctionDefinition : public ExternalDeclaration{
 			dst << "]" << std::endl;
 		}
 };
-
-
-
-
-
-
 
 
 #endif
