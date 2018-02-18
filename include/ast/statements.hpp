@@ -19,8 +19,8 @@ class ExprStatement : public Statement{
 			dst << " ]" << std::endl;
 		}
 
-		virtual void to_python(std::ostream &dst, std::string indent) const override{
-			expr->to_python(dst,indent);
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
+			expr->to_python(dst,indent,tc);
 		}
 };
 
@@ -34,16 +34,16 @@ class CompoundStatement : public Statement{
 		CompoundStatement(std::vector<Declaration*>* _d_list = NULL ,std::vector<Statement*>* _s_list = NULL)
 		:s_list(_s_list),d_list(_d_list){}
 
-		virtual void to_python(std::ostream &dst, std::string indent) const override{
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			if(d_list != NULL){
 				for(auto it=d_list->begin();it!=d_list->end();it++){
-					(*it)->to_python(dst,indent);
+					(*it)->to_python(dst,indent,tc);
 					dst << std::endl;
 				}
 			}
 			if(s_list !=NULL){			//print statement list
 				for(auto it=s_list->begin();it!=s_list->end();it++){
-					(*it)->to_python(dst,indent);
+					(*it)->to_python(dst,indent,tc);
 					dst << std::endl;
 				}
 			}
@@ -77,11 +77,11 @@ class ConditionIfStatement : public Statement{
 		:cond_expr(_cond_expr),s_true(_s_true){}
 
 
-		virtual void to_python(std::ostream &dst, std::string indent) const override{
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << "if (";
-			cond_expr->to_python(dst,"");
+			cond_expr->to_python(dst,"",tc);
 			dst << "):" << std::endl;
-			s_true->to_python(dst,indent+"  ");
+			s_true->to_python(dst,indent+"  ",tc);
 		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
@@ -105,13 +105,13 @@ class ConditionIfElseStatement : public Statement{
 		ConditionIfElseStatement(Expression* _cond_expr, Statement* _s_true, Statement* _s_false)
 		:cond_expr(_cond_expr),s_true(_s_true),s_false(_s_false){}
 
-		virtual void to_python(std::ostream &dst, std::string indent) const override{
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << "if (";
-			cond_expr->to_python(dst,"");
+			cond_expr->to_python(dst,"",tc);
 			dst << "):" << std::endl;
-			s_true->to_python(dst,indent+"  ");
+			s_true->to_python(dst,indent+"  ",tc);
 			dst << indent << "else:" << std::endl;
-			s_false->to_python(dst,indent+"  ");
+			s_false->to_python(dst,indent+"  ",tc);
 		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
@@ -146,11 +146,11 @@ class WhileStatement : public Statement{
 		WhileStatement(Expression* _cond_expr, Statement* _s_true)
 		:cond_expr(_cond_expr),s_true(_s_true){}
 
-		virtual void to_python(std::ostream &dst, std::string indent) const override{
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << "while (";
-			cond_expr->to_python(dst,"");
+			cond_expr->to_python(dst,"",tc);
 			dst << "):" << std::endl;
-			s_true->to_python(dst,indent+"  ");
+			s_true->to_python(dst,indent+"  ",tc);
 		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
@@ -189,9 +189,9 @@ class JumpStatement : public Statement{
 		JumpStatement( Expression* _expr = NULL)
 		:expr(_expr){}
 
-		virtual void to_python(std::ostream &dst, std::string indent) const override{
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << "return";
-			if(expr != NULL) expr->to_python(dst," ");
+			if(expr != NULL) expr->to_python(dst," ",tc);
 		}
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << std::setw(m) << "";

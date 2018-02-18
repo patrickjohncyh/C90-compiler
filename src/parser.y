@@ -6,8 +6,6 @@
 
 extern const ASTNode *root; // Definition of variable (to match declaration earlier)
 
-
-
 int yylex(void);
 void yyerror(const char *);
 

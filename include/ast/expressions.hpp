@@ -8,7 +8,7 @@
 class Expression : public ASTNode{
 	public:
 		virtual void print_struct(std::ostream &dst, int m) const =0;
-		virtual void to_python(std::ostream &dst, std::string indent) const override{
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			std::cerr<<"ASTNode::translate is not implemented by type "<<typeid(this).name()<<"\n";
 		}
 };
@@ -56,12 +56,12 @@ class FunctionCallExpression : public UnaryExpression{
 			dst << "]" << std::endl;
 		}
 
-		virtual void to_python(std::ostream &dst, std::string indent) const override{
-			expr->to_python(dst,indent);
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
+			expr->to_python(dst,indent,tc);
 			dst << "(";
 			if(a_list != NULL){
 				for(auto it=a_list->begin();it!=a_list->end();it++){
-					(*it)->to_python(dst,"");
+					(*it)->to_python(dst,"",tc);
 					if(next(it,1)!=a_list->end()){
 						dst << ",";
 					}
@@ -93,10 +93,10 @@ class BinaryExpression : public Expression{
 
 		virtual const char *getOpcode() const =0;
 
-		virtual void to_python(std::ostream &dst, std::string indent) const override{
-			left->to_python(dst,indent);
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
+			left->to_python(dst,indent,tc);
 			dst << getOpcode();
-			right->to_python(dst,"");
+			right->to_python(dst,"",tc);
 		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
@@ -236,10 +236,10 @@ class DirectAssignmentExpression : public AssignmentExpression{
 		DirectAssignmentExpression(Expression* _lvalue, Expression* _expr)
 		: AssignmentExpression(_lvalue,_expr){}
 
-		virtual void to_python(std::ostream &dst, std::string indent) const override{
-			lvalue->to_python(dst,indent);
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
+			lvalue->to_python(dst,indent,tc);
 			dst << " =";
-			expr->to_python(dst," ");
+			expr->to_python(dst," ",tc);
 		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
