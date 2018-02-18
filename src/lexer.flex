@@ -14,6 +14,8 @@ L	[a-zA-Z_]
 
 
 int								{ return INT; 	 	}
+void							{ return VOID;		}
+
 return							{ return RETURN;	}
 if 								{ return IF;		}
 else							{ return ELSE; 		}

@@ -29,10 +29,12 @@ void yyerror(const char *);
 	std::vector<Expression 	*>* argument_list_vector;
 	std::vector<Statement 	*>* statement_list_vector;
 	std::vector<Declaration *>* declaration_list_vector;
+	std::vector<Declarator  *>* declarator_list_vector;
 
 }
 
 %token INT
+%token VOID
 %token RETURN
 %token IF
 %token ELSE
@@ -49,10 +51,12 @@ void yyerror(const char *);
 
 
 %type <node> translation_unit global_declaration function_definition
-%type <declarator_node>	declarator init_declarator init_declarator_list
+%type <declarator_node>	declarator init_declarator 
+%type <declarator_list_vector> init_declarator_list
 
-%type <declaration_node> declaration parameter_declaration parameter_list 
-%type <declaration_list_vector> declaration_list
+
+%type <declaration_node> declaration parameter_declaration 
+%type <declaration_list_vector> declaration_list parameter_list
 
 
 %type<expression_node> base_expression postfix_expression mult_expression add_expression 
@@ -93,14 +97,13 @@ global_declaration	: 	function_definition					{ $$ = $1; }
 
 function_definition	: 	type_specifier IDENTIFIER '(' parameter_list ')' compound_statement { $$ = new FunctionDefinition(*$1,*$2,$4,$6); }
 
-declarator			: 	IDENTIFIER 						{ $$ = new Declarator(*$1);		}
-
+declarator			: 	IDENTIFIER 						{ $$ = new Declarator(*$1);				}
 
 init_declarator		: 	declarator 						{ $$ = $1;								}
 					| 	declarator '=' expression 		{ $$ = new Declarator($1->getId(),$3);	}
 
-init_declarator_list: 	init_declarator 							{ $$ = $1; 				}
-					|	init_declarator ',' init_declarator_list	{ $1->next = $3; $$ =$1;}
+init_declarator_list: 	init_declarator 							{ $$ = new std::vector<Declarator*>(1,$1);	}
+					|	init_declarator_list ',' init_declarator	{ $1->push_back($3);  $$ = $1;				}
 
 
 declaration 		:	type_specifier ';'							{ $$ = new Declaration(*$1);	}
@@ -108,15 +111,15 @@ declaration 		:	type_specifier ';'							{ $$ = new Declaration(*$1);	}
 								
 
 declaration_list	: 	declaration 						{ $$ = new std::vector<Declaration*>(1,$1); }
-					| 	declaration_list declaration  		{ $1->push_back($2);	$$ = $1; 				}
+					| 	declaration_list declaration  		{ $1->push_back($2);	$$ = $1; 			}
 
 
-parameter_declaration:	type_specifier declarator 	{ $$ = new Declaration(*$1,$2); }		
+parameter_declaration:	type_specifier declarator 	{ $$ = new Declaration(*$1,new std::vector<Declarator*>(1,$2)); }		
 
 
-parameter_list		:	 										 { $$ = NULL; 				}
-					|	parameter_declaration				     { $$ = $1; 				}
-					|	parameter_declaration ',' parameter_list { $1->next = $3; $$ = $1;	}
+parameter_list		:	parameter_declaration				     { $$ = new std::vector<Declaration*>(1,$1);	}
+					|	parameter_list ',' parameter_declaration { $1->push_back($3); $$ = $1;					}
+					|											 { $$ = NULL;}
 
 
 /*---------------------------------------------------------------------------------------------------------------------*/
@@ -210,7 +213,8 @@ iteration_statement	:	WHILE '(' expression ')' statement 						{ $$ = new WhileS
 
 /*---------------------------------------------------------------------------------------------------------------------*/
 
-type_specifier		:	 INT 		  { $$ = new std::string("int"); }
+type_specifier		:	INT 		{ $$ = new std::string("int"); }
+					|	VOID		{ $$ = new std::string("void");} 			
 
 
 %%

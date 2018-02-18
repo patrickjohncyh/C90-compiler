@@ -9,7 +9,7 @@ class Expression : public ASTNode{
 	public:
 		virtual void print_struct(std::ostream &dst, int m) const =0;
 		virtual void to_python(std::ostream &dst, std::string indent) const override{
-			dst << "python" << std::endl;
+			std::cerr<<"ASTNode::translate is not implemented by type "<<typeid(this).name()<<"\n";
 		}
 };
 
@@ -55,6 +55,20 @@ class FunctionCallExpression : public UnaryExpression{
 			}
 			dst << "]" << std::endl;
 		}
+
+		virtual void to_python(std::ostream &dst, std::string indent) const override{
+			expr->to_python(dst,indent);
+			dst << "(";
+			if(a_list != NULL){
+				for(auto it=a_list->begin();it!=a_list->end();it++){
+					(*it)->to_python(dst,"");
+					if(next(it,1)!=a_list->end()){
+						dst << ",";
+					}
+				}
+			}
+			dst << ")";
+		}
 };
 
 
@@ -78,6 +92,12 @@ class BinaryExpression : public Expression{
 		BinaryExpression(Expression* _left, Expression* _right):left(_left),right(_right){}
 
 		virtual const char *getOpcode() const =0;
+
+		virtual void to_python(std::ostream &dst, std::string indent) const override{
+			left->to_python(dst,indent);
+			dst << getOpcode();
+			right->to_python(dst,"");
+		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst<<"( ";
@@ -199,11 +219,10 @@ class NotEqualityExpression : public BinaryExpression{
 /********************** Assignment Expressions ************************/
 
 class AssignmentExpression : public Expression{
-	private:
+	protected:
 		Expression* lvalue;
 		Expression* expr;
-		
- 		
+			
 	public:
 		AssignmentExpression(Expression* _lvalue, Expression* _expr)
 		:lvalue(_lvalue),expr(_expr){}
@@ -217,10 +236,15 @@ class DirectAssignmentExpression : public AssignmentExpression{
 		DirectAssignmentExpression(Expression* _lvalue, Expression* _expr)
 		: AssignmentExpression(_lvalue,_expr){}
 
+		virtual void to_python(std::ostream &dst, std::string indent) const override{
+			lvalue->to_python(dst,indent);
+			dst << " =";
+			expr->to_python(dst," ");
+		}
+
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << "DirectAssignemntExpression" << std::endl;
 		}
-
 };
 
 

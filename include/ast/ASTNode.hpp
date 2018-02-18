@@ -20,4 +20,11 @@ class ASTNode{
 
 
 
+struct Context{
+	
+};
+
+
+
+
 #endif

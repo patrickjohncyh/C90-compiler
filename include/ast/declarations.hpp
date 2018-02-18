@@ -8,7 +8,7 @@
 class Statement : public ASTNode{			//TEMPORARY FIX might consider using inline in the future
 	public:
 		virtual void to_python(std::ostream &dst, std::string indent) const override{
-			dst << "python" << std::endl;
+			std::cerr<<"ASTNode::translate is not implemented by type "<<typeid(this).name()<<"\n";
 		}
 };
 
@@ -24,13 +24,15 @@ class TranslationUnit : public ASTNode{
 		TranslationUnit(astNodePtr _left, astNodePtr _right):left(_left),right(_right){}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
-				left->print_struct(dst,m);
-				dst << "\n";
-				right->print_struct(dst,m);
+			left->print_struct(dst,m);
+			dst << "\n";
+			right->print_struct(dst,m);
 		}
 
 		virtual void to_python(std::ostream &dst, std::string indent) const override{
-			dst << "python" << std::endl;
+			left->to_python(dst,indent);
+			dst << std::endl;
+			right->to_python(dst,indent);
 		}
 
 
@@ -47,9 +49,6 @@ class Declarator  : public ExternalDeclaration{
 		Expression *init_expr;
 
 	public:
-		Declarator *next;
-
-
 		std::string getId(){
 			return id;
 		}
@@ -58,7 +57,9 @@ class Declarator  : public ExternalDeclaration{
 		:id(_id),init_expr(_init_expr){}
 
 		virtual void to_python(std::ostream &dst, std::string indent) const override{
-			dst << "python" << std::endl;
+			dst << indent << id << " =";
+			if(init_expr!=NULL) init_expr->to_python(dst," ");
+			else dst << " 0";
 		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
@@ -71,28 +72,26 @@ class Declarator  : public ExternalDeclaration{
 				dst << " )";
 			}
 			dst << " ]" << std::endl;
-
-			if(next!=NULL){
-				next->print_struct(dst,m);
-			}
 		}
 };
 
 class Declaration : public ExternalDeclaration{
 	private:
 		std::string type;
-		Declarator *dec_list;
+		std::vector<Declarator*>* dec_list;
 
 	public:
-		Declaration *next;		//should this be private?
-
-		Declaration(std::string _type, Declarator *_dec_list = NULL, Declaration *_next = NULL)
-		:type(_type),dec_list(_dec_list),next(_next){}
+		Declaration(std::string _type, std::vector<Declarator*>* _dec_list = NULL)
+		:type(_type),dec_list(_dec_list){}
 
 		virtual void to_python(std::ostream &dst, std::string indent) const override{
-			dst << "python" << std::endl;
+			if(dec_list != NULL){
+				for(auto it=dec_list->begin();it!=dec_list->end();it++){
+					(*it)->to_python(dst,indent);
+					if(next(it,1) != dec_list->end()) dst << std::endl;
+				}
+			}
 		}
-
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst <<  std::setw(m) << "";
@@ -101,14 +100,10 @@ class Declaration : public ExternalDeclaration{
 			dst <<  std::setw(m+2) << "";
 			dst << "Type( " << type << " ), " << std::endl;
 			if(dec_list != NULL){
-				dec_list->print_struct(dst,m+2);
+				//dec_list->print_struct(dst,m+2);
 			}
 			dst <<  std::setw(m) << "";
 			dst << "]" << std::endl;
-			if(next != NULL){
-				next->print_struct(dst,m);
-			}
-
 		}
 };
 
@@ -116,27 +111,26 @@ class FunctionDefinition : public ExternalDeclaration{
 	private:
 		std::string type;
 		std::string id;
-		Declaration *p_list;
-		Statement 	*s_ptr;
+		std::vector<Declaration*>*	p_list;
+		Statement*	s_ptr;
 
 	public:
-		FunctionDefinition(std::string _type, std::string _id, Declaration *_p_list , Statement *_s_ptr )
+		FunctionDefinition(std::string _type, std::string _id,std::vector<Declaration*>* _p_list , Statement *_s_ptr )
 		:type(_type), id(_id), p_list(_p_list), s_ptr(_s_ptr){}
 
 		virtual void to_python(std::ostream &dst, std::string indent) const override{
 			dst << indent << "def " << id << "(";
-			/*if(p_list != NULL){
+			if(p_list != NULL){
 				for(auto it=p_list->begin();it!=p_list->end();it++){
-					(*it)->to_python(dst,indent+"  ");
+					(*it)->to_python(dst,"");
+					if(next(it,1) != p_list->end()) dst << ",";
 				}
-			}*/
+			}
 			dst << ")" << ":" << std::endl;
 			if(s_ptr != NULL){
 				s_ptr->to_python(dst,indent+"  ");	
 			}
 		}
-
-
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << "FunctionDefinition [ " << std::endl;
@@ -150,7 +144,7 @@ class FunctionDefinition : public ExternalDeclaration{
 			if(p_list != NULL){
 				dst <<  std::setw(m+2) << "";
 				dst << "ParameterList (" << std::endl;
-				p_list->print_struct(dst,m+4);
+		//		p_list->print_struct(dst,m+4);
 			}
 
 			dst <<  std::setw(m+2) << "";

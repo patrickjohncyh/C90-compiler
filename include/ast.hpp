@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 #include <cstdlib>
-
+#include <typeinfo>
 
 #include "ast/ASTNode.hpp"
 #include "ast/declarations.hpp"
