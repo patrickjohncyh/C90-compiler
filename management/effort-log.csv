@@ -6,4 +6,9 @@ Date,Effort,Developers,Milestones
 11/02/2018,3,pjc316,SimpleParser;TranslatorSetup;ExpandParser_b
 12/02/2018,3,pjc316,TranslatorSetup;ExpandParser_b
 12/02/2018,0.5,pjc316,TranslatorSetup;ExpandParser_b
-15/02/2018,2,pjc316,TranslatorSetup;RefactorParser_Expression_Statement
+13/02/2018,2,pjc316,RefactorParser_Expression_Statement
+13/02/2018,0.5,pjc316,RefactorParser_Expression_Statement
+14/02/2018,2,pjc316,RefactorParser_Expression_Statement;RefactorParser_declarations
+15/02/2018,1,pjc316,TranslatorSetup;RefactorParser_Expression_Statement
+17/02/2018,2,pjc316,ExpandTranslator_b
+18/02/2018,3,pjc316,ExpandTranslator_b

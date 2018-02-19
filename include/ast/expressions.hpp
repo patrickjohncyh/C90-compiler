@@ -8,9 +8,6 @@
 class Expression : public ASTNode{
 	public:
 		virtual void print_struct(std::ostream &dst, int m) const =0;
-		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-			std::cerr<<"ASTNode::translate is not implemented by type "<<typeid(this).name()<<"\n";
-		}
 };
 
 
@@ -92,6 +89,12 @@ class BinaryExpression : public Expression{
 		BinaryExpression(Expression* _left, Expression* _right):left(_left),right(_right){}
 
 		virtual const char *getOpcode() const =0;
+
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			left->to_c(dst,indent);
+			dst << getOpcode();
+			right->to_c(dst,"");
+		}
 
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			left->to_python(dst,indent,tc);
@@ -235,6 +238,12 @@ class DirectAssignmentExpression : public AssignmentExpression{
 	public:
 		DirectAssignmentExpression(Expression* _lvalue, Expression* _expr)
 		: AssignmentExpression(_lvalue,_expr){}
+
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			lvalue->to_c(dst,indent);
+			dst << " =";
+			expr->to_c(dst," ");
+		}
 
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			lvalue->to_python(dst,indent,tc);

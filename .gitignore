@@ -3,6 +3,7 @@
 *.yy.cpp
 *.got.txt
 
+tmp/*
 bin/*
 *.o
 *.output

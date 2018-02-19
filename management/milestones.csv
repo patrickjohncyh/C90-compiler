@@ -3,13 +3,15 @@ DefineInitialMilestones,             ,1,pjc316,this,Come up with initial milesto
 FlexBisonSetup,,1,pjc316,this,setup flex and bison for very simple subset of C89 with makefile automation
 SimpleParser,FlexBisonSetup,2.5,pjc316,697f77261ab8c96f0cd0ad19b04187cb8abb2ff1,lex a simple c source file;build an AST based on C89 grammar;reprint input in stdout
 TranslatorSetup,SimpleParser,1,pjc316,472a2908db7e70dc7fb9005c39684cee5daa8ada,setup framework for python translation
-SimpleTranslator,TranslatorSetup,1.5,pjc316,,translate simple c source file
+SimpleTranslator,TranslatorSetup,1.5,pjc316,f32685e2f0453f269589c4075363dfd3568b5835,translate simple c source file
 CodeGenSetup,SimpleParser,1.5,pjc316,,setup framework for codegen
 SimpleCodeGen,CodeGenSetup,3,pjc316,,codegen for simple c sourcefile
-TestbenchSetup,,1.5,,,determine structure for testbench and implement automation
-ExpandParser_b,,2,,e95cb7ade31861f87cf8801bbd42e71cae8c7275,Expand Grammar and AST for expressions and statements
-RefactorParser_Expression_Statement,,,,472a2908db7e70dc7fb9005c39684cee5daa8ada,Refactor grammar and AST for expressions and statements
-ExpandCodeGen_b,,2,,,Specifics will be included in futuer commits
-ExpandParser_c,,2,,,Fill in most if not all cases of expressions and statements
-ExpandCodeGen_c,,2,,,Specifics will be included in futuer commits
-ExpandParser_declarations,,,,,Refactor and expand declarations to handle more complex cases
+TestbenchSetup,,1.5,pjc316,,determine structure for testbench and implement automation
+ExpandParser_b,,2,pjc316,e95cb7ade31861f87cf8801bbd42e71cae8c7275,Expand Grammar and AST for expressions and statements
+RefactorParser_Expression_Statement,,3,pjc316,472a2908db7e70dc7fb9005c39684cee5daa8ada,Refactor grammar and AST for expressions and statements
+ExpandCodeGen_b,,2,pjc316,,Specifics will be included in futuer commits
+ExpandParser_c,,2,pjc316,,Fill in most if not all cases of expressions and statements
+ExpandCodeGen_c,,2,pjc316,,Specifics will be included in futuer commits
+RefactorParser_declarations,,3,pjc316,,Refactor and expand declarations to handle more complex cases
+PaserTestbenchSetup,,1,pjc316,this,Setup automated framerwork for testing parser
+ExpandTranslator_b,,3,pjc316,9a79ddd1e18ec4a91a68a1172b9be22dde7ee5ee,Implement translator for more of the grammar

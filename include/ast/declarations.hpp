@@ -7,9 +7,6 @@
 
 class Statement : public ASTNode{			//TEMPORARY FIX might consider using inline in the future
 	public:
-		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-			std::cerr<<"ASTNode::translate is not implemented by type "<<typeid(this).name()<<"\n";
-		}
 };
 
 class TranslationUnit : public ASTNode{
@@ -26,6 +23,14 @@ class TranslationUnit : public ASTNode{
 			right->print_struct(dst,m);
 		}
 
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			left->to_c(dst,indent);
+			dst << ";";
+			dst << std::endl;
+			right->to_c(dst,indent);
+			dst << ";";
+		}
+
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			left->to_python(dst,indent,tc);
 			dst << std::endl;
@@ -37,7 +42,6 @@ class TranslationUnit : public ASTNode{
 
 class ExternalDeclaration : public ASTNode{
 	virtual void print_struct(std::ostream &dst, int m) const =0;
-	virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const=0;
 };
 
 class Declarator  : public ExternalDeclaration{
@@ -52,6 +56,14 @@ class Declarator  : public ExternalDeclaration{
 
 		Declarator(std::string _id = "", Expression *_init_expr = NULL)
 		:id(_id),init_expr(_init_expr){}
+
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst << indent << id;
+			if(init_expr!=NULL){
+				dst << " =";
+				init_expr->to_c(dst,"");
+			}
+		}
 
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << id << " =";
@@ -85,6 +97,16 @@ class Declaration : public ExternalDeclaration{
 
 		std::string getParam_python(){
 			return (*dec_list)[0]->getId();
+		}
+
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst << indent << type << " ";
+			if(dec_list != NULL){
+				for(auto it=dec_list->begin();it!=dec_list->end();it++){
+					(*it)->to_c(dst,"");
+					if(next(it,1) != dec_list->end()) dst << ",";
+				}
+			}
 		}
 
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
@@ -121,8 +143,21 @@ class FunctionDefinition : public ExternalDeclaration{
 		FunctionDefinition(std::string _type, std::string _id,std::vector<Declaration*>* _p_list , Statement *_s_ptr )
 		:type(_type), id(_id), p_list(_p_list), s_ptr(_s_ptr){}
 
-		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst << type << " " << id << "(";
+			if(p_list != NULL){
+				for(auto it=p_list->begin();it!=p_list->end();it++){
+					(*it)->to_c(dst,"");
+					if(next(it,1) != p_list->end()) dst << ", ";
+				}
+			}
+			dst <<")";
+			if(s_ptr != NULL){
+				s_ptr->to_c(dst,indent);
+			}
+		}
 
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << "def " << id << "(";
 			if(p_list != NULL){
 				for(auto it=p_list->begin();it!=p_list->end();it++){
@@ -138,7 +173,6 @@ class FunctionDefinition : public ExternalDeclaration{
 				s_ptr->to_python(dst,indent+"  ",tc);	
 			}
 		}
-
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << "FunctionDefinition [ " << std::endl;

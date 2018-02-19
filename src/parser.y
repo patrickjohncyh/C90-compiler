@@ -87,10 +87,10 @@ void yyerror(const char *);
 
 ROOT : translation_unit	{ root = $1; }
 
-translation_unit	: 	global_declaration					{ $$ = $1; }
+translation_unit	: 	global_declaration					  { $$ = $1; }
 					| 	translation_unit global_declaration   { $$ = new TranslationUnit($1,$2); }
 
-global_declaration	: 	function_definition					{ $$ = $1; }
+global_declaration	: 	function_definition						{ $$ = $1; }
 					| 	declaration 							{ $$ = $1; }
 
 function_definition	: 	type_specifier IDENTIFIER '(' parameter_list ')' compound_statement { $$ = new FunctionDefinition(*$1,*$2,$4,$6); }

@@ -51,5 +51,8 @@ Vagrant.configure(2) do |config|
       # QEMU run-time emulator
       sudo apt-get -y install qemu
 
+      # Python 3
+      sudo apt-get install python3.6
+
    SHELL
 end
