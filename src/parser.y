@@ -206,8 +206,8 @@ condition_statement :	IF '(' expression ')' statement 				{ $$ = new ConditionIf
 					|	IF '(' expression ')' statement ELSE statement 	{ $$ = new ConditionIfElseStatement($3,$5,$7); 	}
 
 
-iteration_statement	:	WHILE '(' expression ')' statement 						{ $$ = new WhileStatement($3,$5);	}
-					|	FOR   '(' expression ';' expression ';' expression ')'	{ $$ = new ForStatement($3,$5,$7);	}
+iteration_statement	:	WHILE '(' expression ')' statement 									{ $$ = new WhileStatement($3,$5);	}
+					|	FOR   '(' expression ';' expression ';' expression ')' statement	{ $$ = new ForStatement($3,$5,$7,$9);	}
 
 /*---------------------------------------------------------------------------------------------------------------------*/
 

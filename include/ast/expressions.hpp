@@ -27,6 +27,10 @@ class PostIncrementExpression : public UnaryExpression{
 	public:
 		PostIncrementExpression(Expression* _expr):UnaryExpression(_expr){}
 
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			expr->to_c(dst,indent);
+			dst<< "++";
+		}
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			expr->print_struct(dst,m);
 			dst << "++" << std::endl;
@@ -42,7 +46,21 @@ class FunctionCallExpression : public UnaryExpression{
 
 		FunctionCallExpression(Expression *_expr , std::vector<Expression*>* _a_list = NULL)
 		:UnaryExpression(_expr),a_list(_a_list){}
-		
+
+
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			expr->to_c(dst,indent);
+			dst << "(";
+			if(a_list != NULL){
+				for(auto it=a_list->begin();it!=a_list->end();it++){
+					(*it)->to_c(dst,"");
+					if(next(it,1)!=a_list->end()){
+						dst << ",";
+					}
+				}
+			}
+			dst << ")";
+		}
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << "FunctionCallExpression [ Identifier ( ";  expr->print_struct(dst,m); dst << " ) ";
 			if(a_list->size() !=0){
@@ -52,7 +70,6 @@ class FunctionCallExpression : public UnaryExpression{
 			}
 			dst << "]" << std::endl;
 		}
-
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			expr->to_python(dst,indent,tc);
 			dst << "(";
@@ -95,13 +112,11 @@ class BinaryExpression : public Expression{
 			dst << getOpcode();
 			right->to_c(dst,"");
 		}
-
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			left->to_python(dst,indent,tc);
 			dst << getOpcode();
 			right->to_python(dst,"",tc);
 		}
-
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst<<"( ";
 	        left->print_struct(dst,m);
@@ -244,13 +259,11 @@ class DirectAssignmentExpression : public AssignmentExpression{
 			dst << " =";
 			expr->to_c(dst," ");
 		}
-
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			lvalue->to_python(dst,indent,tc);
-			dst << " =";
-			expr->to_python(dst," ",tc);
+			dst << "=";
+			expr->to_python(dst,"",tc);
 		}
-
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << "DirectAssignemntExpression" << std::endl;
 		}
@@ -258,9 +271,6 @@ class DirectAssignmentExpression : public AssignmentExpression{
 
 
 // TO IMPLMENET OTHER ASSIGNMENT I.E += ,-=, *= ETC
-
-
-
 
 
 

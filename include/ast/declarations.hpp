@@ -22,7 +22,6 @@ class TranslationUnit : public ASTNode{
 			dst << std::endl;
 			right->print_struct(dst,m);
 		}
-
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			left->to_c(dst,indent);
 			dst << ";";
@@ -30,10 +29,9 @@ class TranslationUnit : public ASTNode{
 			right->to_c(dst,indent);
 			dst << ";";
 		}
-
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			left->to_python(dst,indent,tc);
-			dst << std::endl;
+			//dst << std::endl;
 			right->to_python(dst,indent,tc);
 		}
 
@@ -64,14 +62,13 @@ class Declarator  : public ExternalDeclaration{
 				init_expr->to_c(dst,"");
 			}
 		}
-
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-			dst << indent << id << " =";
-			if(init_expr!=NULL) init_expr->to_python(dst," ",tc);
-			else dst << " 0";
+			dst << indent << id << "=";
+			if(init_expr!=NULL) init_expr->to_python(dst,"",tc);
+			else dst << "0";
+			dst << std::endl;
 			tc.global_var.push_back(id);
 		}
-
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst <<  std::setw(m) << "";
 			dst << "Declarator [ ";
@@ -108,16 +105,14 @@ class Declaration : public ExternalDeclaration{
 				}
 			}
 		}
-
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			if(dec_list != NULL){
 				for(auto it=dec_list->begin();it!=dec_list->end();it++){
 					(*it)->to_python(dst,indent,tc);
-					if(next(it,1) != dec_list->end()) dst << std::endl;
+					//if(next(it,1) != dec_list->end()) dst << std::endl;
 				}
 			}
 		}
-
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst <<  std::setw(m) << "";
 			dst << "Declaration [" << std::endl;
@@ -156,7 +151,6 @@ class FunctionDefinition : public ExternalDeclaration{
 				s_ptr->to_c(dst,indent);
 			}
 		}
-
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << "def " << id << "(";
 			if(p_list != NULL){
@@ -167,13 +161,12 @@ class FunctionDefinition : public ExternalDeclaration{
 			}
 			dst << ")" << ":" << std::endl;
 			for(auto it=tc.global_var.begin(); it!=tc.global_var.end();it++){
-				dst << "  global " << *it << std::endl;;
+				dst << "  global " << *it << std::endl;
 			}
 			if(s_ptr != NULL){
 				s_ptr->to_python(dst,indent+"  ",tc);	
 			}
 		}
-
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << "FunctionDefinition [ " << std::endl;
 

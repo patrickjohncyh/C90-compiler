@@ -29,8 +29,11 @@ int main(int argc, char* argv[]){
 
 			root->to_c(std::cout,"");
 		}
+		else if(std::string(argv[1]) == "--translate"){
+			TranslateContext tc;
+			root->to_python(std::cout,"",tc);
+		}
 		else{
-			const ASTNode *root = parse();
 			root->print_struct(std::cout,0);
 		}
 	}
