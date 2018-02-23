@@ -30,6 +30,13 @@ class Constant : public Primitive{
 		int val;
 	public:
 		Constant(int _val):val(_val){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			std::string destReg = ctx.get_dest_reg();
+			dst << "addiu $"<<destReg<<",$0,"<<val<<std::endl;
+		}
+
+
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << val;
 		}
@@ -39,6 +46,7 @@ class Constant : public Primitive{
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << val;
 		}
+
 };
 
 class Identifier : public Primitive{
@@ -46,6 +54,15 @@ class Identifier : public Primitive{
 		std::string id;
 	public:
 		Identifier(std::string _id):id(_id){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			std::string destReg = ctx.get_dest_reg();
+			//std::cout << "addiu $"<<destReg<<",$0,"<<val<<std::endl;
+			//need to look for value in bindings
+		}
+
+
+
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << id;
 		}
@@ -55,6 +72,8 @@ class Identifier : public Primitive{
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << id;
 		}
+
+
 };
 
 #endif

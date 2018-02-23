@@ -33,8 +33,16 @@ int main(int argc, char* argv[]){
 			TranslateContext tc;
 			root->to_python(std::cout,"",tc);
 		}
-		else{
-			root->print_struct(std::cout,0);
+		else if(std::string(argv[1]) == "--compile"){
+		//	TranslateContext tc;
+		//	root->to_mips(std::cout,"");
+
+			Context c;
+			root = new SubExpression(new Constant(5),new Constant(11));
+			root->to_mips(std::cout,c);
+
+
+
 		}
 	}
 

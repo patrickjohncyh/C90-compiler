@@ -157,6 +157,14 @@ class AddExpression : public BinaryExpression{
 	public:
 		AddExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			std::string destReg = ctx.get_dest_reg();
+			left->to_mips(dst,ctx);
+			std::string tempReg = ctx.alloc_free_reg();
+			right->to_mips(dst,ctx);
+			dst << "addu $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;
+		}
+
 		virtual const char *getOpcode() const override{
 			return "+";
 		}
@@ -165,6 +173,14 @@ class AddExpression : public BinaryExpression{
 class SubExpression : public BinaryExpression{
 	public:
 		SubExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			std::string destReg = ctx.get_dest_reg();
+			left->to_mips(dst,ctx);
+			std::string tempReg = ctx.alloc_free_reg();
+			right->to_mips(dst,ctx);
+			dst << "subu $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;
+		}
 
 		virtual const char *getOpcode() const override{
 			return "-";
