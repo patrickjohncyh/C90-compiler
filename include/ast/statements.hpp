@@ -215,7 +215,6 @@ class ForStatement : public Statement{
 		ForStatement(Expression* _init_expr, Expression* _cond_expr, Expression* _update_expr, Statement* _s_true)
 		:init_expr(_init_expr),cond_expr(_cond_expr),update_expr(_update_expr),s_true(_s_true){}
 
-
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst << indent << "for(";
 			init_expr->to_c(dst,"");

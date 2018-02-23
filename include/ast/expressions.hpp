@@ -108,14 +108,18 @@ class BinaryExpression : public Expression{
 		virtual const char *getOpcode() const =0;
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst << "(";
 			left->to_c(dst,indent);
 			dst << getOpcode();
 			right->to_c(dst,"");
+			dst <<")";
 		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
+			dst << "(";
 			left->to_python(dst,indent,tc);
 			dst << getOpcode();
 			right->to_python(dst,"",tc);
+			dst <<")";
 		}
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst<<"( ";
