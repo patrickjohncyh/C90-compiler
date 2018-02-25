@@ -3,7 +3,7 @@
 
 #include "expressions.hpp"
 #include <iomanip>
-
+#include <sstream>
 
 class Statement : public ASTNode{			//TEMPORARY FIX might consider using inline in the future
 	public:
@@ -16,6 +16,12 @@ class TranslationUnit : public ASTNode{
 
 	public:
 		TranslationUnit(astNodePtr _left, astNodePtr _right):left(_left),right(_right){}
+
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			left->to_mips(dst,ctx);
+			right->to_mips(dst,ctx);
+		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			left->print_struct(dst,m);
@@ -55,6 +61,43 @@ class Declarator  : public ExternalDeclaration{
 		Declarator(std::string _id = "", Expression *_init_expr = NULL)
 		:id(_id),init_expr(_init_expr){}
 
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			if(ctx.in_global_scope()){
+				if(init_expr!=NULL){
+					std::stringstream ss;
+					init_expr->to_c(ss,"");
+
+					dst<<"    "<<".data"<<std::endl;	
+					dst<<"    "<<".globl "<<id<<std::endl;
+					dst<<id<<":"<<std::endl;
+					dst<<"    "<<".word "<<ss.str()<<std::endl;
+					ctx.set_binding(id,".globl");
+				}
+				else{
+				//	dst<<"    "<<".comm "<<id<<",4,4"<<std::endl;	
+				//	ctx.set_binding(id,"%")
+				//should officially use comm.... but will use to for testing first...
+					dst<<"    "<<".data"<<std::endl;	
+					dst<<"    "<<".globl "<<id<<std::endl;
+					dst<<id<<":"<<std::endl;
+					dst<<"    "<<".word "<<"0"<<std::endl;
+					ctx.set_binding(id,".comm");
+				}
+			}
+			else{
+				if(init_expr!=NULL){
+					std::string destReg = ctx.get_dest_reg();
+					init_expr->to_mips(dst,ctx);
+					dst<<"    "<<"sw "<<destReg<<","<<ctx.get_free_stack()<<std::endl;
+					ctx.set_binding(id,ctx.get_curr_offset());
+				}
+				else{
+					dst<<"    "<<"sw $0,"<<ctx.get_free_stack()<<std::endl;
+					ctx.set_binding(id,ctx.get_curr_offset());
+				}
+			}
+		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst << indent << id;
 			if(init_expr!=NULL){
@@ -92,8 +135,17 @@ class Declaration : public ExternalDeclaration{
 		:type(_type),dec_list(_dec_list){}
 
 
-		std::string getParam_python(){
+		std::string getParam(){
 			return (*dec_list)[0]->getId();
+		}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			if(dec_list != NULL){
+				if(!ctx.in_global_scope()) dst<<"    "<<ctx.alloc_stack(4*dec_list->size())<<std::endl;
+				for(auto it=dec_list->begin();it!=dec_list->end();it++){
+					(*it)->to_mips(dst,ctx);
+				}
+			}
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
@@ -138,6 +190,57 @@ class FunctionDefinition : public ExternalDeclaration{
 		FunctionDefinition(std::string _type, std::string _id,std::vector<Declaration*>* _p_list , Statement *_s_ptr )
 		:type(_type), id(_id), p_list(_p_list), s_ptr(_s_ptr){}
 
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			ctx.in_local();
+
+			dst<<"    "<<".text"<<std::endl;	
+			dst<<"    "<<".globl "<<id<<std::endl;
+			dst<<id<<":"<<std::endl;
+			dst<<"    "<<"sw $31,-4($sp)"<<std::endl; //return address
+			dst<<"    "<<"sw $fp,-8($sp)"<<std::endl; // old fp
+			dst<<"    "<<"move $fp,$sp"<<std::endl;
+			dst<<"    "<<ctx.alloc_stack(40)<<std::endl;
+			dst<<"    "<<"sw $s0,"<<ctx.get_free_stack()<<std::endl;
+			dst<<"    "<<"sw $s1,"<<ctx.get_free_stack()<<std::endl;
+			dst<<"    "<<"sw $s2,"<<ctx.get_free_stack()<<std::endl;
+			dst<<"    "<<"sw $s3,"<<ctx.get_free_stack()<<std::endl;
+			dst<<"    "<<"sw $s4,"<<ctx.get_free_stack()<<std::endl;
+			dst<<"    "<<"sw $s5,"<<ctx.get_free_stack()<<std::endl;
+			dst<<"    "<<"sw $s6,"<<ctx.get_free_stack()<<std::endl;
+			dst<<"    "<<"sw $s7,"<<ctx.get_free_stack()<<std::endl;
+
+			if(p_list!=NULL){
+				for(unsigned int i=0;i<p_list->size();i++){
+					if(i<4) dst<<"    "<<"sw $a"<<i<<","<<i*4<<"($fp)"<<std::endl;	
+					ctx.set_binding( (*p_list)[i]->getParam(),std::to_string(i*4) );
+				}
+			}
+			if(s_ptr!=NULL){
+				Context tmpCtx = Context(ctx);
+				s_ptr->to_mips(dst,tmpCtx);
+			}
+
+			dst<<"    "<<"lw $s0,-12($fp)"<<std::endl;
+			dst<<"    "<<"lw $s1,-16($fp)"<<std::endl;
+			dst<<"    "<<"lw $s2,-20($fp)"<<std::endl;
+			dst<<"    "<<"lw $s3,-24($fp)"<<std::endl;
+			dst<<"    "<<"lw $s4,-28($fp)"<<std::endl;
+			dst<<"    "<<"lw $s5,-32($fp)"<<std::endl;
+			dst<<"    "<<"lw $s6,-36($fp)"<<std::endl;
+			dst<<"    "<<"lw $s7,-40($fp)"<<std::endl;
+			dst<<"    "<<"move $sp,$fp"<<std::endl;	  //restore old stack pointer
+			dst<<"    "<<"lw $31,-4($sp)"<<std::endl; //restore return address
+			dst<<"    "<<"lw $fp,-8($sp)"<<std::endl; // restor old fp
+			dst<<"    "<<"j $31"<<std::endl;
+			dst<<"    "<<"nop"<<std::endl;
+			dst<<std::endl;
+
+
+
+
+		}
+
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst << type << " " << id << "(";
 			if(p_list != NULL){
@@ -155,7 +258,7 @@ class FunctionDefinition : public ExternalDeclaration{
 			dst << indent << "def " << id << "(";
 			if(p_list != NULL){
 				for(auto it=p_list->begin();it!=p_list->end();it++){
-					dst << (*it)->getParam_python();
+					dst << (*it)->getParam();
 					if(next(it,1) != p_list->end()) dst << ",";
 				}
 			}

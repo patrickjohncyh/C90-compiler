@@ -38,6 +38,18 @@ class CompoundStatement : public Statement{
 		CompoundStatement(std::vector<Declaration*>* _d_list = NULL ,std::vector<Statement*>* _s_list = NULL)
 		:s_list(_s_list),d_list(_d_list){}
 
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			if(d_list != NULL){
+				for(auto it=d_list->begin();it!=d_list->end();it++){
+					(*it)->to_mips(dst,ctx);
+				}
+			}
+			if(s_list !=NULL){			//print statement list
+				for(auto it=s_list->begin();it!=s_list->end();it++){
+					(*it)->to_mips(dst,ctx);
+				}
+			}
+		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst<<indent<<"{"<<std::endl;
 			if(d_list != NULL){
@@ -238,6 +250,13 @@ class JumpStatement : public Statement{
 	public:
 		JumpStatement( Expression* _expr = NULL)
 		:expr(_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			std::string destReg = ctx.get_dest_reg();
+			expr->to_mips(dst,ctx);
+			dst <<"    "<<"move $2,$"<<destReg<<std::endl;
+
+		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst << indent << "return";

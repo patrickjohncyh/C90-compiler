@@ -162,7 +162,7 @@ class AddExpression : public BinaryExpression{
 			left->to_mips(dst,ctx);
 			std::string tempReg = ctx.alloc_free_reg();
 			right->to_mips(dst,ctx);
-			dst << "addu $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;
+			dst << "    "<<"addu $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;
 		}
 
 		virtual const char *getOpcode() const override{

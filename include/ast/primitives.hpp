@@ -33,7 +33,7 @@ class Constant : public Primitive{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			std::string destReg = ctx.get_dest_reg();
-			dst << "addiu $"<<destReg<<",$0,"<<val<<std::endl;
+			dst << "    "<<"addiu $"<<destReg<<",$0,"<<val<<std::endl;
 		}
 
 
@@ -56,9 +56,7 @@ class Identifier : public Primitive{
 		Identifier(std::string _id):id(_id){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			std::string destReg = ctx.get_dest_reg();
-			//std::cout << "addiu $"<<destReg<<",$0,"<<val<<std::endl;
-			//need to look for value in bindings
+			dst << ctx.get_binding(id) << std::endl;
 		}
 
 
