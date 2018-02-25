@@ -75,13 +75,7 @@ class Declarator  : public ExternalDeclaration{
 					ctx.set_binding(id,".globl");
 				}
 				else{
-				//	dst<<"    "<<".comm "<<id<<",4,4"<<std::endl;	
-				//	ctx.set_binding(id,"%")
-				//should officially use comm.... but will use to for testing first...
-					dst<<"    "<<".data"<<std::endl;	
-					dst<<"    "<<".globl "<<id<<std::endl;
-					dst<<id<<":"<<std::endl;
-					dst<<"    "<<".word "<<"0"<<std::endl;
+					dst<<"    "<<".comm "<<id<<",4,4"<<std::endl;	
 					ctx.set_binding(id,".comm");
 				}
 			}

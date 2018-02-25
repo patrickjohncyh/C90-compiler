@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <cassert>
+#include <sstream>
 
 
 class ASTNode;
@@ -56,7 +57,12 @@ struct Context{
 			return "    lui $"+curr_dest_reg+",%hi("+var+")\n    lw  $"+curr_dest_reg+",%lo("+var+")($"+curr_dest_reg +")";
 		}
 		else if(var_binding[var] == ".comm"){
+			std::stringstream ss;
 
+			ss << "    lui $28,%hi(__gnu_local_gp)"<<std::endl;
+			ss << "    addiu $28,$28,%lo(__gnu_local_gp)"<<std::endl;
+			ss << "    lw $"<<curr_dest_reg<<",%got("<<var<<")($28)";
+			return ss.str();
 		}
 		else{
 			return var_binding[var];
