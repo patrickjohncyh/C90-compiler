@@ -54,11 +54,13 @@ struct Context{
 	}
 	std::string get_binding(std::string var){
 		if(var_binding[var] == ".globl"){
-			return "    lui $"+curr_dest_reg+",%hi("+var+")\n    lw  $"+curr_dest_reg+",%lo("+var+")($"+curr_dest_reg +")";
+			std::stringstream ss;
+			ss <<"    lui $"<<curr_dest_reg<<",%hi("<<var<<")"<<std::endl;
+			ss <<"    lw  $"<<curr_dest_reg<<",%lo("<<var<<")($"<<curr_dest_reg<<")"<<std::endl; 
+			return ss.str();
 		}
 		else if(var_binding[var] == ".comm"){
 			std::stringstream ss;
-
 			ss << "    lui $28,%hi(__gnu_local_gp)"<<std::endl;
 			ss << "    addiu $28,$28,%lo(__gnu_local_gp)"<<std::endl;
 			ss << "    lw $"<<curr_dest_reg<<",%got("<<var<<")($28)";
@@ -110,8 +112,11 @@ struct Context{
 };
 
 
-class ASTNode{
 
+
+
+
+class ASTNode{
 	public:
 		virtual ~ASTNode(){}
 

@@ -67,7 +67,6 @@ class Declarator  : public ExternalDeclaration{
 				if(init_expr!=NULL){
 					std::stringstream ss;
 					init_expr->to_c(ss,"");
-
 					dst<<"    "<<".data"<<std::endl;	
 					dst<<"    "<<".globl "<<id<<std::endl;
 					dst<<id<<":"<<std::endl;
@@ -135,7 +134,8 @@ class Declaration : public ExternalDeclaration{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			if(dec_list != NULL){
-				if(!ctx.in_global_scope()) dst<<"    "<<ctx.alloc_stack(4*dec_list->size())<<std::endl;
+				if(!ctx.in_global_scope()) 
+					dst<<"    "<<ctx.alloc_stack(4*dec_list->size())<<std::endl;
 				for(auto it=dec_list->begin();it!=dec_list->end();it++){
 					(*it)->to_mips(dst,ctx);
 				}
@@ -186,7 +186,6 @@ class FunctionDefinition : public ExternalDeclaration{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			ctx.in_local();
-
 			dst<<"    "<<".text"<<std::endl;	
 			dst<<"    "<<".globl "<<id<<std::endl;
 			dst<<id<<":"<<std::endl;
@@ -228,10 +227,6 @@ class FunctionDefinition : public ExternalDeclaration{
 			dst<<"    "<<"j $31"<<std::endl;
 			dst<<"    "<<"nop"<<std::endl;
 			dst<<std::endl;
-
-
-
-
 		}
 
 

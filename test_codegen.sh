@@ -32,14 +32,14 @@ for j in ${input_dir}/* ; do
             base=$(echo $i | sed -E -e "s|${test_group}/([^.]+)[.]driver[.]c|\1|g");
 
          	# Compile the driver to .o
-            mips-linux-gnu-gcc -S $i -o $working/$base.driver.s
+            mips-linux-gnu-gcc -march=mips1 -mfp32  -S $i -o $working/$base.driver.s
 
             if [[ ${have_compiler} -eq 1 ]] ; then
                 # Compile to .c to .s
                 $compiler --compile ${test_group}/$base.c -o ${working}/$base-slave.s
                 
                 # Link driver and slave
-                mips-linux-gnu-gcc --static ${working}/$base-slave.s $working/$base.driver.s -o $working/$base-test
+                mips-linux-gnu-gcc -std=c89 -march=mips1 -mfp32 --static -O0 ${working}/$base-slave.s $working/$base.driver.s -o $working/$base-test
                 
                 # Run driver
                 qemu-mips $working/$base-test
