@@ -21,9 +21,6 @@ void yyerror(const char *);
 	std::string *string;
 	int int_num;
 
-
-
-
 	std::vector<Expression 	*>* argument_list_vector;
 	std::vector<Statement 	*>* statement_list_vector;
 	std::vector<Declaration *>* declaration_list_vector;

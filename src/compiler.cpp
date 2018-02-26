@@ -19,8 +19,12 @@ int main(int argc, char* argv[]){
 		    ostream << "  ret=main()" << std::endl;
 		    ostream << "  sys.exit(ret)" << std::endl;	
 		}
-		if(std::string(argv[1]) == "--parse"){
+		else if(std::string(argv[1]) == "--parse"){
 			root->to_c(outfile,"");
+		}
+		else if(std::string(argv[1]) == "--compile"){
+			Context c;
+			root->to_mips(outfile,c);
 		}
 	}
 	else{
