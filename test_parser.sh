@@ -12,16 +12,16 @@ if [[ ! -f bin/c_compiler ]] ; then
     have_compiler=0
 fi
 
-input_dir="testbench/c_parser"
+input_dir="testbench/parser"
 
-working="tmp/c_parser_test"
+working="tmp/parser_test"
 mkdir -p ${working}
 
 for i in ${input_dir}/*.c ; do
     base=$(echo $i | sed -E -e "s|${input_dir}/([^.]+)[.]c|\1|g");
 
  	# Compile the reference C version
-    gcc $i -o $working/$base
+    gcc -std=c89 $i -o $working/$base
 
     # Run the reference C version
     $working/$base
@@ -32,7 +32,7 @@ for i in ${input_dir}/*.c ; do
 	    $compiler --parse $i -o ${working}/$base-got.c
 	    
 	    # Run parsed C
-	    gcc ${working}/$base-got.c -o $working/$base-got
+	    gcc -std=c89 ${working}/$base-got.c -o $working/$base-got
 	    $working/$base-got
 	    GOT_C_OUT=$?    
 	fi
