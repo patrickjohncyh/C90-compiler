@@ -172,7 +172,7 @@ class AddExpression : public BinaryExpression{
 			dst <<"lw $"<<destReg_r<<","<<destReg<<"($fp)"<<std::endl;
 			dst <<"lw $"<<tempReg_r<<","<<tempReg<<"($fp)"<<std::endl;
 
-			//perform add
+
 			dst <<"addu $"<<destReg_r<<",$"<<destReg_r<<",$"<<tempReg_r<<std::endl;
 			dst << "sw $"<<destReg_r<<","<<destReg<<"($fp)"<<std::endl;
 		

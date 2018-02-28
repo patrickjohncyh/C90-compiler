@@ -193,7 +193,6 @@ class ConditionIfElseStatement : public Statement{
 			dst << else_bottom_label << ":" << std::endl;
 		}
 
-
 		virtual void to_c(std::ostream &dst, std::string indent) const override{
 			dst << indent << "if(";
 			cond_expr->to_c(dst,"");
@@ -243,6 +242,32 @@ class WhileStatement : public Statement{
 	public:
 		WhileStatement(Expression* _cond_expr, Statement* _s_true)
 		:cond_expr(_cond_expr),s_true(_s_true){}
+
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+			std::string while_start_label = ctx.generateLabel("while_start");
+			std::string while_end_label = ctx.generateLabel("while_end");
+
+
+			dst<<while_start_label<<":"<<std::endl;
+
+			auto condReg = ctx.assignNewStorage();
+			cond_expr->to_mips(dst,ctx);
+			ctx.deAllocStorage();
+
+
+			std::string condReg_r = "v0";
+			dst <<"lw $"<<condReg_r<<","<<condReg<<"($fp)"<<std::endl;
+
+			dst << "beq $0,$"<<condReg_r<<","<<while_end_label<<std::endl;
+			
+			s_true->to_mips(dst,ctx);
+
+			dst << "b "<<while_start_label<<std::endl;
+
+			dst<<while_end_label<<":"<<std::endl;
+		}
 
 		virtual void to_c(std::ostream &dst, std::string indent) const override{
 			dst << indent << "while (";
@@ -305,6 +330,10 @@ class JumpStatement : public Statement{
 		:expr(_expr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+
+
+
 			dst << "##### Return #####" << std::endl;
 			auto destReg = ctx.assignNewStorage();
 			std::string destReg_r = "v0";
@@ -314,6 +343,15 @@ class JumpStatement : public Statement{
 			dst << "lw $"<<destReg_r<<","<<destReg<<"($fp)"<<std::endl;
 			dst <<"move $2,$"<<destReg_r<<std::endl;
 
+
+			dst<<"# Start Epilouge #"<<std::endl;
+			dst<<"addiu $sp,$sp,8"<<std::endl;	//asume one var for now just for testing
+			dst<<"lw $31,-4($sp)"<<std::endl; //restore return address
+			dst<<"lw $fp,-8($sp)"<<std::endl; // restor old fp
+			dst<<"j $31"<<std::endl;
+			dst<<"nop"<<std::endl;
+			dst<<std::endl;
+			dst<<"# End Epilouge #"<<std::endl;
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{

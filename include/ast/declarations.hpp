@@ -185,6 +185,8 @@ class FunctionDefinition : public ExternalDeclaration{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			ctx.scopeLocal();
+			//std::string epilouge_label = ctx.generateLabel("epilouge");
+			
 			dst<<"# Start Prologue #"<<std::endl;
 			dst<<".text"<<std::endl;	
 			dst<<".globl "<<id<<std::endl;
@@ -208,6 +210,8 @@ class FunctionDefinition : public ExternalDeclaration{
 				s_ptr->to_mips(dst,ctx);
 			}
 
+
+			//dst<<epilouge_label<<":"<<std::endl;
 			dst<<"# Start Epilouge #"<<std::endl;
 			dst<<"addiu $sp,$sp,8"<<std::endl;	//asume one var for now just for testing
 			dst<<"lw $31,-4($sp)"<<std::endl; //restore return address

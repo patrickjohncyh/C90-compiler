@@ -27,7 +27,7 @@ struct Context{
 
 
 	std::string generateLabel(std::string label){
-		return label + "_" +std::to_string(labelCount++);
+		return label + "_" + std::to_string(labelCount++);
 	}
 
 	void scopeLocal(){
