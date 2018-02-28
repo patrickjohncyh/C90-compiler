@@ -77,15 +77,15 @@ class Declarator  : public ExternalDeclaration{
 				}
 			}
 			else{
+				ctx.assignNewVariable(id);
+				dst<<"sw $0,"<<ctx.getVariable(id).first<<"($fp)"<<std::endl;
 				if(init_expr!=NULL){
-					/*std::string destReg = ctx.get_dest_reg();
+					auto tempReg = ctx.assignNewStorage();
+					std::string tempReg_r = "v1";
 					init_expr->to_mips(dst,ctx);
-					dst<<"    "<<"sw "<<destReg<<","<<ctx.get_free_stack()<<std::endl;
-					ctx.set_binding(id,ctx.get_curr_offset());*/
-				}
-				else{
-					ctx.assignNewVariable(id);
-					dst<<"sw $0,"<<ctx.getVariable(id).first<<"($fp)"<<std::endl;
+					dst<<"lw $v1,"<<tempReg<<"($fp)"<<std::endl;
+					dst<<"sw $"<<tempReg_r<<","<<ctx.getVariable(id).first<<"($fp)"<<std::endl;
+					ctx.deAllocStorage();
 				}
 			}
 		}
@@ -185,34 +185,37 @@ class FunctionDefinition : public ExternalDeclaration{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			ctx.scopeLocal();
-
+			dst<<"# Start Prologue #"<<std::endl;
 			dst<<".text"<<std::endl;	
 			dst<<".globl "<<id<<std::endl;
 			dst<<id<<":"<<std::endl;
 			dst<<"sw $31,-4($sp)"<<std::endl; //return address
 			dst<<"sw $fp,-8($sp)"<<std::endl; // old fp
-			dst<<"addiu $sp,$sp,-12"<<std::endl;	//asume one var for now just for testing
+			dst<<"addiu $sp,$sp,-8"<<std::endl;
 			dst<<"move $fp,$sp"<<std::endl;
+			dst<<"# End Prologue #"<<std::endl;
 
-			/*
+			
 			if(p_list!=NULL){
 				for(unsigned int i=0;i<p_list->size();i++){
-					if(i<4) dst<<"    "<<"sw $a"<<i<<","<<i*4<<"($fp)"<<std::endl;	
-					ctx.set_binding( (*p_list)[i]->getParam(),std::to_string(i*4) );
+					if(i<4)
+						dst<<"    "<<"sw $a"<<i<<","<<(i*4+8)<<"($fp)"<<std::endl;	
+					ctx.assignNewArgument( (*p_list)[i]->getParam() , i*4+8 );
 				}
-			}*/
+			}
 
 			if(s_ptr!=NULL){
 				s_ptr->to_mips(dst,ctx);
 			}
 
-
-			dst<<"addiu $sp,$sp,12"<<std::endl;	//asume one var for now just for testing
+			dst<<"# Start Epilouge #"<<std::endl;
+			dst<<"addiu $sp,$sp,8"<<std::endl;	//asume one var for now just for testing
 			dst<<"lw $31,-4($sp)"<<std::endl; //restore return address
 			dst<<"lw $fp,-8($sp)"<<std::endl; // restor old fp
 			dst<<"j $31"<<std::endl;
 			dst<<"nop"<<std::endl;
 			dst<<std::endl;
+			dst<<"# End Epilouge #"<<std::endl;
 		}
 
 

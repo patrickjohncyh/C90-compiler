@@ -46,10 +46,8 @@ class FunctionCallExpression : public UnaryExpression{
 		std::vector<Expression*>* a_list;
 
 	public:
-
 		FunctionCallExpression(Expression *_expr , std::vector<Expression*>* _a_list = NULL)
 		:UnaryExpression(_expr),a_list(_a_list){}
-
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			expr->to_c(dst,indent);
@@ -165,41 +163,19 @@ class AddExpression : public BinaryExpression{
 			left->to_mips(dst,ctx);
 			auto tempReg = ctx.assignNewStorage(); 
 			right->to_mips(dst,ctx);
-			std::string destReg_r;
-			std::string tempReg_r;
+
+			std::string destReg_r = "v0";
+			std::string tempReg_r = "v1";
 
 			dst << "##### ADD ####" << std::endl;
-
-			//read dest, read temp
-			// write store to dest
-
-			if(destReg.second == "reg"){
-				destReg_r = destReg.first;
-			}
-			else{ //in memory, load it into some reg
-				destReg_r = "v0";
-				dst <<"lw $v0,"<<destReg.first<<"($fp)"<<std::endl;
-			}
-
-			if(tempReg.second == "reg"){
-				tempReg_r = tempReg.first;
-			}
-			else{ //in memory, load it into some reg
-				tempReg_r = "v1";
-				dst <<"lw $v1,"<<tempReg.first<<"($fp)"<<std::endl;
-			}
-
-
+			
+			dst <<"lw $"<<destReg_r<<","<<destReg<<"($fp)"<<std::endl;
+			dst <<"lw $"<<tempReg_r<<","<<tempReg<<"($fp)"<<std::endl;
 
 			//perform add
 			dst <<"addu $"<<destReg_r<<",$"<<destReg_r<<",$"<<tempReg_r<<std::endl;
-
-			//if dest regReg is mem, then save to stack
-
-			if(destReg.second == "s"){
-				dst << "sw $v0,"<<destReg.first<<"($fp)"<<std::endl;
-			}
-
+			dst << "sw $"<<destReg_r<<","<<destReg<<"($fp)"<<std::endl;
+		
 			ctx.deAllocStorage();
 		}
 
@@ -230,7 +206,6 @@ class SubExpression : public BinaryExpression{
 class LessThanExpression : public BinaryExpression{
 	public:
 		LessThanExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
-
 		virtual const char *getOpcode() const override{
 			return "<";
 		}
@@ -239,7 +214,6 @@ class LessThanExpression : public BinaryExpression{
 class MoreThanExpression : public BinaryExpression{
 	public:
 		MoreThanExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
-
 		virtual const char *getOpcode() const override{
 			return ">";
 		}
@@ -248,7 +222,6 @@ class MoreThanExpression : public BinaryExpression{
 class LessThanEqExpression : public BinaryExpression{
 	public:
 		LessThanEqExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
-
 		virtual const char *getOpcode() const override{
 			return "<=";
 		}
@@ -257,7 +230,6 @@ class LessThanEqExpression : public BinaryExpression{
 class MoreThanEqExpression : public BinaryExpression{
 	public:
 		MoreThanEqExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
-
 		virtual const char *getOpcode() const override{
 			return ">=";
 		}
@@ -266,7 +238,6 @@ class MoreThanEqExpression : public BinaryExpression{
 class EqualityExpression : public BinaryExpression{
 	public:
 		EqualityExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
-
 		virtual const char *getOpcode() const override{
 			return "==";
 		}
@@ -275,7 +246,6 @@ class EqualityExpression : public BinaryExpression{
 class NotEqualityExpression : public BinaryExpression{
 	public:
 		NotEqualityExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
-
 		virtual const char *getOpcode() const override{
 			return "!=";
 		}
@@ -320,23 +290,11 @@ class DirectAssignmentExpression : public AssignmentExpression{
 			auto tempReg = ctx.assignNewStorage();
 			expr->to_mips(dst,ctx);
 
-			//lw r_exp, addr
-			//need to get val from destReg
-			//need to get val from tempReg
+			std::string destReg_r = "v0";
+			std::string tempReg_r = "v1";
 
-
-			std::string destReg_r = destReg.first;
-			std::string tempReg_r = tempReg.first;
-
-			if(destReg.second == "s"){
-				destReg_r = "v0";
-				dst<<"lw $v0,"<<destReg.first<<"($fp)"<<std::endl;
-			}
-
-			if(tempReg.second == "s"){
-				tempReg_r = "v1";
-				dst<<"lw $v1,"<<tempReg.first<<"($fp)"<<std::endl;
-			}
+			dst<<"lw $v0,"<<destReg<<"($fp)"<<std::endl;
+			dst<<"lw $v1,"<<tempReg<<"($fp)"<<std::endl;
 
 			dst<<"sw $"<<tempReg_r<<",0($"<<destReg_r<<")"<<std::endl;
 

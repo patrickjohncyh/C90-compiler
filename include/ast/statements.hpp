@@ -15,6 +15,7 @@ class ExprStatement : public Statement{
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			ctx.assignNewStorage();
 			expr->to_mips(dst,ctx);
+			ctx.deAllocStorage();
 		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
@@ -49,20 +50,14 @@ class CompoundStatement : public Statement{
 			if(d_list != NULL){
 				for(auto it=d_list->begin();it!=d_list->end();it++){
 					(*it)->to_mips(dst,tmpCtx);
-					tmpCtx.resetRegisters();
 				}
 			}
 			if(s_list !=NULL){
 				for(auto it=s_list->begin();it!=s_list->end();it++){
 					(*it)->to_mips(dst,tmpCtx);
-					tmpCtx.resetRegisters();
 				}
 			}
 		}
-
-
-
-
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst<<indent<<"{"<<std::endl;
@@ -119,6 +114,14 @@ class ConditionIfStatement : public Statement{
 	public:
 		ConditionIfStatement(Expression* _cond_expr, Statement* _s_true)
 		:cond_expr(_cond_expr),s_true(_s_true){}
+
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			
+
+			
+		}
+
 
 		virtual void to_c(std::ostream &dst, std::string indent) const override{
 			dst << indent << "if (";
@@ -267,15 +270,12 @@ class JumpStatement : public Statement{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			dst << "##### Return #####" << std::endl;
-			auto destReg = ctx.getCurrStorage();
-			std::string destReg_r = destReg.first;
-
-			if(destReg.second == "s"){
-				destReg_r = "v0";
-			}	
+			auto destReg = ctx.assignNewStorage();
+			std::string destReg_r = "v0";
 
 			expr->to_mips(dst,ctx);
 
+			dst << "lw $"<<destReg_r<<","<<destReg<<"($fp)"<<std::endl;
 			dst <<"move $2,$"<<destReg_r<<std::endl;
 
 		}
