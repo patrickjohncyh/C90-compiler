@@ -169,6 +169,31 @@ class ConditionIfElseStatement : public Statement{
 		ConditionIfElseStatement(Expression* _cond_expr, Statement* _s_true, Statement* _s_false)
 		:cond_expr(_cond_expr),s_true(_s_true),s_false(_s_false){}
 
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			auto condReg = ctx.assignNewStorage();
+			cond_expr->to_mips(dst,ctx);
+			std::string if_bottom_label = ctx.generateLabel("if_bottom");
+			std::string else_bottom_label = ctx.generateLabel("else_bottom");
+
+			std::string condReg_r = "v0";
+			dst <<"lw $"<<condReg_r<<","<<condReg<<"($fp)"<<std::endl;
+
+			dst << "beq $0,$"<<condReg_r<<","<<if_bottom_label<<std::endl;
+			
+			ctx.deAllocStorage();
+
+			s_true->to_mips(dst,ctx);
+
+			dst << "b "<<else_bottom_label<<std::endl;
+
+			dst << if_bottom_label << ":" << std::endl;
+
+			s_false->to_mips(dst,ctx);
+
+			dst << else_bottom_label << ":" << std::endl;
+		}
+
+
 		virtual void to_c(std::ostream &dst, std::string indent) const override{
 			dst << indent << "if(";
 			cond_expr->to_c(dst,"");
