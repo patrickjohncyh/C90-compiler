@@ -32,8 +32,20 @@ class Constant : public Primitive{
 		Constant(int _val):val(_val){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			std::string destReg = ctx.get_dest_reg();
-			dst << "    "<<"addiu $"<<destReg<<",$0,"<<val<<std::endl;
+			auto destReg = ctx.getCurrStorage(); 	//write to dest Reg
+	
+			dst << "##### CONSTANT #####" << std::endl;
+	
+			if(destReg.second == "reg"){
+				std::string destReg_r = destReg.first;
+				dst <<"addiu $"<<destReg_r<<",$0,"<<val<<std::endl;
+			}
+			else{ //in memory
+				std::string destReg_r = "v0";
+				dst <<"addiu $"<<destReg_r<<",$0,"<<val<<std::endl;
+				//copy from v0 to mem
+				dst << "sw $v0,"<<destReg.first<<"($fp)"<<std::endl;
+			}
 		}
 
 
@@ -56,9 +68,54 @@ class Identifier : public Primitive{
 		Identifier(std::string _id):id(_id){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			dst << ctx.get_binding(id) << std::endl;
+			dst << "##### accessVar #####" << std::endl;
+			auto destReg = ctx.getCurrStorage();
+			std::string destReg_r = destReg.first;
+
+			to_mips_getAddr(dst,ctx);
+
+			if(destReg.second == "s"){
+				destReg_r = "v0";
+			}	
+			
+			dst << "lw $"<<destReg_r<<",0($"<<destReg_r<<")"<<std::endl;
+
+
+			if(destReg.second == "s"){
+				dst << "sw $v0,"<<destReg.first<<"($fp)"<<std::endl;
+			}
 		}
 
+
+
+		virtual void to_mips_getAddr(std::ostream &dst, Context ctx) const{
+			dst << "##### getAddr #####" << std::endl;
+
+			auto destReg = ctx.getCurrStorage();
+			auto var_loc = ctx.getVariable(id);
+			std::string destReg_r = destReg.first;
+
+			if(destReg.second == "s"){
+				destReg_r = "v0";
+			}
+
+
+
+
+			if(var_loc.second == "local"){
+					dst<<"addiu $"<<destReg_r<<",$fp,"<<var_loc.first<<std::endl;
+			}
+			else{
+
+			}
+
+
+
+			if(destReg.second == "s"){
+				dst << "sw $v0,"<<destReg.first<<"($fp)"<<std::endl;
+			}
+
+		}
 
 
 		virtual void print_struct(std::ostream &dst, int m) const override{

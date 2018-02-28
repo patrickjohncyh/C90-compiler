@@ -132,6 +132,7 @@ postfix_expression	:	base_expression
 					|	base_expression	'(' ')'					{ $$ = new FunctionCallExpression($1) ;		}
 					|	base_expression '(' argument_list ')'	{ $$ = new FunctionCallExpression($1,$3);	}
 					/* to implement more postfix expressions i.e. arrays */
+					/* base_expression '[' expression ']' */
 
 
 

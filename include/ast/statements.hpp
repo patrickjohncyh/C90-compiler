@@ -12,6 +12,11 @@ class ExprStatement : public Statement{
 	public:
 		ExprStatement( Expression* _expr ):expr(_expr){}
 
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			ctx.assignNewStorage();
+			expr->to_mips(dst,ctx);
+		}
+
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << std::setw(m) << "";
 			dst << "ExpressionStatement [ ";
@@ -39,17 +44,26 @@ class CompoundStatement : public Statement{
 		:s_list(_s_list),d_list(_d_list){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			Context tmpCtx = Context(ctx);
+
 			if(d_list != NULL){
 				for(auto it=d_list->begin();it!=d_list->end();it++){
-					(*it)->to_mips(dst,ctx);
+					(*it)->to_mips(dst,tmpCtx);
+					tmpCtx.resetRegisters();
 				}
 			}
-			if(s_list !=NULL){			//print statement list
+			if(s_list !=NULL){
 				for(auto it=s_list->begin();it!=s_list->end();it++){
-					(*it)->to_mips(dst,ctx);
+					(*it)->to_mips(dst,tmpCtx);
+					tmpCtx.resetRegisters();
 				}
 			}
 		}
+
+
+
+
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst<<indent<<"{"<<std::endl;
 			if(d_list != NULL){
@@ -252,9 +266,17 @@ class JumpStatement : public Statement{
 		:expr(_expr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			std::string destReg = ctx.get_dest_reg();
+			dst << "##### Return #####" << std::endl;
+			auto destReg = ctx.getCurrStorage();
+			std::string destReg_r = destReg.first;
+
+			if(destReg.second == "s"){
+				destReg_r = "v0";
+			}	
+
 			expr->to_mips(dst,ctx);
-			dst <<"    "<<"move $2,$"<<destReg<<std::endl;
+
+			dst <<"move $2,$"<<destReg_r<<std::endl;
 
 		}
 

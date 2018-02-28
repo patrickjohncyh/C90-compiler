@@ -17,7 +17,6 @@ class TranslationUnit : public ASTNode{
 	public:
 		TranslationUnit(astNodePtr _left, astNodePtr _right):left(_left),right(_right){}
 
-
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			left->to_mips(dst,ctx);
 			right->to_mips(dst,ctx);
@@ -37,7 +36,6 @@ class TranslationUnit : public ASTNode{
 		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			left->to_python(dst,indent,tc);
-			//dst << std::endl;
 			right->to_python(dst,indent,tc);
 		}
 
@@ -63,31 +61,31 @@ class Declarator  : public ExternalDeclaration{
 
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			if(ctx.in_global_scope()){
+			if(ctx.getScope() == global){
 				if(init_expr!=NULL){
-					std::stringstream ss;
+				/*	std::stringstream ss;
 					init_expr->to_c(ss,"");
 					dst<<"    "<<".data"<<std::endl;	
 					dst<<"    "<<".globl "<<id<<std::endl;
 					dst<<id<<":"<<std::endl;
 					dst<<"    "<<".word "<<ss.str()<<std::endl;
-					ctx.set_binding(id,".globl");
+					ctx.set_binding(id,".globl");*/
 				}
 				else{
-					dst<<"    "<<".comm "<<id<<",4,4"<<std::endl;	
-					ctx.set_binding(id,".comm");
+					/*dst<<"    "<<".comm "<<id<<",4,4"<<std::endl;	
+					ctx.set_binding(id,".comm");*/
 				}
 			}
 			else{
 				if(init_expr!=NULL){
-					std::string destReg = ctx.get_dest_reg();
+					/*std::string destReg = ctx.get_dest_reg();
 					init_expr->to_mips(dst,ctx);
 					dst<<"    "<<"sw "<<destReg<<","<<ctx.get_free_stack()<<std::endl;
-					ctx.set_binding(id,ctx.get_curr_offset());
+					ctx.set_binding(id,ctx.get_curr_offset());*/
 				}
 				else{
-					dst<<"    "<<"sw $0,"<<ctx.get_free_stack()<<std::endl;
-					ctx.set_binding(id,ctx.get_curr_offset());
+					ctx.assignNewVariable(id);
+					dst<<"sw $0,"<<ctx.getVariable(id).first<<"($fp)"<<std::endl;
 				}
 			}
 		}
@@ -134,11 +132,12 @@ class Declaration : public ExternalDeclaration{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			if(dec_list != NULL){
-				if(!ctx.in_global_scope()) 
-					dst<<"    "<<ctx.alloc_stack(4*dec_list->size())<<std::endl;
-				for(auto it=dec_list->begin();it!=dec_list->end();it++){
-					(*it)->to_mips(dst,ctx);
+				if(ctx.getScope() == local){
+					for(auto it=dec_list->begin();it!=dec_list->end();it++){
+						(*it)->to_mips(dst,ctx);
+					}
 				}
+				
 			}
 		}
 
@@ -185,47 +184,34 @@ class FunctionDefinition : public ExternalDeclaration{
 		:type(_type), id(_id), p_list(_p_list), s_ptr(_s_ptr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			ctx.in_local();
-			dst<<"    "<<".text"<<std::endl;	
-			dst<<"    "<<".globl "<<id<<std::endl;
-			dst<<id<<":"<<std::endl;
-			dst<<"    "<<"sw $31,-4($sp)"<<std::endl; //return address
-			dst<<"    "<<"sw $fp,-8($sp)"<<std::endl; // old fp
-			dst<<"    "<<"move $fp,$sp"<<std::endl;
-			dst<<"    "<<ctx.alloc_stack(40)<<std::endl;
-			dst<<"    "<<"sw $s0,"<<ctx.get_free_stack()<<std::endl;
-			dst<<"    "<<"sw $s1,"<<ctx.get_free_stack()<<std::endl;
-			dst<<"    "<<"sw $s2,"<<ctx.get_free_stack()<<std::endl;
-			dst<<"    "<<"sw $s3,"<<ctx.get_free_stack()<<std::endl;
-			dst<<"    "<<"sw $s4,"<<ctx.get_free_stack()<<std::endl;
-			dst<<"    "<<"sw $s5,"<<ctx.get_free_stack()<<std::endl;
-			dst<<"    "<<"sw $s6,"<<ctx.get_free_stack()<<std::endl;
-			dst<<"    "<<"sw $s7,"<<ctx.get_free_stack()<<std::endl;
+			ctx.scopeLocal();
 
+			dst<<".text"<<std::endl;	
+			dst<<".globl "<<id<<std::endl;
+			dst<<id<<":"<<std::endl;
+			dst<<"sw $31,-4($sp)"<<std::endl; //return address
+			dst<<"sw $fp,-8($sp)"<<std::endl; // old fp
+			dst<<"addiu $sp,$sp,-12"<<std::endl;	//asume one var for now just for testing
+			dst<<"move $fp,$sp"<<std::endl;
+
+			/*
 			if(p_list!=NULL){
 				for(unsigned int i=0;i<p_list->size();i++){
 					if(i<4) dst<<"    "<<"sw $a"<<i<<","<<i*4<<"($fp)"<<std::endl;	
 					ctx.set_binding( (*p_list)[i]->getParam(),std::to_string(i*4) );
 				}
-			}
+			}*/
+
 			if(s_ptr!=NULL){
-				Context tmpCtx = Context(ctx);
-				s_ptr->to_mips(dst,tmpCtx);
+				s_ptr->to_mips(dst,ctx);
 			}
 
-			dst<<"    "<<"lw $s0,-12($fp)"<<std::endl;
-			dst<<"    "<<"lw $s1,-16($fp)"<<std::endl;
-			dst<<"    "<<"lw $s2,-20($fp)"<<std::endl;
-			dst<<"    "<<"lw $s3,-24($fp)"<<std::endl;
-			dst<<"    "<<"lw $s4,-28($fp)"<<std::endl;
-			dst<<"    "<<"lw $s5,-32($fp)"<<std::endl;
-			dst<<"    "<<"lw $s6,-36($fp)"<<std::endl;
-			dst<<"    "<<"lw $s7,-40($fp)"<<std::endl;
-			dst<<"    "<<"move $sp,$fp"<<std::endl;	  //restore old stack pointer
-			dst<<"    "<<"lw $31,-4($sp)"<<std::endl; //restore return address
-			dst<<"    "<<"lw $fp,-8($sp)"<<std::endl; // restor old fp
-			dst<<"    "<<"j $31"<<std::endl;
-			dst<<"    "<<"nop"<<std::endl;
+
+			dst<<"addiu $sp,$sp,12"<<std::endl;	//asume one var for now just for testing
+			dst<<"lw $31,-4($sp)"<<std::endl; //restore return address
+			dst<<"lw $fp,-8($sp)"<<std::endl; // restor old fp
+			dst<<"j $31"<<std::endl;
+			dst<<"nop"<<std::endl;
 			dst<<std::endl;
 		}
 

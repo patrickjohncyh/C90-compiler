@@ -8,6 +8,9 @@
 class Expression : public ASTNode{
 	public:
 		virtual void print_struct(std::ostream &dst, int m) const =0;
+		virtual void to_mips_getAddr(std::ostream &dst, Context ctx) const{
+			dst << "ERROR Unassignable" << std::endl;
+		}
 };
 
 
@@ -158,11 +161,46 @@ class AddExpression : public BinaryExpression{
 		AddExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			std::string destReg = ctx.get_dest_reg();
+			auto destReg = ctx.getCurrStorage(); 	//write to dest Reg
 			left->to_mips(dst,ctx);
-			std::string tempReg = ctx.alloc_free_reg();
+			auto tempReg = ctx.assignNewStorage(); 
 			right->to_mips(dst,ctx);
-			dst << "    "<<"addu $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;
+			std::string destReg_r;
+			std::string tempReg_r;
+
+			dst << "##### ADD ####" << std::endl;
+
+			//read dest, read temp
+			// write store to dest
+
+			if(destReg.second == "reg"){
+				destReg_r = destReg.first;
+			}
+			else{ //in memory, load it into some reg
+				destReg_r = "v0";
+				dst <<"lw $v0,"<<destReg.first<<"($fp)"<<std::endl;
+			}
+
+			if(tempReg.second == "reg"){
+				tempReg_r = tempReg.first;
+			}
+			else{ //in memory, load it into some reg
+				tempReg_r = "v1";
+				dst <<"lw $v1,"<<tempReg.first<<"($fp)"<<std::endl;
+			}
+
+
+
+			//perform add
+			dst <<"addu $"<<destReg_r<<",$"<<destReg_r<<",$"<<tempReg_r<<std::endl;
+
+			//if dest regReg is mem, then save to stack
+
+			if(destReg.second == "s"){
+				dst << "sw $v0,"<<destReg.first<<"($fp)"<<std::endl;
+			}
+
+			ctx.deAllocStorage();
 		}
 
 		virtual const char *getOpcode() const override{
@@ -175,11 +213,11 @@ class SubExpression : public BinaryExpression{
 		SubExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			std::string destReg = ctx.get_dest_reg();
+			/*std::string destReg = ctx.get_dest_reg();
 			left->to_mips(dst,ctx);
 			std::string tempReg = ctx.alloc_free_reg();
 			right->to_mips(dst,ctx);
-			dst << "subu $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;
+			dst << "subu $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;*/
 		}
 
 		virtual const char *getOpcode() const override{
@@ -274,6 +312,37 @@ class DirectAssignmentExpression : public AssignmentExpression{
 		DirectAssignmentExpression(Expression* _lvalue, Expression* _expr)
 		: AssignmentExpression(_lvalue,_expr){}
 
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			dst << "##### DirectAssignment #####" << std::endl;
+
+			auto destReg = ctx.getCurrStorage(); 	//write to dest Reg
+			lvalue->to_mips_getAddr(dst,ctx);		//addr store in destReg
+			auto tempReg = ctx.assignNewStorage();
+			expr->to_mips(dst,ctx);
+
+			//lw r_exp, addr
+			//need to get val from destReg
+			//need to get val from tempReg
+
+
+			std::string destReg_r = destReg.first;
+			std::string tempReg_r = tempReg.first;
+
+			if(destReg.second == "s"){
+				destReg_r = "v0";
+				dst<<"lw $v0,"<<destReg.first<<"($fp)"<<std::endl;
+			}
+
+			if(tempReg.second == "s"){
+				tempReg_r = "v1";
+				dst<<"lw $v1,"<<tempReg.first<<"($fp)"<<std::endl;
+			}
+
+			dst<<"sw $"<<tempReg_r<<",0($"<<destReg_r<<")"<<std::endl;
+
+			ctx.deAllocStorage();
+
+		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			lvalue->to_c(dst,indent);
 			dst << " =";
