@@ -15,6 +15,8 @@ typedef int memReg;
 const int global = 0;
 const int local  = 1;
 
+extern int labelCount;
+
 
 struct Context{
 	std::map<std::string,var_pair> var_location;
@@ -23,6 +25,10 @@ struct Context{
 	int mem_fp_offset_count = 0; // growing negatveily
 	int mem_reg_count = 0;
 
+
+	std::string generateLabel(std::string label){
+		return label + "_" +std::to_string(labelCount++);
+	}
 
 	void scopeLocal(){
 		scope = local;

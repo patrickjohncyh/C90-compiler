@@ -1,6 +1,8 @@
 #include "ast.hpp"
 #include <fstream>
 
+int labelCount = 0;
+
 int main(int argc, char* argv[]){
 
 	if(argc==5){

@@ -117,9 +117,20 @@ class ConditionIfStatement : public Statement{
 
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			
+			auto condReg = ctx.assignNewStorage();
+			cond_expr->to_mips(dst,ctx);
+			std::string bottom_label = ctx.generateLabel("if_bottom");
 
+			std::string condReg_r = "v0";
+			dst <<"lw $"<<condReg_r<<","<<condReg<<"($fp)"<<std::endl;
+
+			dst << "beq $0,$"<<condReg_r<<","<<bottom_label<<std::endl;
 			
+			ctx.deAllocStorage();
+
+			s_true->to_mips(dst,ctx);
+
+			dst << bottom_label << ":" << std::endl;
 		}
 
 
