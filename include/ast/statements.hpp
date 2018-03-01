@@ -117,19 +117,18 @@ class ConditionIfStatement : public Statement{
 
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			auto condReg = ctx.assignNewStorage();
+			auto condMemReg = ctx.assignNewStorage();
 			cond_expr->to_mips(dst,ctx);
-			std::string bottom_label = ctx.generateLabel("if_bottom");
-
-			std::string condReg_r = "v0";
-			dst <<"lw $"<<condReg_r<<","<<condReg<<"($fp)"<<std::endl;
-
-			dst << "beq $0,$"<<condReg_r<<","<<bottom_label<<std::endl;
-			
 			ctx.deAllocStorage();
 
-			s_true->to_mips(dst,ctx);
+			std::string bottom_label = ctx.generateLabel("if_bottom");
 
+			std::string condReg = "v0";
+			ctx.memReg_read(condMemReg, condReg,dst);	
+
+			dst << "beq $0,$"<<condReg<<","<<bottom_label<<std::endl;
+			
+			s_true->to_mips(dst,ctx);
 			dst << bottom_label << ":" << std::endl;
 		}
 
@@ -170,22 +169,21 @@ class ConditionIfElseStatement : public Statement{
 		:cond_expr(_cond_expr),s_true(_s_true),s_false(_s_false){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			auto condReg = ctx.assignNewStorage();
+			auto condMemReg = ctx.assignNewStorage();
 			cond_expr->to_mips(dst,ctx);
+			ctx.deAllocStorage();
+
 			std::string if_bottom_label = ctx.generateLabel("if_bottom");
 			std::string else_bottom_label = ctx.generateLabel("else_bottom");
 
-			std::string condReg_r = "v0";
-			dst <<"lw $"<<condReg_r<<","<<condReg<<"($fp)"<<std::endl;
+			std::string condReg = "v0";
+			ctx.memReg_read(condMemReg,condReg,dst);
 
-			dst << "beq $0,$"<<condReg_r<<","<<if_bottom_label<<std::endl;
+			dst << "beq $0,$"<<condReg<<","<<if_bottom_label<<std::endl;
 			
-			ctx.deAllocStorage();
-
 			s_true->to_mips(dst,ctx);
 
 			dst << "b "<<else_bottom_label<<std::endl;
-
 			dst << if_bottom_label << ":" << std::endl;
 
 			s_false->to_mips(dst,ctx);
@@ -249,23 +247,20 @@ class WhileStatement : public Statement{
 			std::string while_start_label = ctx.generateLabel("while_start");
 			std::string while_end_label = ctx.generateLabel("while_end");
 
-
 			dst<<while_start_label<<":"<<std::endl;
 
-			auto condReg = ctx.assignNewStorage();
+			auto condMemReg = ctx.assignNewStorage();
 			cond_expr->to_mips(dst,ctx);
 			ctx.deAllocStorage();
 
+			std::string condReg = "v0";
+			ctx.memReg_read(condMemReg,condReg,dst);
 
-			std::string condReg_r = "v0";
-			dst <<"lw $"<<condReg_r<<","<<condReg<<"($fp)"<<std::endl;
+			dst << "beq $0,$"<<condReg<<","<<while_end_label<<std::endl;
 
-			dst << "beq $0,$"<<condReg_r<<","<<while_end_label<<std::endl;
-			
 			s_true->to_mips(dst,ctx);
 
 			dst << "b "<<while_start_label<<std::endl;
-
 			dst<<while_end_label<<":"<<std::endl;
 		}
 
@@ -331,17 +326,14 @@ class JumpStatement : public Statement{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 
-
-
-
 			dst << "##### Return #####" << std::endl;
-			auto destReg = ctx.assignNewStorage();
-			std::string destReg_r = "v0";
-
+			auto destMemReg = ctx.assignNewStorage();
 			expr->to_mips(dst,ctx);
+			ctx.deAllocStorage();
 
-			dst << "lw $"<<destReg_r<<","<<destReg<<"($fp)"<<std::endl;
-			dst <<"move $2,$"<<destReg_r<<std::endl;
+			std::string destReg = "v0";
+			ctx.memReg_read(destMemReg,destReg,dst);
+			dst <<"move $2,$"<<destReg<<std::endl;
 
 
 			dst<<"# Start Epilouge #"<<std::endl;

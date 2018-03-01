@@ -212,14 +212,14 @@ class FunctionDefinition : public ExternalDeclaration{
 
 
 			//dst<<epilouge_label<<":"<<std::endl;
-			dst<<"# Start Epilouge #"<<std::endl;
+			/*dst<<"# Start Epilouge #"<<std::endl;
 			dst<<"addiu $sp,$sp,8"<<std::endl;	//asume one var for now just for testing
 			dst<<"lw $31,-4($sp)"<<std::endl; //restore return address
 			dst<<"lw $fp,-8($sp)"<<std::endl; // restor old fp
 			dst<<"j $31"<<std::endl;
 			dst<<"nop"<<std::endl;
 			dst<<std::endl;
-			dst<<"# End Epilouge #"<<std::endl;
+			dst<<"# End Epilouge #"<<std::endl;*/
 		}
 
 

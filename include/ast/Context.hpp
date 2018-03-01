@@ -26,6 +26,16 @@ struct Context{
 	int mem_reg_count = 0;
 
 
+	void memReg_read(memReg loc, std::string reg, std::ostream& dst){
+		dst << "lw $"<<reg<<","<<loc<<"($fp)"<<std::endl;
+	}
+
+	void memReg_write(memReg loc, std::string reg, std::ostream& dst){
+		dst << "sw $"<<reg<<","<<loc<<"($fp)"<<std::endl;
+	}
+
+
+
 	std::string generateLabel(std::string label){
 		return label + "_" + std::to_string(labelCount++);
 	}

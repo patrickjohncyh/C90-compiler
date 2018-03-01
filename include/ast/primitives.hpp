@@ -32,16 +32,13 @@ class Constant : public Primitive{
 		Constant(int _val):val(_val){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			auto destReg = ctx.getCurrStorage();
-			std::string destReg_r = "v0";
-	
 			dst << "##### Constant #####" << std::endl;
-			
-			dst <<"addiu $"<<destReg_r<<",$0,"<<val<<std::endl;
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
 
-			dst << "sw $v0,"<<destReg<<"($fp)"<<std::endl;
+			dst <<"addiu $"<<destReg<<",$0,"<<val<<std::endl;
+			ctx.memReg_write(destMemReg, destReg,dst);	
 		}
-
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << val;
@@ -63,38 +60,34 @@ class Identifier : public Primitive{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			dst << "##### accessVar #####" << std::endl;
-			auto destReg = ctx.getCurrStorage();
-			std::string destReg_r = "v0";
-
+			auto destMemReg = ctx.getCurrStorage();
 			to_mips_getAddr(dst,ctx);
-			
-			dst << "lw $"<<destReg_r<<",0($"<<destReg_r<<")"<<std::endl;
 
-			
-			dst << "sw $v0,"<<destReg<<"($fp)"<<std::endl;
+			std::string destReg = "v0";
+			ctx.memReg_read(destMemReg, destReg,dst);	
+
+			dst << "lw $"<<destReg<<",0($"<<destReg<<")"<<std::endl;
+
+			ctx.memReg_write(destMemReg, destReg,dst);
 
 		}
 
-
-
 		virtual void to_mips_getAddr(std::ostream &dst, Context ctx) const{
 			dst << "##### getAddr #####" << std::endl;
-
-			auto destReg = ctx.getCurrStorage();
+			auto destMemReg = ctx.getCurrStorage();
 			auto var_loc = ctx.getVariable(id);
-			std::string destReg_r = "v0";
 
+			std::string destReg = "v0";
 
 			if(var_loc.second == "local"){
-					dst<<"addiu $"<<destReg_r<<",$fp,"<<var_loc.first<<std::endl;
+				dst<<"addiu $"<<destReg<<",$fp,"<<var_loc.first<<std::endl;
 			}
-			else{
-
+			else if(var_loc.second == "global"){
+				dst<<"lui 	$"<<destReg<<",%hi("<<id<<")"<<std::endl;
+				dst<<"addiu $"<<destReg<<",$"<<destReg<<",%lo("<<id<<")"<<std::endl;
 			}
 
-
-			dst << "sw $v0,"<<destReg<<"($fp)"<<std::endl;
-
+			ctx.memReg_write(destMemReg, destReg,dst);
 		}
 
 

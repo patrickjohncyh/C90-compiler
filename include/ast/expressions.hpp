@@ -49,6 +49,10 @@ class FunctionCallExpression : public UnaryExpression{
 		FunctionCallExpression(Expression *_expr , std::vector<Expression*>* _a_list = NULL)
 		:UnaryExpression(_expr),a_list(_a_list){}
 
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+		}
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			expr->to_c(dst,indent);
 			dst << "(";
@@ -159,24 +163,25 @@ class AddExpression : public BinaryExpression{
 		AddExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			auto destReg = ctx.getCurrStorage(); 	//write to dest Reg
-			left->to_mips(dst,ctx);
-			auto tempReg = ctx.assignNewStorage(); 
-			right->to_mips(dst,ctx);
-
-			std::string destReg_r = "v0";
-			std::string tempReg_r = "v1";
-
 			dst << "##### ADD ####" << std::endl;
-			
-			dst <<"lw $"<<destReg_r<<","<<destReg<<"($fp)"<<std::endl;
-			dst <<"lw $"<<tempReg_r<<","<<tempReg<<"($fp)"<<std::endl;
 
-
-			dst <<"addu $"<<destReg_r<<",$"<<destReg_r<<",$"<<tempReg_r<<std::endl;
-			dst << "sw $"<<destReg_r<<","<<destReg<<"($fp)"<<std::endl;
-		
+			auto destMemReg = ctx.getCurrStorage(); 	//write to dest Reg
+			left->to_mips(dst,ctx);
+			auto tempMemReg = ctx.assignNewStorage(); 
+			right->to_mips(dst,ctx);
 			ctx.deAllocStorage();
+
+
+			std::string destReg = "v0";
+			std::string tempReg = "v1";
+
+			ctx.memReg_read(destMemReg, destReg,dst);	
+			ctx.memReg_read(tempMemReg, tempReg,dst);	
+			
+			dst <<"addu $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;
+			
+			ctx.memReg_write(destMemReg, destReg,dst);	
+
 		}
 
 		virtual const char *getOpcode() const override{
@@ -206,6 +211,29 @@ class SubExpression : public BinaryExpression{
 class LessThanExpression : public BinaryExpression{
 	public:
 		LessThanExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			dst << "##### LESS THAN ####" << std::endl;
+
+			auto destMemReg = ctx.getCurrStorage();
+			left->to_mips(dst,ctx);
+			auto tempMemReg = ctx.assignNewStorage(); 
+			right->to_mips(dst,ctx);
+			ctx.deAllocStorage();
+
+			std::string destReg = "v0";
+			std::string tempReg = "v1";
+
+			ctx.memReg_read(destMemReg, destReg,dst);	
+			ctx.memReg_read(tempMemReg, tempReg,dst);
+
+
+			dst <<"slt $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;
+
+			ctx.memReg_write(destMemReg, destReg,dst);
+
+		}
+
 		virtual const char *getOpcode() const override{
 			return "<";
 		}
@@ -214,6 +242,29 @@ class LessThanExpression : public BinaryExpression{
 class MoreThanExpression : public BinaryExpression{
 	public:
 		MoreThanExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			dst << "##### MORE THAN ####" << std::endl;
+
+			auto destMemReg = ctx.getCurrStorage();
+			left->to_mips(dst,ctx);
+			auto tempMemReg = ctx.assignNewStorage(); 
+			right->to_mips(dst,ctx);
+			ctx.deAllocStorage();
+
+			std::string destReg = "v0";
+			std::string tempReg = "v1";
+
+			ctx.memReg_read(destMemReg, destReg,dst);	
+			ctx.memReg_read(tempMemReg, tempReg,dst);
+
+
+			dst <<"slt $"<<destReg<<",$"<<tempReg<<",$"<<destReg<<std::endl;
+
+			ctx.memReg_write(destMemReg, destReg,dst);
+
+		}
+
 		virtual const char *getOpcode() const override{
 			return ">";
 		}
@@ -285,20 +336,21 @@ class DirectAssignmentExpression : public AssignmentExpression{
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			dst << "##### DirectAssignment #####" << std::endl;
 
-			auto destReg = ctx.getCurrStorage(); 	//write to dest Reg
-			lvalue->to_mips_getAddr(dst,ctx);		//addr store in destReg
-			auto tempReg = ctx.assignNewStorage();
+			auto destMemReg = ctx.getCurrStorage();
+			lvalue->to_mips_getAddr(dst,ctx);			
+			auto tempMemReg = ctx.assignNewStorage();
 			expr->to_mips(dst,ctx);
-
-			std::string destReg_r = "v0";
-			std::string tempReg_r = "v1";
-
-			dst<<"lw $v0,"<<destReg<<"($fp)"<<std::endl;
-			dst<<"lw $v1,"<<tempReg<<"($fp)"<<std::endl;
-
-			dst<<"sw $"<<tempReg_r<<",0($"<<destReg_r<<")"<<std::endl;
-
 			ctx.deAllocStorage();
+
+			std::string destReg = "v0";
+			std::string tempReg = "v1";
+
+			ctx.memReg_read(destMemReg, destReg, dst);
+			ctx.memReg_read(tempMemReg, tempReg, dst);
+
+			dst<<"sw $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;
+
+			
 
 		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
