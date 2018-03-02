@@ -36,9 +36,12 @@ struct Context{
 	mapPtr var_location = new mapType();
 
 	std::stack<std::map<std::string,var_pair>*> var_scope_stack;
+	std::stack<int> var_scope_fp_count_stack;
+
 	std::stack<case_pair> switch_case_data;
 	std::stack<std::string> switch_case_default;
 	std::stack<std::string> break_label;
+	std::string return_label;
 
 
 
@@ -49,12 +52,16 @@ struct Context{
 
 	void open_scope(){
 		var_scope_stack.push(var_location);
+		var_scope_fp_count_stack.push(mem_fp_offset_count);
 		var_location = new std::map<std::string,var_pair>(*var_location);
 	}
 
 	void close_scope(){
 		delete var_location;
+		mem_fp_offset_count = var_scope_fp_count_stack.top();
 		var_location = var_scope_stack.top();
+
+		var_scope_fp_count_stack.pop();
 		var_scope_stack.pop();
 	}
 
@@ -67,7 +74,7 @@ struct Context{
 		dst << "sw $"<<reg<<","<<loc<<"($fp)"<<std::endl;
 	}
 
-
+	
 
 	std::string generateLabel(std::string label){
 		return label + "_" + std::to_string(labelCount++);
@@ -105,7 +112,6 @@ struct Context{
 		(*var_location)[name] = std::make_pair(std::to_string(loc),"local");
 	}
 
-
 	void assignNewVariable(std::string name,std::string type = "int"){
 		if(scope == global){
 			
@@ -113,7 +119,6 @@ struct Context{
 		else if(scope == local){
 			mem_fp_offset_count-=4;
 			(*var_location)[name] = std::make_pair(std::to_string(mem_fp_offset_count),"local");
-
 		}
 	}
 

@@ -188,14 +188,16 @@ class FunctionDefinition : public ExternalDeclaration{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			ctx.scopeLocal();
-			//std::string epilouge_label = ctx.generateLabel("epilouge");
+			std::string returnLabel = ctx.generateLabel("RETURN");
+
+			ctx.return_label = returnLabel;
 			
 			dst<<"# Start Prologue #"<<std::endl;
 			dst<<".text"<<std::endl;	
 			dst<<".globl "<<id<<std::endl;
 			dst<<id<<":"<<std::endl;
-			dst<<"sw $31,-4($sp)"<<std::endl; //return address
-			dst<<"sw $fp,-8($sp)"<<std::endl; // old fp
+			dst<<"sw $31,-4($sp)"<<std::endl; // store return address
+			dst<<"sw $fp,-8($sp)"<<std::endl; // store old fp
 			dst<<"addiu $sp,$sp,-8"<<std::endl;
 			dst<<"move $fp,$sp"<<std::endl;
 			dst<<"# End Prologue #"<<std::endl;
@@ -213,16 +215,18 @@ class FunctionDefinition : public ExternalDeclaration{
 				s_ptr->to_mips(dst,ctx);
 			}
 
+			//retrun label shall handle moving the sp back to where it shld be i.e old sp -8
 
-			//dst<<epilouge_label<<":"<<std::endl;
-			/*dst<<"# Start Epilouge #"<<std::endl;
-			dst<<"addiu $sp,$sp,8"<<std::endl;	//asume one var for now just for testing
+
+			dst<<returnLabel<<":"<<std::endl;
+			dst<<"# Start Epilouge #"<<std::endl;
+			dst<<"addiu $sp,$sp,8"<<std::endl;
 			dst<<"lw $31,-4($sp)"<<std::endl; //restore return address
-			dst<<"lw $fp,-8($sp)"<<std::endl; // restor old fp
+			dst<<"lw $fp,-8($sp)"<<std::endl; //restor old fp
 			dst<<"j $31"<<std::endl;
 			dst<<"nop"<<std::endl;
 			dst<<std::endl;
-			dst<<"# End Epilouge #"<<std::endl;*/
+			dst<<"# End Epilouge #"<<std::endl;
 		}
 
 

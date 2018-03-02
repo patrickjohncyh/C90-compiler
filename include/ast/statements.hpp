@@ -46,7 +46,6 @@ class CompoundStatement : public Statement{
 		:s_list(_s_list),d_list(_d_list){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			//Context tmpCtx = Context(ctx); 	//solve shawoding later
 			ctx.open_scope();
 
 			if(d_list != NULL){
@@ -248,10 +247,13 @@ class WhileStatement : public Statement{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 
-			std::string while_start_label = ctx.generateLabel("while_start");
-			std::string while_end_label = ctx.generateLabel("while_end");
+			std::string whileStartLabel = ctx.generateLabel("$WHILE_START");
+			std::string whileEndLabel = ctx.generateLabel("$WHILE_END");
 
-			dst<<while_start_label<<":"<<std::endl;
+			ctx.break_label.push(whileEndLabel);
+
+
+			dst<<whileStartLabel<<":"<<std::endl;
 
 			auto condMemReg = ctx.assignNewStorage();
 			cond_expr->to_mips(dst,ctx);
@@ -260,12 +262,14 @@ class WhileStatement : public Statement{
 			std::string condReg = "v0";
 			ctx.memReg_read(condMemReg,condReg,dst);
 
-			dst << "beq $0,$"<<condReg<<","<<while_end_label<<std::endl;
+			dst << "beq $0,$"<<condReg<<","<<whileEndLabel<<std::endl;
 
 			s_true->to_mips(dst,ctx);
 
-			dst << "b "<<while_start_label<<std::endl;
-			dst<<while_end_label<<":"<<std::endl;
+			dst << "b "<<whileStartLabel<<std::endl;
+			dst<<whileEndLabel<<":"<<std::endl;
+
+			ctx.break_label.pop();
 		}
 
 		virtual void to_c(std::ostream &dst, std::string indent) const override{
@@ -338,16 +342,8 @@ class JumpStatement : public Statement{
 			std::string destReg = "v0";
 			ctx.memReg_read(destMemReg,destReg,dst);
 			dst <<"move $2,$"<<destReg<<std::endl;
-
-
-			dst<<"# Start Epilouge #"<<std::endl;
-			dst<<"addiu $sp,$sp,8"<<std::endl;	//asume one var for now just for testing
-			dst<<"lw $31,-4($sp)"<<std::endl; //restore return address
-			dst<<"lw $fp,-8($sp)"<<std::endl; // restor old fp
-			dst<<"j $31"<<std::endl;
-			dst<<"nop"<<std::endl;
-			dst<<std::endl;
-			dst<<"# End Epilouge #"<<std::endl;
+			dst <<"addiu $sp,$sp," << -ctx.getCurrStorage() << std::endl; 
+			dst <<"b " << ctx.return_label << std::endl; 
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
@@ -369,6 +365,33 @@ class JumpStatement : public Statement{
 			dst << "; ]" << std::endl;
 		}
 };
+
+
+class JumpBreakStatement : public Statement{
+	private:
+		Expression* expr;
+
+	public:
+		JumpBreakStatement(){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+			dst << "##### Break #####" << std::endl;
+
+			if(!ctx.break_label.empty()){
+				std::string breakLabel = ctx.break_label.top();
+				dst << "b " << breakLabel << std::endl;
+			}
+			else{
+				dst << "Error : Using Break Outside Loop" << std::endl;
+				exit(1);
+			}
+		}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+		}
+};
+
 
 class ConditionSwitchStatement : public Statement{
 	private:
@@ -450,9 +473,7 @@ class ConditionSwitchStatement : public Statement{
 	}
 
 	virtual void print_struct(std::ostream &dst, int m) const override{};
-
 };
-
 
 class LabeledCaseStatement : public Statement{
 	private:
@@ -477,8 +498,6 @@ class LabeledCaseStatement : public Statement{
 		virtual void print_struct(std::ostream &dst, int m) const override{};
 };
 
-
-
 class LabeledDefaultStatement : public Statement{
 	private:
 		Statement* s_ptr;
@@ -497,7 +516,6 @@ class LabeledDefaultStatement : public Statement{
 		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{};
-
 };
 
 

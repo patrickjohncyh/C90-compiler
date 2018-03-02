@@ -198,9 +198,9 @@ compound_statement  : 	'{' '}'										{ $$ = new CompoundStatement();	  		}
 					
 
 				
-jump_statement		: 	RETURN ';'				{ $$ = new JumpStatement(); 	}
-					| 	RETURN expression ';'	{ $$ = new JumpStatement($2);	}
-					|	BREAK ';'				{	;	}
+jump_statement		: 	RETURN ';'				{ $$ = new JumpStatement()		; 	}
+					| 	RETURN expression ';'	{ $$ = new JumpStatement($2)	;	}
+					|	BREAK ';'				{ $$ = new JumpBreakStatement()	;	}
 
 
 expr_statement		: 	expression ';'			{ $$ = new ExprStatement($1);	}
