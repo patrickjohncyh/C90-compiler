@@ -74,10 +74,11 @@ struct Context{
 		dst << "sw $"<<reg<<","<<loc<<"($fp)"<<std::endl;
 	}
 
-	
+
 
 	std::string generateLabel(std::string label){
 		return label + "_" + std::to_string(labelCount++);
+		
 	}
 
 	void scopeLocal(){

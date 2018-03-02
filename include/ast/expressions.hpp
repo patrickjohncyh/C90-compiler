@@ -90,6 +90,7 @@ class FunctionCallExpression : public UnaryExpression{
 			dst << "addiu $sp,$sp," << -ctx.getCurrStorage()*4  + numArgs*4 << std::endl;		//sp to original position
 			dst << "move $"<<destReg<<",$2" << std::endl;
 			ctx.memReg_write(destMemReg,destReg,dst);
+			
 
 		}
 
@@ -234,11 +235,24 @@ class SubExpression : public BinaryExpression{
 		SubExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			/*std::string destReg = ctx.get_dest_reg();
+			dst << "##### ADD ####" << std::endl;
+
+			auto destMemReg = ctx.getCurrStorage(); 	//write to dest Reg
 			left->to_mips(dst,ctx);
-			std::string tempReg = ctx.alloc_free_reg();
+			auto tempMemReg = ctx.assignNewStorage(); 
 			right->to_mips(dst,ctx);
-			dst << "subu $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;*/
+			ctx.deAllocStorage();
+
+
+			std::string destReg = "v0";
+			std::string tempReg = "v1";
+
+			ctx.memReg_read(destMemReg, destReg,dst);	
+			ctx.memReg_read(tempMemReg, tempReg,dst);	
+			
+			dst <<"subu $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;
+			
+			ctx.memReg_write(destMemReg, destReg,dst);
 		}
 
 		virtual const char *getOpcode() const override{

@@ -130,6 +130,7 @@ class ConditionIfStatement : public Statement{
 			ctx.memReg_read(condMemReg, condReg,dst);	
 
 			dst << "beq $0,$"<<condReg<<","<<bottom_label<<std::endl;
+			dst << "nop" << std::endl;
 			
 			s_true->to_mips(dst,ctx);
 			dst << bottom_label << ":" << std::endl;
@@ -183,10 +184,12 @@ class ConditionIfElseStatement : public Statement{
 			ctx.memReg_read(condMemReg,condReg,dst);
 
 			dst << "beq $0,$"<<condReg<<","<<if_bottom_label<<std::endl;
+			dst << "nop" << std::endl;
 
 			s_true->to_mips(dst,ctx);
 
 			dst << "b "<<else_bottom_label<<std::endl;
+			dst << "nop" << std::endl;
 			dst << if_bottom_label << ":" << std::endl;
 
 			s_false->to_mips(dst,ctx);
@@ -267,6 +270,7 @@ class WhileStatement : public Statement{
 			s_true->to_mips(dst,ctx);
 
 			dst << "b "<<whileStartLabel<<std::endl;
+			dst << "nop" << std::endl;
 			dst<<whileEndLabel<<":"<<std::endl;
 
 			ctx.break_label.pop();
@@ -383,6 +387,7 @@ class JumpBreakStatement : public Statement{
 			if(!ctx.break_label.empty()){
 				std::string breakLabel = ctx.break_label.top();
 				dst << "b " << breakLabel << std::endl;
+				dst << "nop" << std::endl;
 			}
 			else{
 				dst << "Error : Using Break Outside Loop" << std::endl;
@@ -445,7 +450,7 @@ class ConditionSwitchStatement : public Statement{
 			ctx.memReg_read(caseMemReg,caseReg,dst);
 
 			dst << "beq $"<<switchReg<<",$"<<caseReg<<","<<cp.second<<std::endl;
-
+			dst << "nop" << std::endl;
 			ctx.switch_case_data.pop();
 		}
 
@@ -454,6 +459,7 @@ class ConditionSwitchStatement : public Statement{
 			std::string defaultLabel = ctx.switch_case_default.top();
 
 			dst << "b " << defaultLabel << std::endl;
+			dst << "nop" << std::endl;
 
 			ctx.switch_case_default.pop();
 		}
@@ -461,6 +467,7 @@ class ConditionSwitchStatement : public Statement{
 
 
 		dst << "b " << switchEndLabel << std::endl;
+		dst << "nop" << std::endl;
 
 		dst << ss.str() << std::endl;
 		dst << switchEndLabel << ":" <<std::endl;

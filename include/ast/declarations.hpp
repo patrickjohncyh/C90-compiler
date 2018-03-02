@@ -188,9 +188,9 @@ class FunctionDefinition : public ExternalDeclaration{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			ctx.scopeLocal();
-			std::string returnLabel = ctx.generateLabel("RETURN");
+			ctx.return_label = ctx.generateLabel("RETURN");
 
-			ctx.return_label = returnLabel;
+		
 			
 			dst<<"# Start Prologue #"<<std::endl;
 			dst<<".text"<<std::endl;	
@@ -206,7 +206,7 @@ class FunctionDefinition : public ExternalDeclaration{
 			if(p_list!=NULL){
 				for(unsigned int i=0;i<p_list->size();i++){
 					if(i<4)
-						dst<<"    "<<"sw $a"<<i<<","<<(i*4+8)<<"($fp)"<<std::endl;	
+						dst<<"sw $a"<<i<<","<<(i*4+8)<<"($fp)"<<std::endl;	
 					ctx.assignNewArgument( (*p_list)[i]->getParam() , i*4+8 );
 				}
 			}
@@ -218,7 +218,7 @@ class FunctionDefinition : public ExternalDeclaration{
 			//retrun label shall handle moving the sp back to where it shld be i.e old sp -8
 
 
-			dst<<returnLabel<<":"<<std::endl;
+			dst<<ctx.return_label<<":"<<std::endl;
 			dst<<"# Start Epilouge #"<<std::endl;
 			dst<<"addiu $sp,$sp,8"<<std::endl;
 			dst<<"lw $31,-4($sp)"<<std::endl; //restore return address
@@ -227,6 +227,7 @@ class FunctionDefinition : public ExternalDeclaration{
 			dst<<"nop"<<std::endl;
 			dst<<std::endl;
 			dst<<"# End Epilouge #"<<std::endl;
+			ctx.scopeGlobal();
 		}
 
 

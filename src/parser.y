@@ -128,7 +128,7 @@ parameter_list		:	parameter_declaration				     { $$ = new std::vector<Declarati
 base_expression		: 	CONSTANT			{ $$ = new Constant($1);   		}
 					| 	IDENTIFIER		 	{ $$ = new Identifier(*$1);  	}	
 					| 	LITERAL			 	{ $$ = new StringLiteral(*$1); 	}	
-					| 	'(' expression ')'	{ $$ = $2;						}
+					| 	'(' expression ')'	{ $$ = $2; 						}
 					
 
 postfix_expression	:	base_expression	
@@ -140,9 +140,9 @@ postfix_expression	:	base_expression
 
 
 
-mult_expression		:	postfix_expression				 	{ $$ = $1; }
+mult_expression		:	postfix_expression				 	   { $$ = $1; }
 					| 	mult_expression '*' postfix_expression { $$ = new MultExpression($1,$3);	}
-					| 	mult_expression '/' postfix_expression { $$ = new DivExpression($1,$3);	}
+					| 	mult_expression '/' postfix_expression { $$ = new DivExpression($1,$3);		}
 					/* to implement modulo expressions */
 
 add_expression		: 	mult_expression					  	{ $$ = $1; }
