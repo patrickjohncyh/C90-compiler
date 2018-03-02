@@ -4,10 +4,16 @@
 
 #include <vector>
 #include <map>
+#include <stack>
 #include <cassert>
 #include <sstream>
 
+
+
+class Expression; //forward declaration
+
 typedef std::pair <std::string,std::string> var_pair;	// loc, type (global_init,global,local);
+typedef std::pair <Expression*,std::string> case_pair;
 
 typedef int memReg;
 
@@ -18,8 +24,17 @@ const int local  = 1;
 extern int labelCount;
 
 
+
+
+
+
 struct Context{
 	std::map<std::string,var_pair> var_location;
+	std::stack<case_pair> switch_case_data;
+	std::stack<std::string> switch_case_default;
+	std::stack<std::string> break_label;
+
+
 
 	int scope = global;
 	int mem_fp_offset_count = 0; // growing negatveily

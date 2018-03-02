@@ -10,6 +10,7 @@ class Expression : public ASTNode{
 		virtual void print_struct(std::ostream &dst, int m) const =0;
 		virtual void to_mips_getAddr(std::ostream &dst, Context ctx) const{
 			dst << "ERROR Unassignable" << std::endl;
+			exit(1);
 		}
 };
 

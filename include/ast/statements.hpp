@@ -4,6 +4,7 @@
 #include "expressions.hpp"
 #include "declarations.hpp"
 #include <iomanip>
+#include <sstream>
 
 class ExprStatement : public Statement{
 	private:
@@ -45,16 +46,16 @@ class CompoundStatement : public Statement{
 		:s_list(_s_list),d_list(_d_list){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			Context tmpCtx = Context(ctx);
+			//Context tmpCtx = Context(ctx); 	//solve shawoding later
 
 			if(d_list != NULL){
 				for(auto it=d_list->begin();it!=d_list->end();it++){
-					(*it)->to_mips(dst,tmpCtx);
+					(*it)->to_mips(dst,ctx);
 				}
 			}
 			if(s_list !=NULL){
 				for(auto it=s_list->begin();it!=s_list->end();it++){
-					(*it)->to_mips(dst,tmpCtx);
+					(*it)->to_mips(dst,ctx);
 				}
 			}
 		}
@@ -180,7 +181,7 @@ class ConditionIfElseStatement : public Statement{
 			ctx.memReg_read(condMemReg,condReg,dst);
 
 			dst << "beq $0,$"<<condReg<<","<<if_bottom_label<<std::endl;
-			
+
 			s_true->to_mips(dst,ctx);
 
 			dst << "b "<<else_bottom_label<<std::endl;
@@ -365,6 +366,149 @@ class JumpStatement : public Statement{
 			dst << "; ]" << std::endl;
 		}
 };
+
+class ConditionSwitchStatement : public Statement{
+	private:
+		Expression* expr;
+		Statement* s_ptr;
+	
+	public:
+	
+	ConditionSwitchStatement( Expression* _expr, Statement* _s_ptr)
+	:expr(_expr),s_ptr(_s_ptr){}
+
+
+	virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+		dst << "##### Switch #####" << std::endl;
+		
+
+		std::stringstream ss; //temporarily store in ss;
+
+		
+
+		std::string switchStartLabel = ctx.generateLabel("$SWTICH_START");
+		std::string switchEndLabel = ctx.generateLabel("$SWTICH_END");
+		ctx.break_label.push(switchEndLabel);
+
+
+
+		case_pair start = std::make_pair(static_cast<Expression*>(NULL),""); //starting point
+		ctx.switch_case_data.push(start);
+		ctx.switch_case_default.push("start");
+		s_ptr->to_mips(ss,ctx);
+
+	
+		//evalute expr
+		auto switchMemReg = ctx.assignNewStorage();
+		std::string switchReg = "v0";
+
+		expr->to_mips(dst,ctx);
+		
+		auto caseMemReg = ctx.assignNewStorage();
+		std::string caseReg = "v1";
+
+
+		while( ctx.switch_case_data.top().first != NULL){  //EMIT CODE TO DO JUMP
+			case_pair cp = ctx.switch_case_data.top();
+			cp.first->to_mips(dst,ctx);
+
+			ctx.memReg_read(switchMemReg,switchReg,dst);
+			ctx.memReg_read(caseMemReg,caseReg,dst);
+
+			dst << "beq $"<<switchReg<<",$"<<caseReg<<","<<cp.second<<std::endl;
+
+			ctx.switch_case_data.pop();
+		}
+
+
+		if( ctx.switch_case_default.top() != "start" ){  //check for default
+			std::string defaultLabel = ctx.switch_case_default.top();
+
+			dst << "b " << defaultLabel << std::endl;
+
+			ctx.switch_case_default.pop();
+		}
+
+
+
+		dst << "b " << switchEndLabel << std::endl;
+
+		dst << ss.str() << std::endl;
+		dst << switchEndLabel << ":" <<std::endl;
+
+
+		ctx.deAllocStorage();
+		ctx.deAllocStorage();
+
+		ctx.switch_case_data.pop();
+		ctx.break_label.pop();
+
+	}
+
+	virtual void print_struct(std::ostream &dst, int m) const override{};
+
+};
+
+
+class LabeledCaseStatement : public Statement{
+	private:
+		Expression* expr;
+		Statement* s_ptr;
+
+	public:
+		LabeledCaseStatement( Expression* _expr, Statement* _s_ptr)
+		:expr(_expr),s_ptr(_s_ptr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			std::string caseLabel = ctx.generateLabel("$CASE");
+			case_pair cp = std::make_pair(expr,caseLabel);
+			ctx.switch_case_data.push(cp);
+
+			dst << cp.second << ":" << std::endl;
+
+			s_ptr->to_mips(dst,ctx);
+
+		}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{};
+};
+
+
+
+class LabeledDefaultStatement : public Statement{
+	private:
+		Statement* s_ptr;
+
+	public:
+		LabeledDefaultStatement( Statement* _s_ptr )
+		:s_ptr(_s_ptr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			std::string defaultLabel = ctx.generateLabel("$DEFAULT");
+			ctx.switch_case_default.push(defaultLabel);
+
+			dst << defaultLabel << ":" << std::endl;
+
+			s_ptr->to_mips(dst,ctx);
+		}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{};
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -7,6 +7,9 @@
 
 class Statement : public ASTNode{			//TEMPORARY FIX might consider using inline in the future
 	public:
+		virtual void to_mips_switch(std::ostream &dst, Context& ctx) const{
+			//do nothing by default
+		}
 };
 
 class TranslationUnit : public ASTNode{

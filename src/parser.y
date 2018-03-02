@@ -35,6 +35,10 @@ void yyerror(const char *);
 %token ELSE
 %token WHILE
 %token FOR
+%token SWITCH
+%token CASE
+%token BREAK
+%token DEFAULT
 
 
 %token IDENTIFIER CONSTANT LITERAL
@@ -65,7 +69,7 @@ void yyerror(const char *);
 
 
 
-%type <statement_node> jump_statement statement compound_statement expr_statement condition_statement iteration_statement
+%type <statement_node> jump_statement statement compound_statement expr_statement condition_statement iteration_statement labeled_statement
 %type <statement_list_vector> statement_list
 
 
@@ -180,6 +184,7 @@ statement 			: 	jump_statement			{ $$ = $1; }
 					| 	expr_statement			{ $$ = $1; }
 					| 	condition_statement		{ $$ = $1; }
 					|	iteration_statement		{ $$ = $1; }
+					|	labeled_statement		{ $$ = $1; }
 
 
 statement_list 		: 	statement 				{ $$ = new std::vector<Statement*>(1,$1);	}
@@ -195,6 +200,7 @@ compound_statement  : 	'{' '}'										{ $$ = new CompoundStatement();	  		}
 				
 jump_statement		: 	RETURN ';'				{ $$ = new JumpStatement(); 	}
 					| 	RETURN expression ';'	{ $$ = new JumpStatement($2);	}
+					|	BREAK ';'				{	;	}
 
 
 expr_statement		: 	expression ';'			{ $$ = new ExprStatement($1);	}
@@ -202,10 +208,20 @@ expr_statement		: 	expression ';'			{ $$ = new ExprStatement($1);	}
 
 condition_statement :	IF '(' expression ')' statement 				{ $$ = new ConditionIfStatement($3,$5); 		}	
 					|	IF '(' expression ')' statement ELSE statement 	{ $$ = new ConditionIfElseStatement($3,$5,$7); 	}
+					| 	SWITCH '(' expression ')' statement 			{ $$ = new ConditionSwitchStatement($3,$5); 	} 
 
 
 iteration_statement	:	WHILE '(' expression ')' statement 									{ $$ = new WhileStatement($3,$5);	}
 					|	FOR   '(' expression ';' expression ';' expression ')' statement	{ $$ = new ForStatement($3,$5,$7,$9);	}
+
+
+labeled_statement	:	CASE expression ':' statement 	{ $$ = new LabeledCaseStatement($2,$4); }
+					| 	DEFAULT 		':' statement 	{ $$ = new LabeledDefaultStatement($3); }
+					| 	IDENTIFIER 		':' statement 	{ ; }
+
+
+
+
 
 /*---------------------------------------------------------------------------------------------------------------------*/
 

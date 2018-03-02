@@ -21,6 +21,10 @@ if 								{ return IF;		}
 else							{ return ELSE; 		}
 while							{ return WHILE; 	}
 for								{ return FOR;		}
+switch							{ return SWITCH; 	}
+case							{ return CASE;	 	}
+break 							{ return BREAK; 	}
+default 						{ return DEFAULT; 	}
 
 
 {L}({L}|{D})*					{ yylval.string = new std::string(yytext);  return IDENTIFIER;	}
@@ -33,6 +37,7 @@ for								{ return FOR;		}
 [}]				{ return ('}'); }
 [;]				{ return (';'); }
 [,]				{ return (','); }
+[:]				{ return (':'); }
 
 
 [=]				{ return ('='); }
