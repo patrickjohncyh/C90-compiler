@@ -47,6 +47,7 @@ class CompoundStatement : public Statement{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			//Context tmpCtx = Context(ctx); 	//solve shawoding later
+			ctx.open_scope();
 
 			if(d_list != NULL){
 				for(auto it=d_list->begin();it!=d_list->end();it++){
@@ -58,6 +59,8 @@ class CompoundStatement : public Statement{
 					(*it)->to_mips(dst,ctx);
 				}
 			}
+
+			ctx.close_scope();
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{

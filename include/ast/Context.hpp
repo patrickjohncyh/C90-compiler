@@ -24,12 +24,18 @@ const int local  = 1;
 extern int labelCount;
 
 
+typedef std::map<std::string,var_pair> mapType;
+typedef mapType* mapPtr;
 
 
 
 
 struct Context{
-	std::map<std::string,var_pair> var_location;
+
+
+	mapPtr var_location = new mapType();
+
+	std::stack<std::map<std::string,var_pair>*> var_scope_stack;
 	std::stack<case_pair> switch_case_data;
 	std::stack<std::string> switch_case_default;
 	std::stack<std::string> break_label;
@@ -39,6 +45,18 @@ struct Context{
 	int scope = global;
 	int mem_fp_offset_count = 0; // growing negatveily
 	int mem_reg_count = 0;
+
+
+	void open_scope(){
+		var_scope_stack.push(var_location);
+		var_location = new std::map<std::string,var_pair>(*var_location);
+	}
+
+	void close_scope(){
+		delete var_location;
+		var_location = var_scope_stack.top();
+		var_scope_stack.pop();
+	}
 
 
 	void memReg_read(memReg loc, std::string reg, std::ostream& dst){
@@ -84,7 +102,7 @@ struct Context{
 	}
 
 	void assignNewArgument(std::string name,int loc){
-		var_location[name] = std::make_pair(std::to_string(loc),"local");
+		(*var_location)[name] = std::make_pair(std::to_string(loc),"local");
 	}
 
 
@@ -94,14 +112,14 @@ struct Context{
 		}
 		else if(scope == local){
 			mem_fp_offset_count-=4;
-			var_location[name] = std::make_pair(std::to_string(mem_fp_offset_count),"local");
+			(*var_location)[name] = std::make_pair(std::to_string(mem_fp_offset_count),"local");
 
 		}
 	}
 
 	var_pair getVariable(std::string name){		//returns var type and address
-		if(var_location.count(name)){
-			return var_location[name];
+		if((*var_location).count(name)){
+			return (*var_location)[name];
 		}
 		else{
 			std::cout << "Error : Variable ( "<<name<<" ) not declared " << std::endl;
