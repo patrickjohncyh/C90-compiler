@@ -11,27 +11,35 @@ class ExprStatement : public Statement{
 		Expression *expr;
 
 	public:
-		ExprStatement( Expression* _expr ):expr(_expr){}
+		ExprStatement( Expression* _expr = NULL):expr(_expr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			ctx.assignNewStorage();
-			expr->to_mips(dst,ctx);
-			ctx.deAllocStorage();
+			if(expr!=NULL){
+				ctx.assignNewStorage();
+				expr->to_mips(dst,ctx);
+				ctx.deAllocStorage();
+			}	
 		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << std::setw(m) << "";
-			dst << "ExpressionStatement [ ";
-			expr->print_struct(dst,m);
-			dst << " ]" << std::endl;
+			if(expr!=NULL){
+				dst << std::setw(m) << "";
+				dst << "ExpressionStatement [ ";
+				expr->print_struct(dst,m);
+				dst << " ]" << std::endl;
+			}
 		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
-			expr->to_c(dst,indent);
-			dst << ";";
+			if(expr!=NULL){
+				expr->to_c(dst,indent);
+				dst << ";";
+			}
 		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-			expr->to_python(dst,indent,tc);
-			dst << std::endl;
+			if(expr!=NULL){
+				expr->to_python(dst,indent,tc);
+				dst << std::endl;
+			}
 		}
 };
 
@@ -311,6 +319,43 @@ class ForStatement : public Statement{
 	public:
 		ForStatement(Expression* _init_expr, Expression* _cond_expr, Expression* _update_expr, Statement* _s_true)
 		:init_expr(_init_expr),cond_expr(_cond_expr),update_expr(_update_expr),s_true(_s_true){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+			std::string forStartLabel = ctx.generateLabel("$FOR_START");
+			std::string forEndLabel = ctx.generateLabel("$FOR_END");
+
+			ctx.break_label.push(forEndLabel);
+
+			ctx.assignNewStorage();
+			std::string initReg = "v0";
+			init_expr->to_mips(dst,ctx);
+			ctx.deAllocStorage();
+
+
+			dst<<forStartLabel<<":"<<std::endl;
+
+			auto condMemReg = ctx.assignNewStorage();
+			std::string condReg = "v0";
+			cond_expr->to_mips(dst,ctx);
+			ctx.deAllocStorage();
+
+			ctx.memReg_read(condMemReg,condReg,dst);
+			dst<<"beq $0,$"<<condReg<<","<<forEndLabel<<std::endl;
+			s_true->to_mips(dst,ctx);
+
+			ctx.assignNewStorage();
+			std::string updateReg = "v0";
+			update_expr->to_mips(dst,ctx);
+			ctx.deAllocStorage();
+
+			dst << "b "<<forStartLabel<<std::endl;
+			dst << "nop" << std::endl;
+			dst<<forEndLabel<<":"<<std::endl;
+
+			ctx.break_label.pop();
+		}
+
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst << indent << "for(";

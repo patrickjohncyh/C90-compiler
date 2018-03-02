@@ -203,7 +203,9 @@ jump_statement		: 	RETURN ';'				{ $$ = new JumpStatement()		; 	}
 					|	BREAK ';'				{ $$ = new JumpBreakStatement()	;	}
 
 
-expr_statement		: 	expression ';'			{ $$ = new ExprStatement($1);	}
+expr_statement		:  expression ';'			{ $$ = new ExprStatement($1);	}
+					|			  ';'			{ $$ = new ExprStatement();					}	
+					
 
 
 condition_statement :	IF '(' expression ')' statement 				{ $$ = new ConditionIfStatement($3,$5); 		}	
