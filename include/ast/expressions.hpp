@@ -12,6 +12,11 @@ class Expression : public ASTNode{
 			dst << "ERROR Unassignable" << std::endl;
 			exit(1);
 		}
+
+		virtual void to_mips_getId(std::ostream &dst,std::string& id) const{
+			dst << "ERROR Not and Identifier" << std::endl;
+			exit(1);
+		}
 };
 
 
@@ -52,7 +57,39 @@ class FunctionCallExpression : public UnaryExpression{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";		//result of function call stored here
+
+
+			int numArgs=0;
+			if(a_list!=NULL){
+				 numArgs = a_list->size();
+			}
+
+			dst << "addiu $sp,$sp," << -numArgs*4 + ctx.getCurrStorage()*4 << std::endl;		//sp to correct position
 			
+			for(int i=0; i<numArgs; i++){
+				auto tempMemReg = ctx.assignNewStorage(); 	
+				std::string tempReg = "v1";
+				(*a_list)[i]->to_mips(dst,ctx); //eval expression
+				ctx.deAllocStorage();
+				ctx.memReg_read(tempMemReg,tempReg,dst);
+				if(i < 4){
+					dst<< "move "<<"$a"<<i<<",$"<<tempReg<< std::endl;
+				}
+				else{
+					dst<<"sw $"<<tempReg<<","<<-4*i<<"($sp)"<<std::endl;	//NB : arg pos relative to new sp
+				}
+			}
+
+			std::string id;
+			expr->to_mips_getId(dst,id);
+			dst << "jal "<< id << std::endl; //call function
+			//copy result int dest Reg
+			//move stack to original
+			dst << "addiu $sp,$sp," << -ctx.getCurrStorage()*4  + numArgs*4 << std::endl;		//sp to original position
+			dst << "move $"<<destReg<<",$2" << std::endl;
+			ctx.memReg_write(destMemReg,destReg,dst);
 
 		}
 

@@ -344,8 +344,8 @@ class JumpStatement : public Statement{
 				ctx.memReg_read(destMemReg,destReg,dst);
 				dst <<"move $2,$"<<destReg<<std::endl;
 			}
-			dst <<"addiu $sp,$sp," << -ctx.getCurrStorage() << std::endl; 
 			dst <<"b " << ctx.return_label << std::endl; 
+			dst <<"nop"<< std::endl; 
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{

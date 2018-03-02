@@ -90,6 +90,10 @@ class Identifier : public Primitive{
 			ctx.memReg_write(destMemReg, destReg,dst);
 		}
 
+		virtual void to_mips_getId(std::ostream &dst, std::string& id) const{
+			id = this->id;
+		}
+
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << id;
