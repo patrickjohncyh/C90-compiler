@@ -17,6 +17,10 @@ class Expression : public ASTNode{
 			dst << "ERROR Not and Identifier" << std::endl;
 			exit(1);
 		}
+
+		virtual int to_mips_eval() const{
+			return 0;
+		}
 };
 
 

@@ -50,72 +50,121 @@ class ExternalDeclaration : public ASTNode{
 };
 
 
-class DeclaratorArray  : public ExternalDeclaration{
-	private:
-		std::string id;
-		Expression *init_expr;
 
+
+
+class Declarator  : public ExternalDeclaration{
 	public:
-		std::string getId(){
-			return id;
+		virtual std::string getId() const{
+			return "";
 		}
 };
 
 
-class Declarator  : public ExternalDeclaration{
+class ArrayDeclarator : public Declarator{
 	private:
 		std::string id;
-		Expression *init_expr;
-
+		Expression *size_expr; 
 	public:
-		std::string getId(){
+
+		ArrayDeclarator(std::string _id = "", Expression *_size_expr = NULL)
+		:id(_id),size_expr(_size_expr){}
+
+
+		virtual std::string getId() const override{
 			return id;
 		}
 
-		Declarator(std::string _id = "", Expression *_init_expr = NULL)
-		:id(_id),init_expr(_init_expr){}
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			
+			int size = size_expr->to_mips_eval();
 
+			ctx.assignNewVariable(id,"int",size);
+			if(ctx.getScope() == global){
+				dst << "GLOBAL NON-INIT ARRAY" << std::endl;
+			}
+			else if(ctx.getScope() == local){
+				dst << "LOCAL NON-INIT ARRAY" << std::endl;
+			}
+		}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+		}
+};
+
+class InitArrayDeclarator : public Declarator{
+	private:
+		Declarator* dec;
+		std::vector<Expression*>* init_list;
+
+	public:
+		InitArrayDeclarator(Declarator* _dec, std::vector<Expression*>* _init_list)
+		:dec(_dec),init_list(_init_list){}
+
+
+		virtual std::string getId() const override{
+			return dec->getId();
+		}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			//ctx.assignNewVariable(id,"int",size);
+			if(ctx.getScope() == global){
+				dst << "GLOBAL INIT ARRAY" << std::endl;
+				for(auto it=init_list->begin();it!=init_list->end();it++){
+					dst << (*it)->to_mips_eval() << std::endl;
+				}
+			}
+			else if(ctx.getScope() == local){
+				dst << "LOCAL INIT ARRAY" << std::endl;
+				for(auto it=init_list->begin();it!=init_list->end();it++){
+					dst << (*it)->to_mips_eval() << std::endl;
+				}
+			}
+			
+		}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+		}
+};
+
+
+class IdentifierDeclarator  : public Declarator{
+	private:
+		std::string id;
+
+	public:
+		virtual std::string getId() const override{
+			return id;
+		}
+
+		IdentifierDeclarator(std::string _id)
+		:id(_id){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			ctx.assignNewVariable(id);
 			
 			if(ctx.getScope() == global){
-				std::stringstream ss;
-				if(init_expr!=NULL){
-					init_expr->to_c(ss,"");
-				}
-				else{
-					ss << "0";
-				}
 				dst<<".data"<<std::endl;	
 				dst<<".globl "<<id<<std::endl;
 				dst<<id<<":"<<std::endl;
-				dst<<".word "<<ss.str()<<std::endl;
+				dst<<".word 0"<<std::endl;
 			}
 			else if(ctx.getScope() == local){
-			
 				dst<<"sw $0,"<<ctx.getVariable(id).first<<"($fp)"<<std::endl;
-				if(init_expr!=NULL){
-					auto tempReg = ctx.assignNewStorage();
-					std::string tempReg_r = "v1";
-					init_expr->to_mips(dst,ctx);
-					dst<<"lw $v1,"<<tempReg<<"($fp)"<<std::endl;
-					dst<<"sw $"<<tempReg_r<<","<<ctx.getVariable(id).first<<"($fp)"<<std::endl;
-					ctx.deAllocStorage();
-				}
 			}
 		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst << indent << id;
-			if(init_expr!=NULL){
+			/*if(init_expr!=NULL){
 				dst << " =";
 				init_expr->to_c(dst,"");
-			}
+			}*/
 		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << id << "=";
-			if(init_expr!=NULL) init_expr->to_python(dst,"",tc);
-			else dst << "0";
+			/*if(init_expr!=NULL) init_expr->to_python(dst,"",tc);
+			else dst << "0";*/
+			dst << "0";;
 			dst << std::endl;
 			tc.global_var.push_back(id);
 		}
@@ -123,14 +172,86 @@ class Declarator  : public ExternalDeclaration{
 			dst <<  std::setw(m) << "";
 			dst << "Declarator [ ";
 			dst << "Id ( " << id << " ) ";
-			if(init_expr != NULL){
+			/*if(init_expr != NULL){
 				dst << ", InitExpr ( ";
 				init_expr->print_struct(dst,m);
 				dst << " )";
-			}
+			}*/
 			dst << " ]" << std::endl;
 		}
 };
+
+
+class InitIdentifierDeclarator  : public Declarator{
+	private:
+			Declarator* dec;
+			Expression* init_expr;
+
+	public:
+		InitIdentifierDeclarator(Declarator* _dec, Expression* _init_expr)
+		:dec(_dec),init_expr(_init_expr){}
+
+		virtual std::string getId() const{
+			return dec->getId();
+		}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			std::string id = dec->getId();
+			ctx.assignNewVariable(id);
+			
+			if(ctx.getScope() == global){
+				int init_val = init_expr->to_mips_eval(); //global only allows constant init
+				dst<<".data"<<std::endl;	
+				dst<<".globl "<<id<<std::endl;
+				dst<<id<<":"<<std::endl;
+				dst<<".word "<<init_val<<std::endl;
+			}
+			else if(ctx.getScope() == local){
+				dst<<"sw $0,"<<ctx.getVariable(id).first<<"($fp)"<<std::endl;
+				auto tempReg = ctx.assignNewStorage();
+				std::string tempReg_r = "v1";
+				init_expr->to_mips(dst,ctx);
+				dst<<"lw $v1,"<<tempReg<<"($fp)"<<std::endl;
+				dst<<"sw $"<<tempReg_r<<","<<ctx.getVariable(id).first<<"($fp)"<<std::endl;
+				ctx.deAllocStorage();
+			}
+		}
+
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst << indent << getId();
+			dst << " =";
+			init_expr->to_c(dst,"");
+		}
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
+			std::string id = dec->getId();
+			dst << indent << id << "=";
+			init_expr->to_python(dst,"",tc);
+			dst << std::endl;
+			tc.global_var.push_back(id);
+		}
+		virtual void print_struct(std::ostream &dst, int m) const override{
+		}
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 class Declaration : public ExternalDeclaration{
 	private:
@@ -191,6 +312,7 @@ class Declaration : public ExternalDeclaration{
 			dst << "]" << std::endl;
 		}
 };
+
 
 class FunctionDefinition : public ExternalDeclaration{
 	private:

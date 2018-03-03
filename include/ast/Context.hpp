@@ -113,7 +113,7 @@ struct Context{
 		(*var_location)[name] = std::make_pair(std::to_string(loc),"local");
 	}
 
-	void assignNewVariable(std::string name,std::string type = "int"){
+	void assignNewVariable(std::string name,std::string type = "int",int size = 1){
 		if(scope == global){
 			(*var_location)[name] = std::make_pair(std::to_string(mem_fp_offset_count),"global");
 		}

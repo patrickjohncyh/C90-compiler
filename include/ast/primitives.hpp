@@ -49,6 +49,9 @@ class Constant : public Primitive{
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << val;
 		}
+		virtual int to_mips_eval() const{
+			return val;
+		}
 
 };
 

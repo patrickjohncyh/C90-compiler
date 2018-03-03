@@ -26,6 +26,8 @@ void yyerror(const char *);
 	std::vector<Declaration *>* declaration_list_vector;
 	std::vector<Declarator  *>* declarator_list_vector;
 
+	std::vector<Expression 	*>* initializer_list_vector;
+
 }
 
 %token INT
@@ -53,6 +55,7 @@ void yyerror(const char *);
 %type <declarator_node>	declarator init_declarator 
 %type <declarator_list_vector> init_declarator_list
 
+%type <initializer_list_vector> initializer_list
 
 %type <declaration_node> declaration parameter_declaration 
 %type <declaration_list_vector> declaration_list parameter_list
@@ -96,12 +99,19 @@ global_declaration	: 	function_definition						{ $$ = $1; }
 
 function_definition	: 	type_specifier IDENTIFIER '(' parameter_list ')' compound_statement { $$ = new FunctionDefinition(*$1,*$2,$4,$6); }
 
-declarator			: 	IDENTIFIER 						{ $$ = new Declarator(*$1);				}
-					//|   IDENTIFIER '[' expression ']'	{ $$ = new DeclaratorArray(*$1,$3);		}
+declarator			: 	IDENTIFIER 						{ $$ = new IdentifierDeclarator(*$1);				}
+					|   IDENTIFIER '[' expression ']'	{ $$ = new ArrayDeclarator(*$1,$3);					}
+					|   IDENTIFIER '['  ']'				{ $$ = new ArrayDeclarator(*$1,NULL);				}
 
 
-init_declarator		: 	declarator 						{ $$ = $1;								}
-					| 	declarator '=' expression 		{ $$ = new Declarator($1->getId(),$3);	}
+initializer_list 	:   expression 							{ $$ = new std::vector<Expression*>(1,$1);	}
+					|	initializer_list ',' expression 	{ $1->push_back($3); $$=$1;					}
+
+
+init_declarator		: 	declarator 								{ $$ = $1;									}
+					| 	declarator '=' expression 				{ $$ = new InitIdentifierDeclarator($1,$3);	}
+					|	declarator '=' '{' initializer_list '}'	{ $$ = new InitArrayDeclarator($1,$4);		}
+
 
 init_declarator_list: 	init_declarator 							{ $$ = new std::vector<Declarator*>(1,$1);	}
 					|	init_declarator_list ',' init_declarator	{ $1->push_back($3);  $$ = $1;				}
