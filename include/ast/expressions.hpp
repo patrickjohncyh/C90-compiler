@@ -78,7 +78,7 @@ class FunctionCallExpression : public UnaryExpression{
 					dst<< "move "<<"$a"<<i<<",$"<<tempReg<< std::endl;
 				}
 				else{
-					dst<<"sw $"<<tempReg<<","<<-4*i<<"($sp)"<<std::endl;	//NB : arg pos relative to new sp
+					dst<<"sw $"<<tempReg<<","<<4*i<<"($sp)"<<std::endl;	//NB : arg pos relative to new sp
 				}
 			}
 
@@ -90,7 +90,6 @@ class FunctionCallExpression : public UnaryExpression{
 			dst << "addiu $sp,$sp," << -ctx.getCurrStorage()*4  + numArgs*4 << std::endl;		//sp to original position
 			dst << "move $"<<destReg<<",$2" << std::endl;
 			ctx.memReg_write(destMemReg,destReg,dst);
-			
 
 		}
 

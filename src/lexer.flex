@@ -31,6 +31,9 @@ default 						{ return DEFAULT; 	}
 {D}+							{ yylval.int_num=strtod(yytext, 0); 		return CONSTANT;	}
 [L]?["](\\.|[^\\"\n])*["]		{ yylval.string = new std::string(yytext);	return LITERAL;		}
 
+
+[[]				{ return ('[');	}
+[]]				{ return (']');	}
 [(]				{ return ('(');	}
 [)]				{ return (')');	}
 [{]				{ return ('{'); }

@@ -78,7 +78,7 @@ struct Context{
 
 	std::string generateLabel(std::string label){
 		return label + "_" + std::to_string(labelCount++);
-		
+
 	}
 
 	void scopeLocal(){
@@ -115,7 +115,7 @@ struct Context{
 
 	void assignNewVariable(std::string name,std::string type = "int"){
 		if(scope == global){
-			
+			(*var_location)[name] = std::make_pair(std::to_string(mem_fp_offset_count),"global");
 		}
 		else if(scope == local){
 			mem_fp_offset_count-=4;

@@ -49,6 +49,19 @@ class ExternalDeclaration : public ASTNode{
 	virtual void print_struct(std::ostream &dst, int m) const =0;
 };
 
+
+class DeclaratorArray  : public ExternalDeclaration{
+	private:
+		std::string id;
+		Expression *init_expr;
+
+	public:
+		std::string getId(){
+			return id;
+		}
+};
+
+
 class Declarator  : public ExternalDeclaration{
 	private:
 		std::string id;
@@ -64,23 +77,23 @@ class Declarator  : public ExternalDeclaration{
 
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			ctx.assignNewVariable(id);
+			
 			if(ctx.getScope() == global){
+				std::stringstream ss;
 				if(init_expr!=NULL){
-				/*	std::stringstream ss;
 					init_expr->to_c(ss,"");
-					dst<<"    "<<".data"<<std::endl;	
-					dst<<"    "<<".globl "<<id<<std::endl;
-					dst<<id<<":"<<std::endl;
-					dst<<"    "<<".word "<<ss.str()<<std::endl;
-					ctx.set_binding(id,".globl");*/
 				}
 				else{
-					/*dst<<"    "<<".comm "<<id<<",4,4"<<std::endl;	
-					ctx.set_binding(id,".comm");*/
+					ss << "0";
 				}
+				dst<<".data"<<std::endl;	
+				dst<<".globl "<<id<<std::endl;
+				dst<<id<<":"<<std::endl;
+				dst<<".word "<<ss.str()<<std::endl;
 			}
-			else{
-				ctx.assignNewVariable(id);
+			else if(ctx.getScope() == local){
+			
 				dst<<"sw $0,"<<ctx.getVariable(id).first<<"($fp)"<<std::endl;
 				if(init_expr!=NULL){
 					auto tempReg = ctx.assignNewStorage();
@@ -140,7 +153,11 @@ class Declaration : public ExternalDeclaration{
 						(*it)->to_mips(dst,ctx);
 					}
 				}
-				
+				else if(ctx.getScope() == global){
+					for(auto it=dec_list->begin();it!=dec_list->end();it++){
+						(*it)->to_mips(dst,ctx);
+					}
+				}
 			}
 		}
 
@@ -189,8 +206,6 @@ class FunctionDefinition : public ExternalDeclaration{
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			ctx.scopeLocal();
 			ctx.return_label = ctx.generateLabel("RETURN");
-
-		
 			
 			dst<<"# Start Prologue #"<<std::endl;
 			dst<<".text"<<std::endl;	
@@ -201,7 +216,6 @@ class FunctionDefinition : public ExternalDeclaration{
 			dst<<"addiu $sp,$sp,-8"<<std::endl;
 			dst<<"move $fp,$sp"<<std::endl;
 			dst<<"# End Prologue #"<<std::endl;
-
 			
 			if(p_list!=NULL){
 				for(unsigned int i=0;i<p_list->size();i++){
@@ -214,9 +228,6 @@ class FunctionDefinition : public ExternalDeclaration{
 			if(s_ptr!=NULL){
 				s_ptr->to_mips(dst,ctx);
 			}
-
-			//retrun label shall handle moving the sp back to where it shld be i.e old sp -8
-
 
 			dst<<ctx.return_label<<":"<<std::endl;
 			dst<<"# Start Epilouge #"<<std::endl;

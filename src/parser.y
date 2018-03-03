@@ -97,6 +97,8 @@ global_declaration	: 	function_definition						{ $$ = $1; }
 function_definition	: 	type_specifier IDENTIFIER '(' parameter_list ')' compound_statement { $$ = new FunctionDefinition(*$1,*$2,$4,$6); }
 
 declarator			: 	IDENTIFIER 						{ $$ = new Declarator(*$1);				}
+					//|   IDENTIFIER '[' expression ']'	{ $$ = new DeclaratorArray(*$1,$3);		}
+
 
 init_declarator		: 	declarator 						{ $$ = $1;								}
 					| 	declarator '=' expression 		{ $$ = new Declarator($1->getId(),$3);	}
@@ -204,7 +206,7 @@ jump_statement		: 	RETURN ';'				{ $$ = new JumpStatement()		; 	}
 
 
 expr_statement		:  expression ';'			{ $$ = new ExprStatement($1);	}
-					|			  ';'			{ $$ = new ExprStatement();					}	
+					|			  ';'			{ $$ = new ExprStatement();		}	
 					
 
 

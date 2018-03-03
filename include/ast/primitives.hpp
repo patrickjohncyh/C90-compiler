@@ -83,8 +83,7 @@ class Identifier : public Primitive{
 				dst<<"addiu $"<<destReg<<",$fp,"<<var_loc.first<<std::endl;
 			}
 			else if(var_loc.second == "global"){
-				dst<<"lui 	$"<<destReg<<",%hi("<<id<<")"<<std::endl;
-				dst<<"addiu $"<<destReg<<",$"<<destReg<<",%lo("<<id<<")"<<std::endl;
+				dst<<"la $"<<destReg<<","<<id << std::endl;
 			}
 
 			ctx.memReg_write(destMemReg, destReg,dst);
