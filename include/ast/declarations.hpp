@@ -58,6 +58,11 @@ class Declarator  : public ExternalDeclaration{
 		virtual std::string getId() const{
 			return "";
 		}
+		virtual int getSize() const{
+			return 0;
+		}
+
+
 };
 
 
@@ -70,6 +75,9 @@ class ArrayDeclarator : public Declarator{
 		ArrayDeclarator(std::string _id = "", Expression *_size_expr = NULL)
 		:id(_id),size_expr(_size_expr){}
 
+		virtual int getSize() const override {
+			return size_expr->to_mips_eval();
+		}
 
 		virtual std::string getId() const override{
 			return id;
@@ -77,10 +85,8 @@ class ArrayDeclarator : public Declarator{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			
-			int size = size_expr->to_mips_eval();
-
+			int size = getSize();
 			ctx.assignNewVariable(id,"int",size);
-
 			if(ctx.getScope() == global){
 				dst << "GLOBAL NON-INIT ARRAY" << std::endl;
 			}
@@ -110,8 +116,21 @@ class InitArrayDeclarator : public Declarator{
 			return dec->getId();
 		}
 
+		virtual int getSize() const override{
+			return dec->getSize();
+		}
+
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			//ctx.assignNewVariable(id,"int",size);
+
+			int size = getSize();
+			std::string id = getId();
+			ctx.assignNewVariable(id,"int",size);
+			
+			if ((unsigned)size != init_list->size()){
+				dst << "Error : Array initializer does not match size" <<std::endl;
+				exit(1);
+			}
+
 			if(ctx.getScope() == global){
 				dst << "GLOBAL INIT ARRAY" << std::endl;
 				for(auto it=init_list->begin();it!=init_list->end();it++){
@@ -119,9 +138,14 @@ class InitArrayDeclarator : public Declarator{
 				}
 			}
 			else if(ctx.getScope() == local){
-				dst << "LOCAL INIT ARRAY" << std::endl;
-				for(auto it=init_list->begin();it!=init_list->end();it++){
-					dst << (*it)->to_mips_eval() << std::endl;
+				for(int i=0;i<size;i++){
+					auto tempMemReg = ctx.assignNewStorage();
+					std::string tempReg = "v0";
+					(*init_list)[i]->to_mips(dst,ctx);
+					ctx.deAllocStorage();
+
+					ctx.memReg_read(tempMemReg,tempReg,dst);
+					dst<<"sw $"<<tempReg<<","<<std::stoi(ctx.getVariable(id).first)-(i*4)<<"($fp)"<<std::endl;
 				}
 			}
 			
