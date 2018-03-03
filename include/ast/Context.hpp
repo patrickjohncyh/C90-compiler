@@ -78,7 +78,6 @@ struct Context{
 
 	std::string generateLabel(std::string label){
 		return label + "_" + std::to_string(labelCount++);
-
 	}
 
 	void scopeLocal(){
@@ -120,6 +119,7 @@ struct Context{
 		else if(scope == local){
 			mem_fp_offset_count-=4;
 			(*var_location)[name] = std::make_pair(std::to_string(mem_fp_offset_count),"local");
+			mem_fp_offset_count-=4*(size-1);	//for array
 		}
 	}
 

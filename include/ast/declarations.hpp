@@ -80,11 +80,15 @@ class ArrayDeclarator : public Declarator{
 			int size = size_expr->to_mips_eval();
 
 			ctx.assignNewVariable(id,"int",size);
+
 			if(ctx.getScope() == global){
 				dst << "GLOBAL NON-INIT ARRAY" << std::endl;
 			}
 			else if(ctx.getScope() == local){
-				dst << "LOCAL NON-INIT ARRAY" << std::endl;
+				for(int i=0;i<size;i++){
+					dst<<"sw $0,"<<std::stoi(ctx.getVariable(id).first)-(i*4)<<"($fp)"<<std::endl;
+				}
+				
 			}
 		}
 
@@ -141,8 +145,7 @@ class IdentifierDeclarator  : public Declarator{
 		:id(_id){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			ctx.assignNewVariable(id);
-			
+			ctx.assignNewVariable(id);	
 			if(ctx.getScope() == global){
 				dst<<".data"<<std::endl;	
 				dst<<".globl "<<id<<std::endl;
@@ -155,15 +158,9 @@ class IdentifierDeclarator  : public Declarator{
 		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst << indent << id;
-			/*if(init_expr!=NULL){
-				dst << " =";
-				init_expr->to_c(dst,"");
-			}*/
 		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << id << "=";
-			/*if(init_expr!=NULL) init_expr->to_python(dst,"",tc);
-			else dst << "0";*/
 			dst << "0";;
 			dst << std::endl;
 			tc.global_var.push_back(id);
@@ -172,11 +169,6 @@ class IdentifierDeclarator  : public Declarator{
 			dst <<  std::setw(m) << "";
 			dst << "Declarator [ ";
 			dst << "Id ( " << id << " ) ";
-			/*if(init_expr != NULL){
-				dst << ", InitExpr ( ";
-				init_expr->print_struct(dst,m);
-				dst << " )";
-			}*/
 			dst << " ]" << std::endl;
 		}
 };
@@ -232,24 +224,6 @@ class InitIdentifierDeclarator  : public Declarator{
 		virtual void print_struct(std::ostream &dst, int m) const override{
 		}
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
