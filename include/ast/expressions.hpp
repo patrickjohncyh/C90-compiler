@@ -13,9 +13,10 @@ class Expression : public ASTNode{
 			exit(1);
 		}
 
-		virtual void to_mips_getId(std::ostream &dst,std::string& id) const{
-			dst << "ERROR Not and Identifier" << std::endl;
+		virtual std::string to_mips_getId() const{
+			std::cout << "ERROR Not and Identifier" << std::endl;
 			exit(1);
+			return "";
 		}
 
 		virtual int to_mips_eval() const{
@@ -49,6 +50,43 @@ class PostIncrementExpression : public UnaryExpression{
 			dst << "++" << std::endl;
 		}
 };
+
+class ArrayAccessExpression : public UnaryExpression{
+	protected:
+		Expression* op_expr;
+	public:
+		ArrayAccessExpression(Expression *_expr,Expression *_op_expr)
+		:UnaryExpression(_expr),op_expr(_op_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";		//1. addr of id 2.result of from array loc stored here
+			expr->to_mips_getAddr(dst,ctx);	
+
+			auto offsetMemReg = ctx.assignNewStorage();
+			std::string offsetReg = "v1";	
+			op_expr->to_mips(dst,ctx);
+			ctx.deAllocStorage();	
+
+			ctx.memReg_read(destMemReg,destReg,dst);
+			ctx.memReg_read(offsetMemReg,offsetReg,dst);
+
+			dst << "sll  $"<<offsetReg<<",$"<<offsetReg<<",2" << std::endl;	//mult offset by 4
+			dst << "subu $"<<destReg<<",$"<<destReg<<",$"<<offsetReg << std::endl;	//address of element
+			dst << "lw $"<<destReg<<",0($"<<destReg<<")"<<std::endl;
+
+			ctx.memReg_write(destMemReg,destReg,dst);
+
+			
+		}
+
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+		}
+
+};
+
 
 
 class FunctionCallExpression : public UnaryExpression{
@@ -86,9 +124,8 @@ class FunctionCallExpression : public UnaryExpression{
 				}
 			}
 
-			std::string id;
-			expr->to_mips_getId(dst,id);
-			dst << "jal "<< id << std::endl; //call function
+			std::string id = expr->to_mips_getId();
+			dst << "jal "<< id << std::endl; //call function, Assumes that it is an Identifier
 			//copy result int dest Reg
 			//move stack to original
 			dst << "addiu $sp,$sp," << -ctx.getCurrStorage()*4  + numArgs*4 << std::endl;		//sp to original position
