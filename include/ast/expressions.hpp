@@ -59,7 +59,16 @@ class ArrayAccessExpression : public UnaryExpression{
 		:UnaryExpression(_expr),op_expr(_op_expr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";		//1. addr of id 2.result of from array loc stored here
+			to_mips_getAddr(dst,ctx);	
+			ctx.memReg_read(destMemReg,destReg,dst);
+			dst << "lw $"<<destReg<<",0($"<<destReg<<")"<<std::endl;
+			ctx.memReg_write(destMemReg,destReg,dst);			
+		}
 
+
+		virtual void to_mips_getAddr(std::ostream &dst, Context ctx) const{
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";		//1. addr of id 2.result of from array loc stored here
 			expr->to_mips_getAddr(dst,ctx);	
@@ -74,13 +83,9 @@ class ArrayAccessExpression : public UnaryExpression{
 
 			dst << "sll  $"<<offsetReg<<",$"<<offsetReg<<",2" << std::endl;	//mult offset by 4
 			dst << "subu $"<<destReg<<",$"<<destReg<<",$"<<offsetReg << std::endl;	//address of element
-			dst << "lw $"<<destReg<<",0($"<<destReg<<")"<<std::endl;
-
 			ctx.memReg_write(destMemReg,destReg,dst);
 
-			
 		}
-
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
 		}
