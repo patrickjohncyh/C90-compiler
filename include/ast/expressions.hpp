@@ -264,6 +264,68 @@ class PreDecrementExpression : public UnaryExpression{
 		}
 };
 
+class PrePositiveExpression : public UnaryExpression{
+	public:
+		PrePositiveExpression(Expression* _expr):UnaryExpression(_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			ctx.getCurrStorage();
+			expr->to_mips(dst,ctx);	
+		}
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst<< "+";
+			expr->to_c(dst,indent);
+		}
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << "+" << std::endl;
+			expr->print_struct(dst,m);
+		}
+};
+
+class PreNegativeExpression : public UnaryExpression{
+	public:
+		PreNegativeExpression(Expression* _expr):UnaryExpression(_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			expr->to_mips(dst,ctx);		
+			ctx.memReg_read(destMemReg, destReg, dst);
+			dst<<"subu  $"<<destReg<<",$0,$"<<destReg<<std::endl;		//negate
+			ctx.memReg_write(destMemReg, destReg, dst);
+		}
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst<< "-";
+			expr->to_c(dst,indent);
+		}
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << "-" << std::endl;
+			expr->print_struct(dst,m);
+		}
+};
+
+class PreNotExpression : public UnaryExpression{
+	public:
+		PreNotExpression(Expression* _expr):UnaryExpression(_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			expr->to_mips(dst,ctx);	
+			ctx.memReg_read(destMemReg, destReg, dst);
+			dst << "sltiu $"<<destReg<<",$0,1"<<std::endl;
+			ctx.memReg_write(destMemReg, destReg, dst);
+		}
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst<< "!";
+			expr->to_c(dst,indent);
+		}
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << "!" << std::endl;
+			expr->print_struct(dst,m);
+		}
+};
+
 
 
 

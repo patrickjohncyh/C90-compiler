@@ -49,6 +49,8 @@ default 						{ return DEFAULT; 	}
 [%]				{ return ('%'); }
 [+]				{ return ('+'); }
 [-]				{ return ('-'); }
+[~]				{ return ('~'); }
+[!]				{ return ('!'); }		
 
 
 \==				{ return EQ_OP;	}

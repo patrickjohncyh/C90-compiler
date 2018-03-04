@@ -152,9 +152,12 @@ postfix_expression	:	base_expression
 					|	postfix_expression 	'[' expression ']'		{ $$ = new ArrayAccessExpression($1,$3); 	}
 
 prefix_expression	:	postfix_expression
-					| 	INC_OP prefix_expression	{ $$ = new PreIncrementExpression($2); }
-					| 	DEC_OP prefix_expression 	{ $$ = new PreDecrementExpression($2); }
-
+					| 	INC_OP prefix_expression	{ $$ = new PreIncrementExpression($2);	}
+					| 	DEC_OP prefix_expression 	{ $$ = new PreDecrementExpression($2);	}
+					|	'!'	prefix_expression		{ $$ = new PreNotExpression($2); 		}
+					|   '+' prefix_expression		{ $$ = new PrePositiveExpression($2);	} 
+					|	'-' prefix_expression		{ $$ = new PreNegativeExpression($2);	}
+					|	'~' prefix_expression		{  ;}
 
 mult_expression		:	prefix_expression				 	   { $$ = $1; }
 					| 	mult_expression '*' postfix_expression { $$ = new MultExpression($1,$3);	}
