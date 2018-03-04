@@ -107,17 +107,14 @@ class FunctionCallExpression : public UnaryExpression{
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";		//result of function call stored here
 
-
 			int numArgs=0;
-			if(a_list!=NULL){
-				 numArgs = a_list->size();
-			}
+			if(a_list!=NULL) numArgs = a_list->size();
 
 			dst << "addiu $sp,$sp," << -numArgs*4 + ctx.getCurrStorage()*4 << std::endl;		//sp to correct position
-			
 			for(int i=0; i<numArgs; i++){
 				auto tempMemReg = ctx.assignNewStorage(); 	
 				std::string tempReg = "v1";
+				//check type of argument. If array, then need to pass address. Pointers too i presume
 				(*a_list)[i]->to_mips(dst,ctx); //eval expression
 				ctx.deAllocStorage();
 				ctx.memReg_read(tempMemReg,tempReg,dst);
@@ -198,6 +195,29 @@ class BinaryExpression : public Expression{
 
 		virtual const char *getOpcode() const =0;
 
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const{};
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+			auto destMemReg = ctx.getCurrStorage(); 	//write to dest Reg
+			left->to_mips(dst,ctx);
+			auto tempMemReg = ctx.assignNewStorage(); 
+			right->to_mips(dst,ctx);
+			ctx.deAllocStorage();
+
+
+			std::string destReg = "v0";
+			std::string tempReg = "v1";
+
+			ctx.memReg_read(destMemReg, destReg,dst);	
+			ctx.memReg_read(tempMemReg, tempReg,dst);	
+
+			to_mips_getOperation(dst,ctx,destReg,tempReg);
+	
+			ctx.memReg_write(destMemReg, destReg,dst);	
+
+		}
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst << "(";
 			left->to_c(dst,indent);
@@ -248,27 +268,9 @@ class AddExpression : public BinaryExpression{
 	public:
 		AddExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			dst << "##### ADD ####" << std::endl;
-
-			auto destMemReg = ctx.getCurrStorage(); 	//write to dest Reg
-			left->to_mips(dst,ctx);
-			auto tempMemReg = ctx.assignNewStorage(); 
-			right->to_mips(dst,ctx);
-			ctx.deAllocStorage();
-
-
-			std::string destReg = "v0";
-			std::string tempReg = "v1";
-
-			ctx.memReg_read(destMemReg, destReg,dst);	
-			ctx.memReg_read(tempMemReg, tempReg,dst);	
-			
-			dst <<"addu $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;
-			
-			ctx.memReg_write(destMemReg, destReg,dst);	
-
-		}
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+			dst <<"addu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+		};
 
 		virtual const char *getOpcode() const override{
 			return "+";
@@ -279,26 +281,9 @@ class SubExpression : public BinaryExpression{
 	public:
 		SubExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			dst << "##### ADD ####" << std::endl;
-
-			auto destMemReg = ctx.getCurrStorage(); 	//write to dest Reg
-			left->to_mips(dst,ctx);
-			auto tempMemReg = ctx.assignNewStorage(); 
-			right->to_mips(dst,ctx);
-			ctx.deAllocStorage();
-
-
-			std::string destReg = "v0";
-			std::string tempReg = "v1";
-
-			ctx.memReg_read(destMemReg, destReg,dst);	
-			ctx.memReg_read(tempMemReg, tempReg,dst);	
-			
-			dst <<"subu $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;
-			
-			ctx.memReg_write(destMemReg, destReg,dst);
-		}
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+			dst <<"subu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+		};
 
 		virtual const char *getOpcode() const override{
 			return "-";
@@ -311,27 +296,9 @@ class LessThanExpression : public BinaryExpression{
 	public:
 		LessThanExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			dst << "##### LESS THAN ####" << std::endl;
-
-			auto destMemReg = ctx.getCurrStorage();
-			left->to_mips(dst,ctx);
-			auto tempMemReg = ctx.assignNewStorage(); 
-			right->to_mips(dst,ctx);
-			ctx.deAllocStorage();
-
-			std::string destReg = "v0";
-			std::string tempReg = "v1";
-
-			ctx.memReg_read(destMemReg, destReg,dst);	
-			ctx.memReg_read(tempMemReg, tempReg,dst);
-
-
-			dst <<"slt $"<<destReg<<",$"<<destReg<<",$"<<tempReg<<std::endl;
-
-			ctx.memReg_write(destMemReg, destReg,dst);
-
-		}
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+			dst <<"slt $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+		};
 
 		virtual const char *getOpcode() const override{
 			return "<";
@@ -342,27 +309,9 @@ class MoreThanExpression : public BinaryExpression{
 	public:
 		MoreThanExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			dst << "##### MORE THAN ####" << std::endl;
-
-			auto destMemReg = ctx.getCurrStorage();
-			left->to_mips(dst,ctx);
-			auto tempMemReg = ctx.assignNewStorage(); 
-			right->to_mips(dst,ctx);
-			ctx.deAllocStorage();
-
-			std::string destReg = "v0";
-			std::string tempReg = "v1";
-
-			ctx.memReg_read(destMemReg, destReg,dst);	
-			ctx.memReg_read(tempMemReg, tempReg,dst);
-
-
-			dst <<"slt $"<<destReg<<",$"<<tempReg<<",$"<<destReg<<std::endl;
-
-			ctx.memReg_write(destMemReg, destReg,dst);
-
-		}
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+			dst <<"slt $"<<left<<",$"<<right<<",$"<<left<<std::endl;
+		};
 
 		virtual const char *getOpcode() const override{
 			return ">";
@@ -372,6 +321,12 @@ class MoreThanExpression : public BinaryExpression{
 class LessThanEqExpression : public BinaryExpression{
 	public:
 		LessThanEqExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+		
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+			dst <<"slt  $"<<left<<",$"<<right<<",$"<<left<<std::endl;
+			dst <<"xori	$"<<left<<",$"<<left<<","<<0x1<<std::endl;
+		};
+
 		virtual const char *getOpcode() const override{
 			return "<=";
 		}
@@ -380,6 +335,12 @@ class LessThanEqExpression : public BinaryExpression{
 class MoreThanEqExpression : public BinaryExpression{
 	public:
 		MoreThanEqExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+			dst <<"slt  $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+			dst <<"xori	$"<<left<<",$"<<left<<","<<0x1<<std::endl;
+		};
+
 		virtual const char *getOpcode() const override{
 			return ">=";
 		}
@@ -388,6 +349,11 @@ class MoreThanEqExpression : public BinaryExpression{
 class EqualityExpression : public BinaryExpression{
 	public:
 		EqualityExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+			dst <<"xor   $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+			dst <<"sltiu $"<<left<<",$"<<left<<",1"<<std::endl;
+		};
 		virtual const char *getOpcode() const override{
 			return "==";
 		}
@@ -396,6 +362,12 @@ class EqualityExpression : public BinaryExpression{
 class NotEqualityExpression : public BinaryExpression{
 	public:
 		NotEqualityExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+			dst <<"xor  $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+			dst <<"sltu $"<<left<<",$0,$"<<left<<std::endl;
+		};
+
 		virtual const char *getOpcode() const override{
 			return "!=";
 		}

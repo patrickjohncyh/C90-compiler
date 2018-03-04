@@ -10,7 +10,7 @@ fi
 
 have_compiler=1
 if [[ ! -f bin/c_compiler ]] ; then
-    >&2 echo "Warning : cannot find compiler at path ${compiler}. Only checking C reference against python reference."
+    >&2 echo "Warning : cannot find compiler at path ${compiler}."
     have_compiler=0
 fi
 
@@ -20,38 +20,36 @@ working="tmp/codegen_test"
 mkdir -p ${working}
 rm ${working}/*
 
-for j in ${input_dir}/* ; do
+count=0;
 
-    test_group=$j;
-    if [ -z "$(ls -A ${test_group})" ]; then
-        echo "NO TESTS FOR [$(basename $test_group)]"
-    else
-        echo "TESTING [$(basename $test_group)] :"
-        for i in ${test_group}/*.driver.c ; do
+for i in ${input_dir}/*.c ; do
+    count=$((count+1));
+    base=$(echo $i | sed -E -e "s|${input_dir}/([^.]+)[.]c|\1|g");
 
-            base=$(echo $i | sed -E -e "s|${test_group}/([^.]+)[.]driver[.]c|\1|g");
+ 	# Compile the .c to .o to get reference
+    mips-linux-gnu-gcc --static -march=mips1 -mfp32 $i -o $working/$base-ref
 
-         	# Compile the driver to .o
-            mips-linux-gnu-gcc -march=mips1 -mfp32  -S $i -o $working/$base.driver.s
+    if [[ ${have_compiler} -eq 1 ]] ; then
+        # Compile to .c to .s using Compiler
+        $compiler --compile $i -o ${working}/$base-out.s
+        
+        # Statically link .s
+        mips-linux-gnu-gcc -std=c89 -march=mips1 -mfp32 --static -O0 ${working}/$base-out.s -o $working/$base-out
+        
+        # Run reference
+        qemu-mips $working/$base-ref
+        REF_OUT=$? 
 
-            if [[ ${have_compiler} -eq 1 ]] ; then
-                # Compile to .c to .s
-                $compiler --compile ${test_group}/$base.c -o ${working}/$base-slave.s
-                
-                # Link driver and slave
-                mips-linux-gnu-gcc -std=c89 -march=mips1 -mfp32 --static -O0 ${working}/$base-slave.s $working/$base.driver.s -o $working/$base-test
-                
-                # Run driver
-                qemu-mips $working/$base-test
-                TEST_OUT=$?    
-            fi
-
-            if [[ $TEST_OUT -ne 0 ]] ; then
-                echo "$base, Fail, $TEST_OUT"
-            else
-                echo "$base, Pass"
-            fi
-        done
+        # Run reference
+        qemu-mips $working/$base-out
+        GOT_OUT=$?    
     fi
 
+    if [[ $REF_OUT -ne $GOT_OUT ]] ; then
+        Status="Fail"
+        printf  "%-5s %-27s \e[31m %-10s \e[0m \n" $count $base $Status
+    else
+        Status="Pass"
+        printf  "%-5s %-27s \e[32m %-10s \e[0m \n" $count $base $Status
+    fi
 done
