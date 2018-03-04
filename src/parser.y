@@ -144,11 +144,11 @@ base_expression		: 	CONSTANT			{ $$ = new Constant($1);   		}
 					
 
 postfix_expression	:	base_expression	
-					|	base_expression	INC_OP					{ $$ = new PostIncrementExpression($1); 	}
-					|	base_expression	DEC_OP					{ $$ = new PostDecrementExpression($1); 	}
-					|	base_expression	'(' ')'					{ $$ = new FunctionCallExpression($1) ;		}
-					|	base_expression '(' argument_list ')'	{ $$ = new FunctionCallExpression($1,$3);	}
-					|	base_expression '[' expression ']'		{ $$ = new ArrayAccessExpression($1,$3); 	}
+					|	postfix_expression	INC_OP					{ $$ = new PostIncrementExpression($1); 	}
+					|	postfix_expression	DEC_OP					{ $$ = new PostDecrementExpression($1); 	}
+					|	postfix_expression	'(' ')'					{ $$ = new FunctionCallExpression($1) ;		}
+					|	postfix_expression 	'(' argument_list ')'	{ $$ = new FunctionCallExpression($1,$3);	}
+					|	postfix_expression 	'[' expression ']'		{ $$ = new ArrayAccessExpression($1,$3); 	}
 					/* to implement more postfix expressions*/
 
 
