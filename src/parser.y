@@ -44,7 +44,7 @@ void yyerror(const char *);
 
 
 %token IDENTIFIER CONSTANT LITERAL
-%token INC_OP
+%token INC_OP DEC_OP
 
 %token EQ_OP NE_OP LT_OP GT_OP LE_OP GE_OP
 
@@ -145,6 +145,7 @@ base_expression		: 	CONSTANT			{ $$ = new Constant($1);   		}
 
 postfix_expression	:	base_expression	
 					|	base_expression	INC_OP					{ $$ = new PostIncrementExpression($1); 	}
+					|	base_expression	DEC_OP					{ $$ = new PostDecrementExpression($1); 	}
 					|	base_expression	'(' ')'					{ $$ = new FunctionCallExpression($1) ;		}
 					|	base_expression '(' argument_list ')'	{ $$ = new FunctionCallExpression($1,$3);	}
 					|	base_expression '[' expression ']'		{ $$ = new ArrayAccessExpression($1,$3); 	}

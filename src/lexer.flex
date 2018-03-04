@@ -63,6 +63,7 @@ default 						{ return DEFAULT; 	}
 
 
 \++				{ return INC_OP;}
+\--				{ return DEC_OP;}
 
 
 

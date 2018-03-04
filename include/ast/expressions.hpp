@@ -41,6 +41,24 @@ class PostIncrementExpression : public UnaryExpression{
 	public:
 		PostIncrementExpression(Expression* _expr):UnaryExpression(_expr){}
 
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			expr->to_mips_getAddr(dst,ctx);		//addr of expression in destReg	
+			
+			std::string tempReg = "v1";
+
+			ctx.memReg_read(destMemReg, destReg, dst);
+
+			dst<<"lw    $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//value of expr now in tempReg
+			dst<<"addiu $"<<tempReg<<",$"<<tempReg<<",1"<<std::endl;	//increment
+			dst<<"sw	$"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//save incremented value to mem
+			dst<<"addiu	$"<<destReg<<",$"<<tempReg<<",-1"<<std::endl;	//place old value into destReg
+
+			ctx.memReg_write(destMemReg, destReg, dst);
+
+		}
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			expr->to_c(dst,indent);
 			dst<< "++";
@@ -48,6 +66,39 @@ class PostIncrementExpression : public UnaryExpression{
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			expr->print_struct(dst,m);
 			dst << "++" << std::endl;
+		}
+};
+
+class PostDecrementExpression : public UnaryExpression{
+	public:
+		PostDecrementExpression(Expression* _expr):UnaryExpression(_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			expr->to_mips_getAddr(dst,ctx);		//addr of expression in destReg	
+			
+			std::string tempReg = "v1";
+
+			ctx.memReg_read(destMemReg, destReg, dst);
+
+			dst<<"lw    $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//value of expr now in tempReg
+			dst<<"addiu $"<<tempReg<<",$"<<tempReg<<",-1"<<std::endl;	//decrement
+			dst<<"sw	$"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//save incremented value to mem
+			dst<<"addiu	$"<<destReg<<",$"<<tempReg<<",1"<<std::endl;	//place old value into destReg
+
+			ctx.memReg_write(destMemReg, destReg, dst);
+
+		}
+
+
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			expr->to_c(dst,indent);
+			dst<< "--";
+		}
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			expr->print_struct(dst,m);
+			dst << "--" << std::endl;
 		}
 };
 
@@ -60,8 +111,8 @@ class ArrayAccessExpression : public UnaryExpression{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			auto destMemReg = ctx.getCurrStorage();
-			std::string destReg = "v0";		//1. addr of id 2.result of from array loc stored here
-			to_mips_getAddr(dst,ctx);	
+			std::string destReg = "v0";		
+			to_mips_getAddr(dst,ctx);		//addr of expression operated on
 			ctx.memReg_read(destMemReg,destReg,dst);
 			dst << "lw $"<<destReg<<",0($"<<destReg<<")"<<std::endl;
 			ctx.memReg_write(destMemReg,destReg,dst);			
@@ -70,18 +121,18 @@ class ArrayAccessExpression : public UnaryExpression{
 
 		virtual void to_mips_getAddr(std::ostream &dst, Context ctx) const{
 			auto destMemReg = ctx.getCurrStorage();
-			std::string destReg = "v0";		//1. addr of id 2.result of from array loc stored here
-			expr->to_mips_getAddr(dst,ctx);	
+			std::string destReg = "v0";
+			expr->to_mips_getAddr(dst,ctx);	//addr of id
 
 			auto offsetMemReg = ctx.assignNewStorage();
 			std::string offsetReg = "v1";	
-			op_expr->to_mips(dst,ctx);
+			op_expr->to_mips(dst,ctx);		//offset calc
 			ctx.deAllocStorage();	
 
 			ctx.memReg_read(destMemReg,destReg,dst);
 			ctx.memReg_read(offsetMemReg,offsetReg,dst);
 
-			dst << "sll  $"<<offsetReg<<",$"<<offsetReg<<",2" << std::endl;	//mult offset by 4
+			dst << "sll  $"<<offsetReg<<",$"<<offsetReg<<",2" << std::endl;	//mult offset by 4 (for int)
 			dst << "subu $"<<destReg<<",$"<<destReg<<",$"<<offsetReg << std::endl;	//address of element
 			ctx.memReg_write(destMemReg,destReg,dst);
 
@@ -91,7 +142,6 @@ class ArrayAccessExpression : public UnaryExpression{
 		}
 
 };
-
 
 
 class FunctionCallExpression : public UnaryExpression{
@@ -127,10 +177,8 @@ class FunctionCallExpression : public UnaryExpression{
 			}
 
 			std::string id = expr->to_mips_getId();
-			dst << "jal "<< id << std::endl; //call function, Assumes that it is an Identifier
-			//copy result int dest Reg
-			//move stack to original
-			dst << "addiu $sp,$sp," << -ctx.getCurrStorage()*4  + numArgs*4 << std::endl;		//sp to original position
+			dst << "jal "<< id << std::endl; 												//call function, Assumes that it is an Identifier
+			dst << "addiu $sp,$sp," << -ctx.getCurrStorage()*4  + numArgs*4 << std::endl;	//sp to original position
 			dst << "move $"<<destReg<<",$2" << std::endl;
 			ctx.memReg_write(destMemReg,destReg,dst);
 
@@ -443,8 +491,6 @@ class DirectAssignmentExpression : public AssignmentExpression{
 			ctx.memReg_read(tempMemReg, tempReg, dst);
 
 			dst<<"sw $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;
-
-			
 
 		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
