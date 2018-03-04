@@ -250,6 +250,12 @@ class MultExpression : public BinaryExpression{
 	public:
 		MultExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+
+			dst <<"mult $"<<left<<",$"<<right<<std::endl;
+			dst <<"mflo $"<<left<<std::endl;
+		};
+
 		virtual const char *getOpcode() const override{
 			return "*";
 		}
@@ -259,8 +265,25 @@ class DivExpression : public BinaryExpression{
 	public:
 		DivExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+			dst <<"div $"<<left<<",$"<<right<<std::endl;
+			dst <<"mflo $"<<left<<std::endl;
+		};
 		virtual const char *getOpcode() const override{
 			return "/";
+		}
+};
+
+class ModuloExpression : public BinaryExpression{
+	public:
+		ModuloExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+			dst <<"div $"<<left<<",$"<<right<<std::endl;
+			dst <<"mfhi $"<<left<<std::endl;
+		};
+		virtual const char *getOpcode() const override{
+			return "%";
 		}
 };
 

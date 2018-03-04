@@ -155,7 +155,8 @@ postfix_expression	:	base_expression
 mult_expression		:	postfix_expression				 	   { $$ = $1; }
 					| 	mult_expression '*' postfix_expression { $$ = new MultExpression($1,$3);	}
 					| 	mult_expression '/' postfix_expression { $$ = new DivExpression($1,$3);		}
-					/* to implement modulo expressions */
+					|	mult_expression '%' postfix_expression { $$ = new ModuloExpression($1,$3);	}
+
 
 add_expression		: 	mult_expression					  	{ $$ = $1; }
 					| 	add_expression '+' mult_expression	{ $$ = new AddExpression($1,$3);	}

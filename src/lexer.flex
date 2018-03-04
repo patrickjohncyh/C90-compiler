@@ -46,6 +46,7 @@ default 						{ return DEFAULT; 	}
 [=]				{ return ('='); }
 [*]				{ return ('*'); }
 [/]				{ return ('/'); }
+[%]				{ return ('%'); }
 [+]				{ return ('+'); }
 [-]				{ return ('-'); }
 
