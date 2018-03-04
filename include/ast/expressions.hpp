@@ -36,7 +36,6 @@ class UnaryExpression : public Expression{
 
 /********************** Post Fix Expressions *********/
 
-
 class PostIncrementExpression : public UnaryExpression{
 	public:
 		PostIncrementExpression(Expression* _expr):UnaryExpression(_expr){}
@@ -45,20 +44,14 @@ class PostIncrementExpression : public UnaryExpression{
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
 			expr->to_mips_getAddr(dst,ctx);		//addr of expression in destReg	
-			
 			std::string tempReg = "v1";
-
 			ctx.memReg_read(destMemReg, destReg, dst);
-
 			dst<<"lw    $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//value of expr now in tempReg
 			dst<<"addiu $"<<tempReg<<",$"<<tempReg<<",1"<<std::endl;	//increment
 			dst<<"sw	$"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//save incremented value to mem
 			dst<<"addiu	$"<<destReg<<",$"<<tempReg<<",-1"<<std::endl;	//place old value into destReg
-
 			ctx.memReg_write(destMemReg, destReg, dst);
-
 		}
-
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			expr->to_c(dst,indent);
 			dst<< "++";
@@ -77,21 +70,14 @@ class PostDecrementExpression : public UnaryExpression{
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
 			expr->to_mips_getAddr(dst,ctx);		//addr of expression in destReg	
-			
 			std::string tempReg = "v1";
-
 			ctx.memReg_read(destMemReg, destReg, dst);
-
 			dst<<"lw    $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//value of expr now in tempReg
 			dst<<"addiu $"<<tempReg<<",$"<<tempReg<<",-1"<<std::endl;	//decrement
 			dst<<"sw	$"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//save incremented value to mem
 			dst<<"addiu	$"<<destReg<<",$"<<tempReg<<",1"<<std::endl;	//place old value into destReg
-
 			ctx.memReg_write(destMemReg, destReg, dst);
-
 		}
-
-
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			expr->to_c(dst,indent);
 			dst<< "--";
@@ -222,12 +208,61 @@ class FunctionCallExpression : public UnaryExpression{
 };
 
 
-// TO IMPLEMENT OTHER POSTFIX EXPRESSIONS
-
-
 /********************** Pre Fix Expressions *********/
 
+class PreIncrementExpression : public UnaryExpression{
+	public:
+		PreIncrementExpression(Expression* _expr):UnaryExpression(_expr){}
 
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			expr->to_mips_getAddr(dst,ctx);		//addr of expression in destReg	
+			std::string tempReg = "v1";
+			ctx.memReg_read(destMemReg, destReg, dst);
+			dst<<"lw    $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//value of expr now in tempReg
+			dst<<"addiu $"<<tempReg<<",$"<<tempReg<<",1"<<std::endl;	//increment
+			dst<<"sw	$"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//save incremented value to mem
+			dst<<"move	$"<<destReg<<",$"<<tempReg<<std::endl;			//place incremeneted value into destReg
+			ctx.memReg_write(destMemReg, destReg, dst);
+		}
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst<< "++";
+			expr->to_c(dst,indent);
+
+		}
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << "++" << std::endl;
+			expr->print_struct(dst,m);
+
+		}
+};
+
+class PreDecrementExpression : public UnaryExpression{
+	public:
+		PreDecrementExpression(Expression* _expr):UnaryExpression(_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			expr->to_mips_getAddr(dst,ctx);		//addr of expression in destReg	
+			std::string tempReg = "v1";
+			ctx.memReg_read(destMemReg, destReg, dst);
+			dst<<"lw    $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//value of expr now in tempReg
+			dst<<"addiu $"<<tempReg<<",$"<<tempReg<<",-1"<<std::endl;	//increment
+			dst<<"sw	$"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//save incremented value to mem
+			dst<<"move	$"<<destReg<<",$"<<tempReg<<std::endl;			//place incremeneted value into destReg
+			ctx.memReg_write(destMemReg, destReg, dst);
+		}
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst<< "--";
+			expr->to_c(dst,indent);
+		}
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << "--" << std::endl;
+			expr->print_struct(dst,m);
+		}
+};
 
 
 

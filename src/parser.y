@@ -61,7 +61,8 @@ void yyerror(const char *);
 %type <declaration_list_vector> declaration_list parameter_list
 
 
-%type<expression_node> base_expression postfix_expression mult_expression add_expression 
+%type<expression_node> base_expression postfix_expression prefix_expression 
+%type<expression_node> mult_expression add_expression 
 %type<expression_node> bw_shift_expression  compare_expression  equality_expression
 %type<expression_node> bitwise_expression logical_expression ternary_expression 
 %type<expression_node> assign_expression  expression 
@@ -149,11 +150,13 @@ postfix_expression	:	base_expression
 					|	postfix_expression	'(' ')'					{ $$ = new FunctionCallExpression($1) ;		}
 					|	postfix_expression 	'(' argument_list ')'	{ $$ = new FunctionCallExpression($1,$3);	}
 					|	postfix_expression 	'[' expression ']'		{ $$ = new ArrayAccessExpression($1,$3); 	}
-					/* to implement more postfix expressions*/
+
+prefix_expression	:	postfix_expression
+					| 	INC_OP prefix_expression	{ $$ = new PreIncrementExpression($2); }
+					| 	DEC_OP prefix_expression 	{ $$ = new PreDecrementExpression($2); }
 
 
-
-mult_expression		:	postfix_expression				 	   { $$ = $1; }
+mult_expression		:	prefix_expression				 	   { $$ = $1; }
 					| 	mult_expression '*' postfix_expression { $$ = new MultExpression($1,$3);	}
 					| 	mult_expression '/' postfix_expression { $$ = new DivExpression($1,$3);		}
 					|	mult_expression '%' postfix_expression { $$ = new ModuloExpression($1,$3);	}
