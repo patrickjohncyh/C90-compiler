@@ -49,10 +49,6 @@ class ExternalDeclaration : public ASTNode{
 	virtual void print_struct(std::ostream &dst, int m) const =0;
 };
 
-
-
-
-
 class Declarator  : public ExternalDeclaration{
 	public:
 		virtual std::string getId() const{
@@ -64,10 +60,7 @@ class Declarator  : public ExternalDeclaration{
 		virtual std::string getDtype() const{
 			return "";
 		}
-
-
 };
-
 
 class ArrayDeclarator : public Declarator{
 	private:
@@ -96,7 +89,12 @@ class ArrayDeclarator : public Declarator{
 			int size = getSize();
 			ctx.assignNewVariable(id,"int","array",size);
 			if(ctx.getScope() == global){
-				dst << "GLOBAL NON-INIT ARRAY" << std::endl;
+				dst<<".data"<<std::endl;	
+				dst<<".globl "<<id<<std::endl;
+				dst<<id<<":"<<std::endl;
+				for(int i=0;i<size;i++){
+					dst<<".word "<< 0 << std::endl;
+				}	
 			}
 			else if(ctx.getScope() == local){
 				for(int i=0;i<size;i++){
@@ -119,7 +117,6 @@ class InitArrayDeclarator : public Declarator{
 		InitArrayDeclarator(Declarator* _dec, std::vector<Expression*>* _init_list)
 		:dec(_dec),init_list(_init_list){}
 
-
 		virtual std::string getId() const override{
 			return dec->getId();
 		}
@@ -140,10 +137,12 @@ class InitArrayDeclarator : public Declarator{
 			}
 
 			if(ctx.getScope() == global){
-				dst << "GLOBAL INIT ARRAY" << std::endl;
+				dst<<".data"<<std::endl;	
+				dst<<".globl "<<id<<std::endl;
+				dst<<id<<":"<<std::endl;
 				for(auto it=init_list->begin();it!=init_list->end();it++){
-					dst << (*it)->to_mips_eval() << std::endl;
-				}
+					dst<<".word "<< (*it)->to_mips_eval() << std::endl;
+				}				
 			}
 			else if(ctx.getScope() == local){
 				for(int i=0;i<size;i++){
@@ -151,14 +150,12 @@ class InitArrayDeclarator : public Declarator{
 					std::string tempReg = "v0";
 					(*init_list)[i]->to_mips(dst,ctx);
 					ctx.deAllocStorage();
-
 					ctx.memReg_read(tempMemReg,tempReg,dst);
 					dst<<"sw $"<<tempReg<<","<< (ctx.getVariable_loc(id)-(i*4))<<"($fp)"<<std::endl;
 				}
 			}
 			
 		}
-
 		virtual void print_struct(std::ostream &dst, int m) const override{
 		}
 };
@@ -174,7 +171,7 @@ class IdentifierDeclarator  : public Declarator{
 		}
 
 		virtual std::string getDtype() const override{
-			return "array";
+			return "basic";
 		}
 
 		IdentifierDeclarator(std::string _id)

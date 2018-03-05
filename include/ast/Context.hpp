@@ -31,8 +31,6 @@ typedef mapType* mapPtr;
 
 
 struct Context{
-
-
 	mapPtr var_location = new mapType();
 
 	std::stack<std::map<std::string,var_pair>*> var_scope_stack;
