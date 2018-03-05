@@ -108,8 +108,7 @@ class ArrayAccessExpression : public UnaryExpression{
 		virtual void to_mips_getAddr(std::ostream &dst, Context ctx) const{
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
-			//expr->to_mips_getAddr(dst,ctx);	//addr of id
-			expr->to_mips(dst,ctx);	//addr of id from map if local or mem loc if arguemnt or some sort of pounter
+			expr->to_mips(dst,ctx);	//addr of id from map if local or mem loc if arguemnt or some sort of pointer
 
 			auto offsetMemReg = ctx.assignNewStorage();
 			std::string offsetReg = "v1";	
@@ -572,18 +571,18 @@ class DirectAssignmentExpression : public AssignmentExpression{
 			dst << "##### DirectAssignment #####" << std::endl;
 
 			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
 			lvalue->to_mips_getAddr(dst,ctx);			
 			auto tempMemReg = ctx.assignNewStorage();
+			std::string tempReg = "v1";
 			expr->to_mips(dst,ctx);
 			ctx.deAllocStorage();
 
-			std::string destReg = "v0";
-			std::string tempReg = "v1";
-
 			ctx.memReg_read(destMemReg, destReg, dst);
 			ctx.memReg_read(tempMemReg, tempReg, dst);
-
-			dst<<"sw $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;
+			dst<<"sw   $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;
+			dst<<"move $"<<destReg<<",$"<<tempReg<<std::endl;
+			ctx.memReg_write(destMemReg, destReg, dst);
 
 		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
