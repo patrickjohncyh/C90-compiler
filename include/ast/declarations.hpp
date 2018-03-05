@@ -61,6 +61,9 @@ class Declarator  : public ExternalDeclaration{
 		virtual int getSize() const{
 			return 0;
 		}
+		virtual std::string getDtype() const{
+			return "";
+		}
 
 
 };
@@ -83,16 +86,21 @@ class ArrayDeclarator : public Declarator{
 			return id;
 		}
 
+
+		virtual std::string getDtype() const override{
+			return "array";
+		}
+
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			
 			int size = getSize();
-			ctx.assignNewVariable(id,"int",size);
+			ctx.assignNewVariable(id,"int","array",size);
 			if(ctx.getScope() == global){
 				dst << "GLOBAL NON-INIT ARRAY" << std::endl;
 			}
 			else if(ctx.getScope() == local){
 				for(int i=0;i<size;i++){
-					dst<<"sw $0,"<<std::stoi(ctx.getVariable(id).first)-(i*4)<<"($fp)"<<std::endl;
+					dst<<"sw $0,"<<(ctx.getVariable_loc(id)-(i*4))<<"($fp)"<<std::endl;
 				}
 				
 			}
@@ -124,7 +132,7 @@ class InitArrayDeclarator : public Declarator{
 
 			int size = getSize();
 			std::string id = getId();
-			ctx.assignNewVariable(id,"int",size);
+			ctx.assignNewVariable(id,"int","array",size);
 			
 			if ((unsigned)size != init_list->size()){
 				dst << "Error : Array initializer does not match size" <<std::endl;
@@ -145,7 +153,7 @@ class InitArrayDeclarator : public Declarator{
 					ctx.deAllocStorage();
 
 					ctx.memReg_read(tempMemReg,tempReg,dst);
-					dst<<"sw $"<<tempReg<<","<<std::stoi(ctx.getVariable(id).first)-(i*4)<<"($fp)"<<std::endl;
+					dst<<"sw $"<<tempReg<<","<< (ctx.getVariable_loc(id)-(i*4))<<"($fp)"<<std::endl;
 				}
 			}
 			
@@ -165,6 +173,10 @@ class IdentifierDeclarator  : public Declarator{
 			return id;
 		}
 
+		virtual std::string getDtype() const override{
+			return "array";
+		}
+
 		IdentifierDeclarator(std::string _id)
 		:id(_id){}
 
@@ -177,7 +189,7 @@ class IdentifierDeclarator  : public Declarator{
 				dst<<".word 0"<<std::endl;
 			}
 			else if(ctx.getScope() == local){
-				dst<<"sw $0,"<<ctx.getVariable(id).first<<"($fp)"<<std::endl;
+				dst<<"sw $0,"<<ctx.getVariable_loc(id)<<"($fp)"<<std::endl;
 			}
 		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
@@ -223,12 +235,12 @@ class InitIdentifierDeclarator  : public Declarator{
 				dst<<".word "<<init_val<<std::endl;
 			}
 			else if(ctx.getScope() == local){
-				dst<<"sw $0,"<<ctx.getVariable(id).first<<"($fp)"<<std::endl;
+				dst<<"sw $0,"<<ctx.getVariable_loc(id)<<"($fp)"<<std::endl;
 				auto tempReg = ctx.assignNewStorage();
 				std::string tempReg_r = "v1";
 				init_expr->to_mips(dst,ctx);
 				dst<<"lw $v1,"<<tempReg<<"($fp)"<<std::endl;
-				dst<<"sw $"<<tempReg_r<<","<<ctx.getVariable(id).first<<"($fp)"<<std::endl;
+				dst<<"sw $"<<tempReg_r<<","<<ctx.getVariable_loc(id)<<"($fp)"<<std::endl;
 				ctx.deAllocStorage();
 			}
 		}
@@ -263,6 +275,14 @@ class Declaration : public ExternalDeclaration{
 
 		std::string getParam(){
 			return (*dec_list)[0]->getId();
+		}
+
+		std::string getParam_type(){
+			return type;
+		}
+
+		std::string getParam_dtype(){
+			return (*dec_list)[0]->getDtype();
 		}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
@@ -339,9 +359,8 @@ class FunctionDefinition : public ExternalDeclaration{
 			
 			if(p_list!=NULL){
 				for(unsigned int i=0;i<p_list->size();i++){
-					if(i<4)
-						dst<<"sw $a"<<i<<","<<(i*4+8)<<"($fp)"<<std::endl;	
-					ctx.assignNewArgument( (*p_list)[i]->getParam() , i*4+8 );
+					if(i<4) dst<<"sw $a"<<i<<","<<(i*4+8)<<"($fp)"<<std::endl;	
+					ctx.assignNewArgument( (*p_list)[i]->getParam() , i*4+8, (*p_list)[i]->getParam_type() ,"basic");
 				}
 			}
 

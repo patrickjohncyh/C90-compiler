@@ -12,7 +12,7 @@
 
 class Expression; //forward declaration
 
-typedef std::pair <std::string,std::string> var_pair;	// loc, type (global_init,global,local);
+typedef std::tuple <int,std::string,std::string,std::string> var_pair;	// loc, scope (global,local), primitive_type, derived_type ;
 typedef std::pair <Expression*,std::string> case_pair;
 
 typedef int memReg;
@@ -108,17 +108,17 @@ struct Context{
 		return (mem_fp_offset_count);
 	}
 
-	void assignNewArgument(std::string name,int loc){
-		(*var_location)[name] = std::make_pair(std::to_string(loc),"local");
+	void assignNewArgument(std::string name,int loc,std::string type = "int",std::string d_type = "basic"){
+		(*var_location)[name] = std::make_tuple(loc,"local","int","basic");
 	}
 
-	void assignNewVariable(std::string name,std::string type = "int",int size = 1){
+	void assignNewVariable(std::string name,std::string type = "int",std::string d_type = "basic", int size = 1){
 		if(scope == global){
-			(*var_location)[name] = std::make_pair(std::to_string(mem_fp_offset_count),"global");
+			(*var_location)[name] = std::make_tuple((mem_fp_offset_count),"global",type,d_type);
 		}
 		else if(scope == local){
 			mem_fp_offset_count-=4;
-			(*var_location)[name] = std::make_pair(std::to_string(mem_fp_offset_count),"local");
+			(*var_location)[name] = std::make_tuple((mem_fp_offset_count),"local",type,d_type);
 			mem_fp_offset_count-=4*(size-1);	//for array
 		}
 	}
@@ -131,6 +131,28 @@ struct Context{
 			std::cout << "Error : Variable ( "<<name<<" ) not declared " << std::endl;
 			exit(1);
 		}
+	}
+
+
+	int getVariable_loc(std::string name){
+		auto var = getVariable(name);
+		return std::get<0>(var);
+
+	}
+
+	std::string getVariable_scope(std::string name){
+		auto var = getVariable(name);
+		return std::get<1>(var);
+	}
+
+	std::string getVariable_type(std::string name){
+		auto var = getVariable(name);
+		return std::get<2>(var);
+	}
+
+	std::string getVariable_dtype(std::string name){
+		auto var = getVariable(name);
+		return std::get<3>(var);
 	}
 
 };

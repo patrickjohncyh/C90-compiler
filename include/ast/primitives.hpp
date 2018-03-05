@@ -64,28 +64,31 @@ class Identifier : public Primitive{
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			dst << "##### accessVar #####" << std::endl;
 			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
 			to_mips_getAddr(dst,ctx);
 
-			std::string destReg = "v0";
-			ctx.memReg_read(destMemReg, destReg,dst);	
+			auto var_dtype = ctx.getVariable_dtype(id);
 
-			dst << "lw $"<<destReg<<",0($"<<destReg<<")"<<std::endl;
-
-			ctx.memReg_write(destMemReg, destReg,dst);
+			if(var_dtype != "array"){	//array identifier evaluates to its address
+				ctx.memReg_read(destMemReg, destReg,dst);	
+				dst << "lw $"<<destReg<<",0($"<<destReg<<")"<<std::endl;
+				ctx.memReg_write(destMemReg, destReg,dst);
+			}
 
 		}
 
 		virtual void to_mips_getAddr(std::ostream &dst, Context ctx) const{
 			dst << "##### getAddr #####" << std::endl;
 			auto destMemReg = ctx.getCurrStorage();
-			auto var_loc = ctx.getVariable(id);
+			auto var_loc   = ctx.getVariable_loc(id);
+			auto var_scope = ctx.getVariable_scope(id);
 
 			std::string destReg = "v0";
 
-			if(var_loc.second == "local"){
-				dst<<"addiu $"<<destReg<<",$fp,"<<var_loc.first<<std::endl;
+			if(var_scope == "local"){
+				dst<<"addiu $"<<destReg<<",$fp,"<<var_loc<<std::endl;
 			}
-			else if(var_loc.second == "global"){
+			else if(var_scope == "global"){
 				dst<<"la $"<<destReg<<","<<id << std::endl;
 			}
 

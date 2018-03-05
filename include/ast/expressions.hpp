@@ -108,7 +108,8 @@ class ArrayAccessExpression : public UnaryExpression{
 		virtual void to_mips_getAddr(std::ostream &dst, Context ctx) const{
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
-			expr->to_mips_getAddr(dst,ctx);	//addr of id
+			//expr->to_mips_getAddr(dst,ctx);	//addr of id
+			expr->to_mips(dst,ctx);	//addr of id from map if local or mem loc if arguemnt or some sort of pounter
 
 			auto offsetMemReg = ctx.assignNewStorage();
 			std::string offsetReg = "v1";	
@@ -150,7 +151,6 @@ class FunctionCallExpression : public UnaryExpression{
 			for(int i=0; i<numArgs; i++){
 				auto tempMemReg = ctx.assignNewStorage(); 	
 				std::string tempReg = "v1";
-				//check type of argument. If array, then need to pass address. Pointers too i presume
 				(*a_list)[i]->to_mips(dst,ctx); //eval expression
 				ctx.deAllocStorage();
 				ctx.memReg_read(tempMemReg,tempReg,dst);
@@ -327,8 +327,6 @@ class PreNotExpression : public UnaryExpression{
 };
 
 
-
-
 /********************** Binary Expressions ************************/
 class BinaryExpression : public Expression{
 	protected:
@@ -387,7 +385,6 @@ class BinaryExpression : public Expression{
 	        dst<<" )";
 		}
 };
-
 
 /********* Arithmetic Binary Expressions *********/
 
@@ -567,7 +564,6 @@ class AssignmentExpression : public Expression{
 
 
 class DirectAssignmentExpression : public AssignmentExpression{
-
 	public:
 		DirectAssignmentExpression(Expression* _lvalue, Expression* _expr)
 		: AssignmentExpression(_lvalue,_expr){}
