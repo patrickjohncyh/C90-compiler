@@ -30,8 +30,8 @@ void yyerror(const char *);
 
 }
 
-%token INT
-%token VOID
+%token INT CHAR DOUBLE FLOAT VOID
+
 %token RETURN
 %token IF
 %token ELSE
@@ -160,16 +160,16 @@ prefix_expression	:	postfix_expression
 					|	'~' prefix_expression		{  ;}
 
 mult_expression		:	prefix_expression				 	   { $$ = $1; }
-					| 	mult_expression '*' postfix_expression { $$ = new MultExpression($1,$3);	}
-					| 	mult_expression '/' postfix_expression { $$ = new DivExpression($1,$3);		}
-					|	mult_expression '%' postfix_expression { $$ = new ModuloExpression($1,$3);	}
+					| 	mult_expression '*' prefix_expression  { $$ = new MultExpression($1,$3);	}
+					| 	mult_expression '/' prefix_expression  { $$ = new DivExpression($1,$3);		}
+					|	mult_expression '%' prefix_expression  { $$ = new ModuloExpression($1,$3);	}
 
 
 add_expression		: 	mult_expression					  	{ $$ = $1; }
 					| 	add_expression '+' mult_expression	{ $$ = new AddExpression($1,$3);	}
 					| 	add_expression '-' mult_expression  { $$ = new SubExpression($1,$3);	}
 
-bw_shift_expression	:	add_expression
+bw_shift_expression	:	add_expression	/*implement bw shift*/
 
 compare_expression	: 	bw_shift_expression
 					|	compare_expression LT_OP bw_shift_expression	{ $$ = new LessThanExpression($1,$3); 		}
@@ -233,8 +233,9 @@ condition_statement :	IF '(' expression ')' statement 				{ $$ = new ConditionIf
 					| 	SWITCH '(' expression ')' statement 			{ $$ = new ConditionSwitchStatement($3,$5); 	} 
 
 
-iteration_statement	:	WHILE '(' expression ')' statement 									{ $$ = new WhileStatement($3,$5);	}
-					|	FOR   '(' expression ';' expression ';' expression ')' statement	{ $$ = new ForStatement($3,$5,$7,$9);	}
+iteration_statement	:	WHILE '(' expression ')' statement 								{ $$ = new WhileStatement($3,$5);		}
+					|	FOR '(' expr_statement expr_statement ')' statement				{ $$ = new ForStatement($3,$4,NULL,$6);	}
+					| 	FOR '(' expr_statement expr_statement expression ')' statement 	{ $$ = new ForStatement($3,$4,$5,$7);	}
 
 
 labeled_statement	:	CASE expression ':' statement 	{ $$ = new LabeledCaseStatement($2,$4); }
@@ -242,19 +243,18 @@ labeled_statement	:	CASE expression ':' statement 	{ $$ = new LabeledCaseStateme
 					| 	IDENTIFIER 		':' statement 	{ ; }
 
 
-
-
-
 /*---------------------------------------------------------------------------------------------------------------------*/
 
-type_specifier		:	INT 		{ $$ = new std::string("int"); }
-					|	VOID		{ $$ = new std::string("void");} 			
+type_specifier		:	INT 		{ $$ = new std::string("int"); 		}
+					|	VOID		{ $$ = new std::string("void");		} 	
+					|	CHAR 		{ $$ = new std::string("char");		} 
+					|	DOUBLE 		{ $$ = new std::string("double");	} 	
+					|	FLOAT 		{ $$ = new std::string("float");	} 				
 
 
 %%
 
 const ASTNode *root; // Definition of variable (to match declaration earlier)
-
 
 
 const ASTNode* parse(){

@@ -311,14 +311,14 @@ class WhileStatement : public Statement{
 
 class ForStatement : public Statement{
 	private:
-		Expression* init_expr;
-		Expression* cond_expr;
+		Statement* init_stat;
+		Statement* cond_stat;
 		Expression* update_expr;
 		Statement*	s_true;
 		
 	public:
-		ForStatement(Expression* _init_expr, Expression* _cond_expr, Expression* _update_expr, Statement* _s_true)
-		:init_expr(_init_expr),cond_expr(_cond_expr),update_expr(_update_expr),s_true(_s_true){}
+		ForStatement(Statement* _init_stat, Statement* _cond_stat, Expression* _update_expr, Statement* _s_true)
+		:init_stat(_init_stat),cond_stat(_cond_stat),update_expr(_update_expr),s_true(_s_true){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 
@@ -326,28 +326,26 @@ class ForStatement : public Statement{
 			std::string forEndLabel = ctx.generateLabel("$FOR_END");
 
 			ctx.break_label.push(forEndLabel);
-
-			ctx.assignNewStorage();
-			std::string initReg = "v0";
-			init_expr->to_mips(dst,ctx);
-			ctx.deAllocStorage();
-
+			
+			init_stat->to_mips(dst,ctx);
 
 			dst<<forStartLabel<<":"<<std::endl;
 
 			auto condMemReg = ctx.assignNewStorage();
 			std::string condReg = "v0";
-			cond_expr->to_mips(dst,ctx);
 			ctx.deAllocStorage();
+			cond_stat->to_mips(dst,ctx);
 
 			ctx.memReg_read(condMemReg,condReg,dst);
 			dst<<"beq $0,$"<<condReg<<","<<forEndLabel<<std::endl;
 			s_true->to_mips(dst,ctx);
 
-			ctx.assignNewStorage();
-			std::string updateReg = "v0";
-			update_expr->to_mips(dst,ctx);
-			ctx.deAllocStorage();
+			if(update_expr!=NULL){
+				ctx.assignNewStorage();
+				std::string updateReg = "v0";
+				update_expr->to_mips(dst,ctx);
+				ctx.deAllocStorage();
+			}
 
 			dst << "b "<<forStartLabel<<std::endl;
 			dst << "nop" << std::endl;
@@ -359,9 +357,9 @@ class ForStatement : public Statement{
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst << indent << "for(";
-			init_expr->to_c(dst,"");
+			init_stat->to_c(dst,"");
 			dst << ";";
-			cond_expr->to_c(dst,"");
+			cond_stat->to_c(dst,"");
 			dst << ";";
 			update_expr->to_c(dst,"");
 			dst << ")" << std::endl;

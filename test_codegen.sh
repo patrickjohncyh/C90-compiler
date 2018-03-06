@@ -31,7 +31,7 @@ for i in ${input_dir}/*.c ; do
 
     if [[ ${have_compiler} -eq 1 ]] ; then
         # Compile to .c to .s using Compiler
-        $compiler --compile $i -o ${working}/$base-out.s
+        $compiler -S $i -o ${working}/$base-out.s
         
         # Statically link .s
         mips-linux-gnu-gcc -std=c89 -march=mips1 -mfp32 --static -O0 ${working}/$base-out.s -o $working/$base-out

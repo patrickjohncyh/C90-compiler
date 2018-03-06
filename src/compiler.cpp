@@ -24,7 +24,7 @@ int main(int argc, char* argv[]){
 		else if(std::string(argv[1]) == "--parse"){
 			root->to_c(outfile,"");
 		}
-		else if(std::string(argv[1]) == "--compile"){
+		else if(std::string(argv[1]) == "-S"){
 			Context c;
 			root->to_mips(outfile,c);
 		}
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]){
 			TranslateContext tc;
 			root->to_python(std::cout,"",tc);
 		}
-		else if(std::string(argv[1]) == "--compile"){
+		else if(std::string(argv[1]) == "-S"){
 			Context c;
 			root->to_mips(std::cout,c);
 		}
