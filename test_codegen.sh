@@ -35,14 +35,14 @@ for i in ${input_dir}/*.c ; do
         
         # Statically link .s
         mips-linux-gnu-gcc -std=c89 -march=mips1 -mfp32 --static -O0 ${working}/$base-out.s -o $working/$base-out
-        
+                
         # Run reference
         qemu-mips $working/$base-ref
         REF_OUT=$? 
 
         # Run reference
         qemu-mips $working/$base-out
-        GOT_OUT=$?    
+        GOT_OUT=$? 
     fi
 
     if [[ $REF_OUT -ne $GOT_OUT ]] ; then

@@ -17,7 +17,6 @@ typedef std::pair <Expression*,std::string> case_pair;
 
 typedef int memReg;
 
-
 const int global = 0;
 const int local  = 1;
 
@@ -32,6 +31,9 @@ typedef mapType* mapPtr;
 
 struct Context{
 	mapPtr var_location = new mapType();
+
+	std::map<std::string,int> type_size = {{"int", 4}, {"char", 1}}; //in terms of bytes
+
 
 	std::stack<std::map<std::string,var_pair>*> var_scope_stack;
 	std::stack<int> var_scope_fp_count_stack;
@@ -115,9 +117,9 @@ struct Context{
 			(*var_location)[name] = std::make_tuple((mem_fp_offset_count),"global",type,d_type);
 		}
 		else if(scope == local){
-			mem_fp_offset_count-=4;
-			(*var_location)[name] = std::make_tuple((mem_fp_offset_count),"local",type,d_type);
-			mem_fp_offset_count-=4*(size-1);	//for array
+			int num_bytes = type_size[type];
+			mem_fp_offset_count-=num_bytes*size; // mainly for array. first element is nearer top of stack
+			(*var_location)[name] = std::make_tuple(mem_fp_offset_count,"local",type,d_type); 
 		}
 	}
 

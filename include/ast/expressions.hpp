@@ -119,7 +119,9 @@ class ArrayAccessExpression : public UnaryExpression{
 			ctx.memReg_read(offsetMemReg,offsetReg,dst);
 
 			dst << "sll  $"<<offsetReg<<",$"<<offsetReg<<",2" << std::endl;	//mult offset by 4 (for int)
-			dst << "subu $"<<destReg<<",$"<<destReg<<",$"<<offsetReg << std::endl;	//address of element
+			dst << "addu $"<<destReg<<",$"<<destReg<<",$"<<offsetReg << std::endl;	//address of element
+
+			//dst << "subu $"<<destReg<<",$"<<destReg<<",$"<<offsetReg << std::endl;	//address of element
 			ctx.memReg_write(destMemReg,destReg,dst);
 
 		}

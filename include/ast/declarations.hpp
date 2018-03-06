@@ -55,7 +55,7 @@ class Declarator  : public ExternalDeclaration{
 			return "";
 		}
 		virtual int getSize() const{
-			return 0;
+			return 1;
 		}
 		virtual std::string getDtype() const{
 			return "";
@@ -66,8 +66,8 @@ class ArrayDeclarator : public Declarator{
 	private:
 		std::string id;
 		Expression *size_expr; 
-	public:
 
+	public:
 		ArrayDeclarator(std::string _id = "", Expression *_size_expr = NULL)
 		:id(_id),size_expr(_size_expr){}
 
@@ -79,7 +79,6 @@ class ArrayDeclarator : public Declarator{
 			return id;
 		}
 
-
 		virtual std::string getDtype() const override{
 			return "array";
 		}
@@ -87,7 +86,7 @@ class ArrayDeclarator : public Declarator{
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			
 			int size = getSize();
-			ctx.assignNewVariable(id,"int","array",size);
+			//ctx.assignNewVariable(id,"int","array",size);
 			if(ctx.getScope() == global){
 				dst<<".data"<<std::endl;	
 				dst<<".globl "<<id<<std::endl;
@@ -125,11 +124,15 @@ class InitArrayDeclarator : public Declarator{
 			return dec->getSize();
 		}
 
+		virtual std::string getDtype() const{
+			return "array";
+		}
+
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 
 			int size = getSize();
 			std::string id = getId();
-			ctx.assignNewVariable(id,"int","array",size);
+			//ctx.assignNewVariable(id,"int","array",size);
 			
 			if ((unsigned)size != init_list->size()){
 				dst << "Error : Array initializer does not match size" <<std::endl;
@@ -151,7 +154,7 @@ class InitArrayDeclarator : public Declarator{
 					(*init_list)[i]->to_mips(dst,ctx);
 					ctx.deAllocStorage();
 					ctx.memReg_read(tempMemReg,tempReg,dst);
-					dst<<"sw $"<<tempReg<<","<< (ctx.getVariable_loc(id)-(i*4))<<"($fp)"<<std::endl;
+					dst<<"sw $"<<tempReg<<","<< (ctx.getVariable_loc(id)+(i*4))<<"($fp)"<<std::endl;
 				}
 			}
 			
@@ -178,7 +181,6 @@ class IdentifierDeclarator  : public Declarator{
 		:id(_id){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			ctx.assignNewVariable(id);	
 			if(ctx.getScope() == global){
 				dst<<".data"<<std::endl;	
 				dst<<".globl "<<id<<std::endl;
@@ -222,7 +224,7 @@ class InitIdentifierDeclarator  : public Declarator{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			std::string id = dec->getId();
-			ctx.assignNewVariable(id);
+		//	ctx.assignNewVariable(id);
 			
 			if(ctx.getScope() == global){
 				int init_val = init_expr->to_mips_eval(); //global only allows constant init
@@ -284,15 +286,12 @@ class Declaration : public ExternalDeclaration{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			if(dec_list != NULL){
-				if(ctx.getScope() == local){
-					for(auto it=dec_list->begin();it!=dec_list->end();it++){
-						(*it)->to_mips(dst,ctx);
-					}
-				}
-				else if(ctx.getScope() == global){
-					for(auto it=dec_list->begin();it!=dec_list->end();it++){
-						(*it)->to_mips(dst,ctx);
-					}
+				for(auto it=dec_list->begin();it!=dec_list->end();it++){
+					std::string id 	  = (*it)->getId();
+					std::string dtype = (*it)->getDtype();
+					int size 		  = (*it)->getSize();
+					ctx.assignNewVariable(id,type,dtype,size);
+					(*it)->to_mips(dst,ctx);	
 				}
 			}
 		}
