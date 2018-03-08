@@ -3,24 +3,28 @@
 
 #include <iomanip>
 #include <vector>
+#include <cmath>
 
 
 class Expression : public ASTNode{
 	public:
-		virtual void print_struct(std::ostream &dst, int m) const =0;
-		virtual void to_mips_getAddr(std::ostream &dst, Context ctx) const{
-			dst << "ERROR Unassignable" << std::endl;
+		virtual void to_mips_getAddr(std::ostream &dst, Context& ctx) const{
+			std::cout << "ERROR : Unassignable" << std::endl;
 			exit(1);
 		}
 
 		virtual std::string to_mips_getId() const{
-			std::cout << "ERROR Not and Identifier" << std::endl;
+			std::cout << "ERROR : Not and Identifier" << std::endl;
 			exit(1);
 			return "";
 		}
-
 		virtual int to_mips_eval() const{
 			return 0;
+		}
+		virtual Type exprType(Context& ctx) const{
+			std::cout << "ERROR : exprType() Not implemented" << std::endl;
+			exit(1);
+			return Type(Int);
 		}
 };
 
@@ -43,7 +47,7 @@ class PostIncrementExpression : public UnaryExpression{
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
-			expr->to_mips_getAddr(dst,ctx);		//addr of expression in destReg	
+			expr->to_mips_getAddr(dst,ctx);								//addr of expression in destReg	
 			std::string tempReg = "v1";
 			ctx.memReg_read(destMemReg, destReg, dst);
 			dst<<"lw    $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//value of expr now in tempReg
@@ -69,7 +73,7 @@ class PostDecrementExpression : public UnaryExpression{
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
-			expr->to_mips_getAddr(dst,ctx);		//addr of expression in destReg	
+			expr->to_mips_getAddr(dst,ctx);								//addr of expression in destReg	
 			std::string tempReg = "v1";
 			ctx.memReg_read(destMemReg, destReg, dst);
 			dst<<"lw    $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//value of expr now in tempReg
@@ -100,12 +104,13 @@ class ArrayAccessExpression : public UnaryExpression{
 			std::string destReg = "v0";		
 			to_mips_getAddr(dst,ctx);		//addr of expression operated on
 			ctx.memReg_read(destMemReg,destReg,dst);
-			dst << "lw $"<<destReg<<",0($"<<destReg<<")"<<std::endl;
+
+			dst<<ctx.memoryOffsetRead(exprType(ctx),destReg,destReg,0);
+
 			ctx.memReg_write(destMemReg,destReg,dst);			
 		}
 
-
-		virtual void to_mips_getAddr(std::ostream &dst, Context ctx) const{
+		virtual void to_mips_getAddr(std::ostream &dst, Context& ctx) const override{
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
 			expr->to_mips(dst,ctx);	//addr of id from map if local or mem loc if arguemnt or some sort of pointer
@@ -118,12 +123,15 @@ class ArrayAccessExpression : public UnaryExpression{
 			ctx.memReg_read(destMemReg,destReg,dst);
 			ctx.memReg_read(offsetMemReg,offsetReg,dst);
 
-			dst << "sll  $"<<offsetReg<<",$"<<offsetReg<<",2" << std::endl;	//mult offset by 4 (for int)
-			dst << "addu $"<<destReg<<",$"<<destReg<<",$"<<offsetReg << std::endl;	//address of element
+			int byteSize = 4;//ctx.type_size[exprType(ctx)];
 
-			//dst << "subu $"<<destReg<<",$"<<destReg<<",$"<<offsetReg << std::endl;	//address of element
+			dst << "sll  $"<<offsetReg<<",$"<<offsetReg<<","<<log2(byteSize) << std::endl;	//mult offset by 4 (for int)
+			dst << "addu $"<<destReg<<",$"<<destReg<<",$"<<offsetReg 		 << std::endl;	//address of element
 			ctx.memReg_write(destMemReg,destReg,dst);
+		}
 
+		virtual Type exprType(Context& ctx) const override{
+			return expr->exprType(ctx);
 		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
@@ -148,7 +156,7 @@ class FunctionCallExpression : public UnaryExpression{
 			int numArgs=0;
 			if(a_list!=NULL) numArgs = a_list->size();
 
-			dst << "addiu $sp,$sp," << -numArgs*4 + ctx.getCurrStorage()*4 << std::endl;		//sp to correct position
+			dst << "addiu $sp,$sp," << -numArgs*4 + ctx.getCurrStorage() << std::endl;		//sp to correct position
 			for(int i=0; i<numArgs; i++){
 				auto tempMemReg = ctx.assignNewStorage(); 	
 				std::string tempReg = "v1";
@@ -164,11 +172,15 @@ class FunctionCallExpression : public UnaryExpression{
 			}
 
 			std::string id = expr->to_mips_getId();
-			dst << "jal "<< id << std::endl; 												//call function, Assumes that it is an Identifier
-			dst << "addiu $sp,$sp," << -ctx.getCurrStorage()*4  + numArgs*4 << std::endl;	//sp to original position
+			dst << "jal "<< id << std::endl; 											//call function, Assumes that it is an Identifier
+			dst << "addiu $sp,$sp," << -ctx.getCurrStorage()  + numArgs*4 << std::endl;	//sp to original position
 			dst << "move $"<<destReg<<",$2" << std::endl;
 			ctx.memReg_write(destMemReg,destReg,dst);
 
+		}
+
+		virtual Type exprType(Context& ctx) const override{
+			return Type(Int); //should be the type of the function declared...
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
@@ -339,27 +351,36 @@ class BinaryExpression : public Expression{
 
 		virtual const char *getOpcode() const =0;
 
-		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const{};
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const{}; 
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 
-			auto destMemReg = ctx.getCurrStorage(); 	//write to dest Reg
+			Type type = exprType(ctx);
+			//mem alloc will depend on type of left and right.. looking ahead for floats. focus on integrals now.
+
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
 			left->to_mips(dst,ctx);
+
 			auto tempMemReg = ctx.assignNewStorage(); 
+			std::string tempReg = "v1";
 			right->to_mips(dst,ctx);
+
 			ctx.deAllocStorage();
 
+			ctx.memReg_read(destMemReg,destReg,dst);	
+			ctx.memReg_read(tempMemReg,tempReg,dst);	
 
-			std::string destReg = "v0";
-			std::string tempReg = "v1";
-
-			ctx.memReg_read(destMemReg, destReg,dst);	
-			ctx.memReg_read(tempMemReg, tempReg,dst);	
-
-			to_mips_getOperation(dst,ctx,destReg,tempReg);
-	
+			to_mips_getOperation(dst,ctx,destReg,tempReg,type);
+			
 			ctx.memReg_write(destMemReg, destReg,dst);	
+		}
 
+		virtual Type exprType(Context& ctx) const override{
+			Type leftType  = left->exprType(ctx);
+			Type rightType = right->exprType(ctx);
+			Type thisType = ctx.arithmeticConversion(leftType,rightType);
+			return thisType;
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
@@ -393,11 +414,20 @@ class MultExpression : public BinaryExpression{
 	public:
 		MultExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
-
-			dst <<"mult $"<<left<<",$"<<right<<std::endl;
-			dst <<"mflo $"<<left<<std::endl;
-		};
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
+			if(type.isIntegral()){
+				if(type.isSigned()){
+					dst <<"mult $"<<left<<",$"<<right<<std::endl;
+					dst <<"mflo $"<<left<<std::endl;
+				}
+				else{
+					//unsigned 
+				}
+			}
+			else{
+				//float
+			}
+		}
 
 		virtual const char *getOpcode() const override{
 			return "*";
@@ -408,8 +438,21 @@ class DivExpression : public BinaryExpression{
 	public:
 		DivExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
-			dst <<"div $"<<left<<",$"<<right<<std::endl;
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
+			if(type.isIntegral()){
+				if(type.isSigned()){
+					dst <<"div $0,$"<<left<<",$"<<right<<std::endl;
+				} 			
+				else{
+					dst <<"divu $0,$"<<left<<",$"<<right<<std::endl;
+				}
+			}
+			else{
+				//floats
+			}
+
+			
+			dst <<"mfhi $"<<left<<std::endl;
 			dst <<"mflo $"<<left<<std::endl;
 		};
 		virtual const char *getOpcode() const override{
@@ -421,7 +464,7 @@ class ModuloExpression : public BinaryExpression{
 	public:
 		ModuloExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
 			dst <<"div $"<<left<<",$"<<right<<std::endl;
 			dst <<"mfhi $"<<left<<std::endl;
 		};
@@ -434,8 +477,12 @@ class AddExpression : public BinaryExpression{
 	public:
 		AddExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
-			dst <<"addu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right,Type type) const override{
+			if(type.isIntegral())
+				dst <<"addu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+			else{
+				//float
+			}
 		};
 
 		virtual const char *getOpcode() const override{
@@ -447,10 +494,13 @@ class SubExpression : public BinaryExpression{
 	public:
 		SubExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
-			dst <<"subu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right,Type type) const override{
+			if(type.isIntegral())
+				dst <<"subu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+			else{
+				//float
+			}
 		};
-
 		virtual const char *getOpcode() const override{
 			return "-";
 		}
@@ -462,7 +512,7 @@ class LessThanExpression : public BinaryExpression{
 	public:
 		LessThanExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
 			dst <<"slt $"<<left<<",$"<<left<<",$"<<right<<std::endl;
 		};
 
@@ -475,7 +525,7 @@ class MoreThanExpression : public BinaryExpression{
 	public:
 		MoreThanExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
 			dst <<"slt $"<<left<<",$"<<right<<",$"<<left<<std::endl;
 		};
 
@@ -488,7 +538,7 @@ class LessThanEqExpression : public BinaryExpression{
 	public:
 		LessThanEqExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 		
-		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
 			dst <<"slt  $"<<left<<",$"<<right<<",$"<<left<<std::endl;
 			dst <<"xori	$"<<left<<",$"<<left<<","<<0x1<<std::endl;
 		};
@@ -502,7 +552,7 @@ class MoreThanEqExpression : public BinaryExpression{
 	public:
 		MoreThanEqExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
 			dst <<"slt  $"<<left<<",$"<<left<<",$"<<right<<std::endl;
 			dst <<"xori	$"<<left<<",$"<<left<<","<<0x1<<std::endl;
 		};
@@ -516,7 +566,7 @@ class EqualityExpression : public BinaryExpression{
 	public:
 		EqualityExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
 			dst <<"xor   $"<<left<<",$"<<left<<",$"<<right<<std::endl;
 			dst <<"sltiu $"<<left<<",$"<<left<<",1"<<std::endl;
 		};
@@ -529,7 +579,7 @@ class NotEqualityExpression : public BinaryExpression{
 	public:
 		NotEqualityExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right) const override{
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type)const override{
 			dst <<"xor  $"<<left<<",$"<<left<<",$"<<right<<std::endl;
 			dst <<"sltu $"<<left<<",$0,$"<<left<<std::endl;
 		};
@@ -556,13 +606,10 @@ class AssignmentExpression : public Expression{
 	protected:
 		Expression* lvalue;
 		Expression* expr;
-			
 	public:
 		AssignmentExpression(Expression* _lvalue, Expression* _expr)
 		:lvalue(_lvalue),expr(_expr){}
 };
-
-
 
 class DirectAssignmentExpression : public AssignmentExpression{
 	public:
@@ -582,11 +629,15 @@ class DirectAssignmentExpression : public AssignmentExpression{
 
 			ctx.memReg_read(destMemReg, destReg, dst);
 			ctx.memReg_read(tempMemReg, tempReg, dst);
-			dst<<"sw   $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;
+
+			Type ltype = lvalue->exprType(ctx);
+
+			dst<<ctx.memoryOffsetWrite(ltype,tempReg,destReg,0);
+
 			dst<<"move $"<<destReg<<",$"<<tempReg<<std::endl;
 			ctx.memReg_write(destMemReg, destReg, dst);
-
 		}
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			lvalue->to_c(dst,indent);
 			dst << " =";
@@ -604,8 +655,6 @@ class DirectAssignmentExpression : public AssignmentExpression{
 
 
 // TO IMPLMENET OTHER ASSIGNMENT I.E += ,-=, *= ETC
-
-
 
 /********************** Ternary Expressions ************************/
 

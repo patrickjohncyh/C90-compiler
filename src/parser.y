@@ -20,6 +20,7 @@ void yyerror(const char *);
 	Expression *expression_node;
 	std::string *string;
 	int int_num;
+	Type *type_node;
 
 	std::vector<Expression 	*>* argument_list_vector;
 	std::vector<Statement 	*>* statement_list_vector;
@@ -30,7 +31,7 @@ void yyerror(const char *);
 
 }
 
-%token INT CHAR DOUBLE FLOAT VOID
+%token INT CHAR DOUBLE FLOAT VOID UNSIGNED SHORT SIGNED LONG
 
 %token RETURN
 %token IF
@@ -79,7 +80,7 @@ void yyerror(const char *);
 
 
 %type <string> IDENTIFIER LITERAL INT RETURN 
-%type <string> type_specifier 
+%type <type_node> type_specifier 
 
 
 %type <int_num> CONSTANT
@@ -98,7 +99,7 @@ translation_unit	: 	global_declaration					  { $$ = $1; }
 global_declaration	: 	function_definition						{ $$ = $1; }
 					| 	declaration 							{ $$ = $1; }
 
-function_definition	: 	type_specifier IDENTIFIER '(' parameter_list ')' compound_statement { $$ = new FunctionDefinition(*$1,*$2,$4,$6); }
+function_definition	: 	type_specifier IDENTIFIER '(' parameter_list ')' compound_statement { $$ = new FunctionDefinition($1,*$2,$4,$6); }
 
 declarator			: 	IDENTIFIER 						{ $$ = new IdentifierDeclarator(*$1);				}
 					|   IDENTIFIER '[' expression ']'	{ $$ = new ArrayDeclarator(*$1,$3);					}
@@ -245,11 +246,37 @@ labeled_statement	:	CASE expression ':' statement 	{ $$ = new LabeledCaseStateme
 
 /*---------------------------------------------------------------------------------------------------------------------*/
 
-type_specifier		:	INT 		{ $$ = new std::string("int"); 		}
-					|	VOID		{ $$ = new std::string("void");		} 	
-					|	CHAR 		{ $$ = new std::string("char");		} 
-					|	DOUBLE 		{ $$ = new std::string("double");	} 	
-					|	FLOAT 		{ $$ = new std::string("float");	} 				
+
+
+type_specifier		:	VOID				{ $$ = new Type(Void);	}
+					|	CHAR 				{ $$ = new Type(Char);	} 
+					|	SIGNED CHAR			{ $$ = new Type(Char);	} 
+					|	UNSIGNED CHAR 		{ $$ = new Type(UChar);	}
+					|	SHORT 				{ $$ = new Type(Short);	} 
+					|	SIGNED SHORT		{ $$ = new Type(Short);	} 
+					|	SHORT INT 			{ $$ = new Type(Short);	} 
+					|	SIGNED SHORT INT 	{ $$ = new Type(Short);	} 
+					|	UNSIGNED SHORT 		{ $$ = new Type(UShort);}
+					|	UNSIGNED SHORT INT	{ $$ = new Type(UShort);}
+					|	INT 				{ $$ = new Type(Int); 	}
+					|	SIGNED  			{ $$ = new Type(Int); 	}
+					|	SIGNED INT 			{ $$ = new Type(Int);	}
+					|	UNSIGNED 	 		{ $$ = new Type(UInt); 	}
+					|	UNSIGNED INT 		{ $$ = new Type(UInt); 	}
+					|	LONG				{ $$ = new Type(Long);  }
+					|	SIGNED LONG			{ $$ = new Type(Long); 	}
+					|	LONG INT			{ $$ = new Type(Long);	}
+					|	SIGNED LONG INT		{ $$ = new Type(Long); 	}
+					|	UNSIGNED LONG		{ $$ = new Type(ULong); }
+					|	UNSIGNED LONG INT	{ $$ = new Type(ULong); }
+
+				  /*|	FLOAT 				{ $$ = new std::string("float");				} 	
+					|	DOUBLE 				{ $$ = new std::string("double");				}
+					|	LONG DOUBLE 		{ $$ = new std::string("double");				}*/
+					
+				
+
+						
 
 
 %%

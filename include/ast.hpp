@@ -7,6 +7,8 @@
 #include <cstdlib>
 #include <typeinfo>
 
+#include "ast/Type.hpp"
+#include "ast/Variable.hpp"
 #include "ast/Context.hpp"
 #include "ast/ASTNode.hpp"
 #include "ast/declarations.hpp"

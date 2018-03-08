@@ -27,7 +27,7 @@ for i in ${input_dir}/*.c ; do
     base=$(echo $i | sed -E -e "s|${input_dir}/([^.]+)[.]c|\1|g");
 
  	# Compile the .c to .o to get reference
-    mips-linux-gnu-gcc --static -march=mips1 -mfp32 $i -o $working/$base-ref
+    mips-linux-gnu-gcc  --static -march=mips1 -mfp32 $i -o $working/$base-ref
 
     if [[ ${have_compiler} -eq 1 ]] ; then
         # Compile to .c to .s using Compiler
@@ -47,7 +47,7 @@ for i in ${input_dir}/*.c ; do
 
     if [[ $REF_OUT -ne $GOT_OUT ]] ; then
         Status="Fail"
-        printf  "%-5s %-27s \e[31m %-10s \e[0m \n" $count $base $Status
+        printf  "%-5s %-27s \e[31m %-10s \e[0m REF:%-7s GOT:%-7s \n" $count $base $Status $REF_OUT $GOT_OUT
     else
         Status="Pass"
         printf  "%-5s %-27s \e[32m %-10s \e[0m \n" $count $base $Status

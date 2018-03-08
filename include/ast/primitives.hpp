@@ -27,7 +27,7 @@ class StringLiteral : public Primitive{
 
 class Constant : public Primitive{
 	private:
-		int val;
+		unsigned val;
 	public:
 		Constant(int _val):val(_val){}
 
@@ -35,9 +35,14 @@ class Constant : public Primitive{
 			dst << "##### Constant #####" << std::endl;
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
-
-			dst <<"addiu $"<<destReg<<",$0,"<<val<<std::endl;
+			dst <<"li $"<<destReg<<","<<val<<std::endl;
 			ctx.memReg_write(destMemReg, destReg,dst);	
+		}
+
+		virtual Type exprType(Context& ctx) const override{
+			if(val > 2147483647)
+				return Type(UInt);
+			return Type(Int);
 		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
@@ -52,7 +57,6 @@ class Constant : public Primitive{
 		virtual int to_mips_eval() const{
 			return val;
 		}
-
 };
 
 class Identifier : public Primitive{
@@ -67,39 +71,37 @@ class Identifier : public Primitive{
 			std::string destReg = "v0";
 			to_mips_getAddr(dst,ctx);
 
-			auto var_dtype = ctx.getVariable_dtype(id);
+			Variable var = ctx.getVariable(id);
 
-			if(var_dtype != "array"){	//array identifier evaluates to its address
-				ctx.memReg_read(destMemReg, destReg,dst);	
-				dst << "lw $"<<destReg<<",0($"<<destReg<<")"<<std::endl;
+			if(!var.isArray()){	//array identifier evaluates to its address, pointer too possibly
+				ctx.memReg_read(destMemReg, destReg,dst);
+				dst<<ctx.memoryOffsetRead(exprType(ctx),destReg,destReg,0);
 				ctx.memReg_write(destMemReg, destReg,dst);
 			}
+		}	
 
-		}
-
-		virtual void to_mips_getAddr(std::ostream &dst, Context ctx) const{
+		virtual void to_mips_getAddr(std::ostream &dst, Context& ctx) const override{
 			dst << "##### getAddr #####" << std::endl;
 			auto destMemReg = ctx.getCurrStorage();
-			auto var_loc   = ctx.getVariable_loc(id);
-			auto var_scope = ctx.getVariable_scope(id);
-
 			std::string destReg = "v0";
-
-			if(var_scope == "local"){
-				dst<<"addiu $"<<destReg<<",$fp,"<<var_loc<<std::endl;
-			}
-			else if(var_scope == "global"){
+			
+			Variable var = ctx.getVariable(id);
+			if(var.getScope() == local)
+				dst<<"addiu $"<<destReg<<",$fp,"<<var.getAddr()<<std::endl;
+			else
 				dst<<"la $"<<destReg<<","<<id << std::endl;
-			}
 
 			ctx.memReg_write(destMemReg, destReg,dst);
 		}
 
+
 		virtual std::string to_mips_getId() const{
 			return id;
 		}
-
-
+		virtual Type exprType(Context& ctx) const override{
+			Variable var = ctx.getVariable(id);
+			return var.getType();;
+		}
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << id;
 		}

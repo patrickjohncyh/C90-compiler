@@ -14,10 +14,15 @@ L	[a-zA-Z_]
 
 
 int								{ return INT; 	 	}
+unsigned						{ return UNSIGNED; 	}
+signed							{ return SIGNED; 	}
+long							{ return LONG;	 	}
 void							{ return VOID;		}
 char							{ return CHAR;		}
-double							{ return DOUBLE;	}
+short							{ return SHORT;		}
 float							{ return FLOAT;		}
+double							{ return DOUBLE;	}
+
 
 return							{ return RETURN;	}
 if 								{ return IF;		}

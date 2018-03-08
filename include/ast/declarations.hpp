@@ -57,8 +57,8 @@ class Declarator  : public ExternalDeclaration{
 		virtual int getSize() const{
 			return 1;
 		}
-		virtual std::string getDtype() const{
-			return "";
+		virtual dType getDtype() const{
+			return Basic;
 		}
 };
 
@@ -68,39 +68,37 @@ class ArrayDeclarator : public Declarator{
 		Expression *size_expr; 
 
 	public:
-		ArrayDeclarator(std::string _id = "", Expression *_size_expr = NULL)
+		ArrayDeclarator(std::string _id, Expression *_size_expr)
 		:id(_id),size_expr(_size_expr){}
 
-		virtual int getSize() const override {
-			return size_expr->to_mips_eval();
-		}
-
-		virtual std::string getId() const override{
-			return id;
-		}
-
-		virtual std::string getDtype() const override{
-			return "array";
-		}
-
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			
+			Variable var = ctx.getVariable(id);
+			Type type = var.getType();
 			int size = getSize();
-			//ctx.assignNewVariable(id,"int","array",size);
+			
 			if(ctx.getScope() == global){
 				dst<<".data"<<std::endl;	
 				dst<<".globl "<<id<<std::endl;
 				dst<<id<<":"<<std::endl;
 				for(int i=0;i<size;i++){
-					dst<<".word "<< 0 << std::endl;
+					dst<<".word "<< 0 << std::endl;		//should change based on type
 				}	
 			}
 			else if(ctx.getScope() == local){
 				for(int i=0;i<size;i++){
-					dst<<"sw $0,"<<(ctx.getVariable_loc(id)-(i*4))<<"($fp)"<<std::endl;
+					int offset = var.getAddr()+ (i*type.bytes());
+					dst<<ctx.memoryOffsetWrite(type,"0","fp", offset);
 				}
-				
 			}
+		}
+		virtual int getSize() const override {
+			return size_expr->to_mips_eval();
+		}
+		virtual std::string getId() const override{
+			return id;
+		}
+		virtual dType getDtype() const override{
+			return Array;
 		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
@@ -124,16 +122,16 @@ class InitArrayDeclarator : public Declarator{
 			return dec->getSize();
 		}
 
-		virtual std::string getDtype() const{
-			return "array";
+		virtual dType getDtype() const{
+			return Array;
 		}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-
-			int size = getSize();
 			std::string id = getId();
-			//ctx.assignNewVariable(id,"int","array",size);
-			
+			Variable var = ctx.getVariable(id);
+			Type type = var.getType();
+			int size = getSize();
+
 			if ((unsigned)size != init_list->size()){
 				dst << "Error : Array initializer does not match size" <<std::endl;
 				exit(1);
@@ -144,7 +142,7 @@ class InitArrayDeclarator : public Declarator{
 				dst<<".globl "<<id<<std::endl;
 				dst<<id<<":"<<std::endl;
 				for(auto it=init_list->begin();it!=init_list->end();it++){
-					dst<<".word "<< (*it)->to_mips_eval() << std::endl;
+					dst<<".word "<< (*it)->to_mips_eval() << std::endl;	//should change label based on type
 				}				
 			}
 			else if(ctx.getScope() == local){
@@ -154,10 +152,11 @@ class InitArrayDeclarator : public Declarator{
 					(*init_list)[i]->to_mips(dst,ctx);
 					ctx.deAllocStorage();
 					ctx.memReg_read(tempMemReg,tempReg,dst);
-					dst<<"sw $"<<tempReg<<","<< (ctx.getVariable_loc(id)+(i*4))<<"($fp)"<<std::endl;
+
+					int offset = var.getAddr()+(i*type.bytes());
+					dst<<ctx.memoryOffsetWrite(type,tempReg,"fp", offset );
 				}
-			}
-			
+			}	
 		}
 		virtual void print_struct(std::ostream &dst, int m) const override{
 		}
@@ -169,14 +168,6 @@ class IdentifierDeclarator  : public Declarator{
 		std::string id;
 
 	public:
-		virtual std::string getId() const override{
-			return id;
-		}
-
-		virtual std::string getDtype() const override{
-			return "basic";
-		}
-
 		IdentifierDeclarator(std::string _id)
 		:id(_id){}
 
@@ -188,8 +179,16 @@ class IdentifierDeclarator  : public Declarator{
 				dst<<".word 0"<<std::endl;
 			}
 			else if(ctx.getScope() == local){
-				dst<<"sw $0,"<<ctx.getVariable_loc(id)<<"($fp)"<<std::endl;
+				Variable var = ctx.getVariable(id);
+				dst<<ctx.memoryOffsetWrite(var.getType(),"0","fp",var.getAddr());	
 			}
+		}
+
+		virtual std::string getId() const override{
+			return id;
+		}
+		virtual dType getDtype() const override{
+			return Basic;
 		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst << indent << id;
@@ -224,8 +223,9 @@ class InitIdentifierDeclarator  : public Declarator{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			std::string id = dec->getId();
-		//	ctx.assignNewVariable(id);
-			
+			Variable var = ctx.getVariable(id);
+			Type type = var.getType();
+
 			if(ctx.getScope() == global){
 				int init_val = init_expr->to_mips_eval(); //global only allows constant init
 				dst<<".data"<<std::endl;	
@@ -234,13 +234,13 @@ class InitIdentifierDeclarator  : public Declarator{
 				dst<<".word "<<init_val<<std::endl;
 			}
 			else if(ctx.getScope() == local){
-				dst<<"sw $0,"<<ctx.getVariable_loc(id)<<"($fp)"<<std::endl;
-				auto tempReg = ctx.assignNewStorage();
-				std::string tempReg_r = "v1";
+				auto tempMemReg = ctx.assignNewStorage();
+				std::string tempReg = "v1";
 				init_expr->to_mips(dst,ctx);
-				dst<<"lw $v1,"<<tempReg<<"($fp)"<<std::endl;
-				dst<<"sw $"<<tempReg_r<<","<<ctx.getVariable_loc(id)<<"($fp)"<<std::endl;
 				ctx.deAllocStorage();
+
+				ctx.memReg_read(tempMemReg,tempReg,dst);
+				dst<<ctx.memoryOffsetWrite(type,tempReg,"fp",var.getAddr());
 			}
 		}
 
@@ -264,31 +264,18 @@ class InitIdentifierDeclarator  : public Declarator{
 
 class Declaration : public ExternalDeclaration{
 	private:
-		std::string type;
+		Type type;
 		std::vector<Declarator*>* dec_list;
 
 	public:
-		Declaration(std::string _type, std::vector<Declarator*>* _dec_list = NULL)
+		Declaration(Type _type, std::vector<Declarator*>* _dec_list = NULL)
 		:type(_type),dec_list(_dec_list){}
-
-
-		std::string getParam(){
-			return (*dec_list)[0]->getId();
-		}
-
-		std::string getParam_type(){
-			return type;
-		}
-
-		std::string getParam_dtype(){
-			return (*dec_list)[0]->getDtype();
-		}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			if(dec_list != NULL){
 				for(auto it=dec_list->begin();it!=dec_list->end();it++){
 					std::string id 	  = (*it)->getId();
-					std::string dtype = (*it)->getDtype();
+					dType dtype 	  = (*it)->getDtype();
 					int size 		  = (*it)->getSize();
 					ctx.assignNewVariable(id,type,dtype,size);
 					(*it)->to_mips(dst,ctx);	
@@ -296,15 +283,26 @@ class Declaration : public ExternalDeclaration{
 			}
 		}
 
+		std::string getParam(){
+			return (*dec_list)[0]->getId();
+		}
+		dType getParam_dtype(){
+			return (*dec_list)[0]->getDtype();
+		}
+		Type getParam_type(){
+			return type;
+		}
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
-			dst << indent << type << " ";
+		/*	dst << indent << type << " ";
 			if(dec_list != NULL){
 				for(auto it=dec_list->begin();it!=dec_list->end();it++){
 					(*it)->to_c(dst,"");
 					if(next(it,1) != dec_list->end()) dst << ",";
 				}
-			}
+			}*/
 		}
+
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			if(dec_list != NULL){
 				for(auto it=dec_list->begin();it!=dec_list->end();it++){
@@ -314,7 +312,7 @@ class Declaration : public ExternalDeclaration{
 			}
 		}
 		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst <<  std::setw(m) << "";
+			/*dst <<  std::setw(m) << "";
 			dst << "Declaration [" << std::endl;
 
 			dst <<  std::setw(m+2) << "";
@@ -323,20 +321,20 @@ class Declaration : public ExternalDeclaration{
 				//dec_list->print_struct(dst,m+2);
 			}
 			dst <<  std::setw(m) << "";
-			dst << "]" << std::endl;
+			dst << "]" << std::endl;*/
 		}
 };
 
 
 class FunctionDefinition : public ExternalDeclaration{
 	private:
-		std::string type;
+		Type* type;
 		std::string id;
 		std::vector<Declaration*>*	p_list;
 		Statement*	s_ptr;
 
 	public:
-		FunctionDefinition(std::string _type, std::string _id,std::vector<Declaration*>* _p_list , Statement *_s_ptr )
+		FunctionDefinition(Type* _type, std::string _id,std::vector<Declaration*>* _p_list , Statement *_s_ptr )
 		:type(_type), id(_id), p_list(_p_list), s_ptr(_s_ptr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
@@ -356,14 +354,14 @@ class FunctionDefinition : public ExternalDeclaration{
 			if(p_list!=NULL){
 				for(unsigned int i=0;i<p_list->size();i++){
 					if(i<4) dst<<"sw $a"<<i<<","<<(i*4+8)<<"($fp)"<<std::endl;	
-					ctx.assignNewArgument( (*p_list)[i]->getParam() , i*4+8, (*p_list)[i]->getParam_type() ,"basic");
+					ctx.assignNewArgument( (*p_list)[i]->getParam(),(*p_list)[i]->getParam_type() ,Basic,i*4+8);
 				}
 			}
 
 			if(s_ptr!=NULL){
 				s_ptr->to_mips(dst,ctx);
 			}
-
+			
 			dst<<ctx.return_label<<":"<<std::endl;
 			dst<<"# Start Epilouge #"<<std::endl;
 			dst<<"addiu $sp,$sp,8"<<std::endl;
@@ -376,20 +374,6 @@ class FunctionDefinition : public ExternalDeclaration{
 			ctx.scopeGlobal();
 		}
 
-
-		virtual void to_c(std::ostream &dst,std::string indent) const override{
-			dst << type << " " << id << "(";
-			if(p_list != NULL){
-				for(auto it=p_list->begin();it!=p_list->end();it++){
-					(*it)->to_c(dst,"");
-					if(next(it,1) != p_list->end()) dst << ", ";
-				}
-			}
-			dst <<")";
-			if(s_ptr != NULL){
-				s_ptr->to_c(dst,indent);
-			}
-		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << "def " << id << "(";
 			if(p_list != NULL){
@@ -406,8 +390,22 @@ class FunctionDefinition : public ExternalDeclaration{
 				s_ptr->to_python(dst,indent+"  ",tc);	
 			}
 		}
+
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+		/*	dst << type << " " << id << "(";
+			if(p_list != NULL){
+				for(auto it=p_list->begin();it!=p_list->end();it++){
+					(*it)->to_c(dst,"");
+					if(next(it,1) != p_list->end()) dst << ", ";
+				}
+			}
+			dst <<")";
+			if(s_ptr != NULL){
+				s_ptr->to_c(dst,indent);
+			}*/
+		}
 		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "FunctionDefinition [ " << std::endl;
+		/*	dst << "FunctionDefinition [ " << std::endl;
 
 			dst <<  std::setw(m+2) << "";
 			dst << "Type( " << type << " )"<<  std::endl;
@@ -424,7 +422,7 @@ class FunctionDefinition : public ExternalDeclaration{
 			dst << ")" << std::endl;
 
 			s_ptr->print_struct(dst,m+2);
-			dst << "]" << std::endl;
+			dst << "]" << std::endl;*/
 		}
 };
 
