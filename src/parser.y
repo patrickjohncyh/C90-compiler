@@ -20,6 +20,7 @@ void yyerror(const char *);
 	Expression *expression_node;
 	std::string *string;
 	int int_num;
+	double float_num;
 	Type *type_node;
 
 	std::vector<Expression 	*>* argument_list_vector;
@@ -44,7 +45,7 @@ void yyerror(const char *);
 %token DEFAULT
 
 
-%token IDENTIFIER CONSTANT LITERAL
+%token IDENTIFIER LITERAL CONSTANT_I CONSTANT_F
 %token INC_OP DEC_OP
 
 %token EQ_OP NE_OP LT_OP GT_OP LE_OP GE_OP
@@ -79,11 +80,9 @@ void yyerror(const char *);
 
 
 
-%type <string> IDENTIFIER LITERAL INT RETURN 
+%type <string> IDENTIFIER LITERAL INT RETURN CONSTANT_I	CONSTANT_F
 %type <type_node> type_specifier 
 
-
-%type <int_num> CONSTANT
 
 %start ROOT
 
@@ -139,7 +138,8 @@ parameter_list		:	parameter_declaration				     { $$ = new std::vector<Declarati
 /* Expressions */
 
 
-base_expression		: 	CONSTANT			{ $$ = new Constant($1);   		}
+base_expression		: 	CONSTANT_I			{ $$ = new IntegralConstant(*$1);}
+					|	CONSTANT_F			{ $$ = new FloatingConstant(*$1);}
 					| 	IDENTIFIER		 	{ $$ = new Identifier(*$1);  	}	
 					| 	LITERAL			 	{ $$ = new StringLiteral(*$1); 	}	
 					| 	'(' expression ')'	{ $$ = $2; 						}
@@ -269,9 +269,9 @@ type_specifier		:	VOID				{ $$ = new Type(Void);	}
 					|	SIGNED LONG INT		{ $$ = new Type(Long); 	}
 					|	UNSIGNED LONG		{ $$ = new Type(ULong); }
 					|	UNSIGNED LONG INT	{ $$ = new Type(ULong); }
+					|	FLOAT 				{ $$ = new Type(Float);	} 
 
-				  /*|	FLOAT 				{ $$ = new std::string("float");				} 	
-					|	DOUBLE 				{ $$ = new std::string("double");				}
+					/*|	DOUBLE 				{ $$ = new std::string("double");				}
 					|	LONG DOUBLE 		{ $$ = new std::string("double");				}*/
 					
 				

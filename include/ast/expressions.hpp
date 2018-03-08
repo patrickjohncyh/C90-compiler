@@ -22,8 +22,8 @@ class Expression : public ASTNode{
 			return 0;
 		}
 		virtual Type exprType(Context& ctx) const{
-			std::cout << "ERROR : exprType() Not implemented" << std::endl;
-			exit(1);
+		//	std::cout << "ERROR : exprType() Not implemented" << std::endl;
+		//	exit(1);
 			return Type(Int);
 		}
 };
@@ -173,6 +173,7 @@ class FunctionCallExpression : public UnaryExpression{
 
 			std::string id = expr->to_mips_getId();
 			dst << "jal "<< id << std::endl; 											//call function, Assumes that it is an Identifier
+			dst << "nop "<<std::endl;
 			dst << "addiu $sp,$sp," << -ctx.getCurrStorage()  + numArgs*4 << std::endl;	//sp to original position
 			dst << "move $"<<destReg<<",$2" << std::endl;
 			ctx.memReg_write(destMemReg,destReg,dst);
@@ -526,7 +527,19 @@ class MoreThanExpression : public BinaryExpression{
 		MoreThanExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
 		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
-			dst <<"slt $"<<left<<",$"<<right<<",$"<<left<<std::endl;
+			if(type.isIntegral()){
+				if(type.isSigned()){
+					dst <<"slt $"<<left<<",$"<<right<<",$"<<left<<std::endl;
+				}
+				else{
+					dst <<"sltu $"<<left<<",$"<<right<<",$"<<left<<std::endl;
+				}
+				
+			}
+			else{
+				//flaot
+			}
+			
 		};
 
 		virtual const char *getOpcode() const override{

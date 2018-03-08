@@ -9,6 +9,6 @@ int factorial(int num)
 }
 
 int main(){
-	return factorial(20);
+	return factorial(5);
 }
 

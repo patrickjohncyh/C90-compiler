@@ -30,18 +30,6 @@ typedef mapType* mapPtr;
 struct Context{
 	mapPtr var_location = new mapType();
 
-
-	std::map<std::string,int> type_size = {{"char",			1},
-								   {"signed char",	1},
-								   {"unsigned char",1},
-								   {"int", 			4},
-								   {"signed int",	4},
-								   {"unsigned int",	4},
-								   {"unsigned",		4} }; //in terms of bytes
-
-
-
-
 	std::stack <mapType*> var_scope_stack;
 	std::stack<int> var_scope_fp_count_stack;
 
@@ -50,10 +38,12 @@ struct Context{
 	std::stack<std::string> break_label;
 	std::string return_label;
 
+	std::map<std::string,std::string> labeled_constant;
+
+
 	Scope scope = global;
 	int mem_fp_offset_count = 0; // growing negatveily
 	int mem_reg_count = 0;
-
 
 	void open_scope(){
 		var_scope_stack.push(var_location);
@@ -92,6 +82,15 @@ struct Context{
 	void memReg_write(memReg loc, std::string reg, std::ostream& dst){
 		dst << "sw $"<<reg<<","<<loc<<"($fp)"<<std::endl;
 	}
+
+	void memReg_read_f(memReg loc, std::string reg, std::ostream& dst){
+		dst << "lwc1 $"<<reg<<","<<loc<<"($fp)"<<std::endl;
+	}
+
+	void memReg_write_f(memReg loc, std::string reg, std::ostream& dst){
+		dst << "swc1 $"<<reg<<","<<loc<<"($fp)"<<std::endl;
+	}
+
 
 	memReg assignNewStorage(){
 		mem_fp_offset_count-=4;
@@ -133,21 +132,21 @@ struct Context{
 
 	std::string memoryOffsetRead(Type type, std::string r1, std::string r2, int offset){
 		std::stringstream ss;
-		if( type.is(Char) ) 				ss<<"lb  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.is(UChar) ) 			ss<<"lbu $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.is(Short) ) 			ss<<"lh  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.is(UShort))			ss<<"lhu $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.isIntegral()) 			ss<<"lw  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else ; //float
+		if( type.is(Char) ) 				ss<<"lb   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.is(UChar) ) 			ss<<"lbu  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.is(Short) ) 			ss<<"lh   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.is(UShort))			ss<<"lhu  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.isIntegral()) 			ss<<"lw   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else 								ss<<"lwc1 $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		return ss.str();
 	}
 
 	std::string memoryOffsetWrite(Type type, std::string r1, std::string r2, int offset){
 		std::stringstream ss;
-		if( type.is(Char)||type.is(UChar) ) 		ss<<"sb  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.is(Short) || type.is(UShort)) 	ss<<"sh  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.isIntegral()) 					ss<<"sw  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else ; //float
+		if( type.is(Char)||type.is(UChar) ) 		ss<<"sb   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.is(Short) || type.is(UShort)) 	ss<<"sh   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.isIntegral()) 					ss<<"sw   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else 										ss<<"swc1 $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		return ss.str();
 	}
 	Type integeralPromotion(Type t){

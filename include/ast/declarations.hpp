@@ -234,13 +234,32 @@ class InitIdentifierDeclarator  : public Declarator{
 				dst<<".word "<<init_val<<std::endl;
 			}
 			else if(ctx.getScope() == local){
-				auto tempMemReg = ctx.assignNewStorage();
-				std::string tempReg = "v1";
-				init_expr->to_mips(dst,ctx);
-				ctx.deAllocStorage();
 
-				ctx.memReg_read(tempMemReg,tempReg,dst);
-				dst<<ctx.memoryOffsetWrite(type,tempReg,"fp",var.getAddr());
+				if(type.isIntegral()){
+					auto tempMemReg = ctx.assignNewStorage();
+					std::string tempReg = "v1";
+					init_expr->to_mips(dst,ctx);
+					ctx.deAllocStorage();
+
+					ctx.memReg_read(tempMemReg,tempReg,dst);
+					dst<<ctx.memoryOffsetWrite(type,tempReg,"fp",var.getAddr());
+				}
+				else{
+					//assuming float first... i.e 32 bits...
+					auto tempMemReg = ctx.assignNewStorage();
+					std::string tempReg = "f0";
+					init_expr->to_mips(dst,ctx);
+					ctx.deAllocStorage();
+
+					ctx.memReg_read_f(tempMemReg,tempReg,dst);
+					dst<<ctx.memoryOffsetWrite(type,tempReg,"fp",var.getAddr());
+
+				}
+
+
+
+
+
 			}
 		}
 
@@ -340,11 +359,15 @@ class FunctionDefinition : public ExternalDeclaration{
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			ctx.scopeLocal();
 			ctx.return_label = ctx.generateLabel("RETURN");
-			
+				
 			dst<<"# Start Prologue #"<<std::endl;
 			dst<<".text"<<std::endl;	
 			dst<<".globl "<<id<<std::endl;
 			dst<<id<<":"<<std::endl;
+
+			dst<<".set noreorder"<<std::endl;
+			dst<<".set nomacro"<<std::endl;
+
 			dst<<"sw $31,-4($sp)"<<std::endl; // store return address
 			dst<<"sw $fp,-8($sp)"<<std::endl; // store old fp
 			dst<<"addiu $sp,$sp,-8"<<std::endl;
@@ -361,7 +384,7 @@ class FunctionDefinition : public ExternalDeclaration{
 			if(s_ptr!=NULL){
 				s_ptr->to_mips(dst,ctx);
 			}
-			
+
 			dst<<ctx.return_label<<":"<<std::endl;
 			dst<<"# Start Epilouge #"<<std::endl;
 			dst<<"addiu $sp,$sp,8"<<std::endl;
@@ -371,6 +394,11 @@ class FunctionDefinition : public ExternalDeclaration{
 			dst<<"nop"<<std::endl;
 			dst<<std::endl;
 			dst<<"# End Epilouge #"<<std::endl;
+
+			dst<<".set macro"<<std::endl;
+			dst<<".set reorder"<<std::endl;
+
+
 			ctx.scopeGlobal();
 		}
 

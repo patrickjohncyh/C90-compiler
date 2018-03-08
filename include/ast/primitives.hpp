@@ -25,11 +25,14 @@ class StringLiteral : public Primitive{
 		}
 };
 
-class Constant : public Primitive{
+
+class IntegralConstant : public Primitive{
 	private:
-		unsigned val;
+		std::string str_val;
+		unsigned int val;
 	public:
-		Constant(int _val):val(_val){}
+		IntegralConstant(std::string _str_val)
+		:str_val(_str_val),val(std::stoull(str_val)){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			dst << "##### Constant #####" << std::endl;
@@ -59,6 +62,47 @@ class Constant : public Primitive{
 		}
 };
 
+class FloatingConstant : public Primitive{
+	private:
+		std::string str_val;
+		double val;
+	public:
+		FloatingConstant(std::string _str_val)
+		:str_val(_str_val),val(std::stod(str_val)){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "f0";
+			std::string addrReg = "v0";
+			std::string floatConstLabel = ctx.generateLabel("$FC");
+			ctx.labeled_constant[floatConstLabel] = str_val;
+			dst<<"la   $"<<addrReg<<","<< floatConstLabel << std::endl;	 //address of float label
+			dst<<ctx.memoryOffsetRead(exprType(ctx),destReg,addrReg,0);	 //read from address in f0
+			ctx.memReg_write_f(destMemReg, destReg,dst);				 //write from f0 into mem...
+
+		}
+
+		virtual Type exprType(Context& ctx) const override{
+			return Type(Float); //shld be double as per c90 spec;
+		}
+
+		virtual int to_mips_eval() const{
+			//return val;
+		}
+
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << val;
+		}
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst << indent << val;
+		}
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
+			dst << indent << val;
+		}
+};
+
+
 class Identifier : public Primitive{
 	private:
 		std::string id;
@@ -74,9 +118,17 @@ class Identifier : public Primitive{
 			Variable var = ctx.getVariable(id);
 
 			if(!var.isArray()){	//array identifier evaluates to its address, pointer too possibly
-				ctx.memReg_read(destMemReg, destReg,dst);
-				dst<<ctx.memoryOffsetRead(exprType(ctx),destReg,destReg,0);
-				ctx.memReg_write(destMemReg, destReg,dst);
+				if(exprType(ctx).isIntegral()){
+					ctx.memReg_read(destMemReg, destReg,dst);
+					dst<<ctx.memoryOffsetRead(exprType(ctx),destReg,destReg,0);
+					ctx.memReg_write(destMemReg, destReg,dst);
+				}
+				else{
+					ctx.memReg_read(destMemReg, destReg,dst);
+					std::string destRegF = "f0";
+					dst<<ctx.memoryOffsetRead(exprType(ctx),destRegF,destReg,0);
+					ctx.memReg_write_f(destMemReg, destRegF,dst);
+				}
 			}
 		}	
 

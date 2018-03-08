@@ -7,6 +7,7 @@
 
 D	[0-9]
 L	[a-zA-Z_]
+E	[Ee][+-]?{D}+
 
 
 
@@ -35,8 +36,17 @@ break 							{ return BREAK; 	}
 default 						{ return DEFAULT; 	}
 
 
-{L}({L}|{D})*					{ yylval.string = new std::string(yytext);  return IDENTIFIER;	}
-{D}+							{ yylval.int_num=strtod(yytext, 0); 		return CONSTANT;	}
+{L}({L}|{D})*					{ yylval.string = new std::string(yytext); return IDENTIFIER;	}
+
+{D}+							{ yylval.string = new std::string(yytext); return CONSTANT_I; }
+
+{D}+{E}?						{ yylval.string = new std::string(yytext); return CONSTANT_F; }
+{D}*"."{D}+({E})?				{ yylval.string = new std::string(yytext); return CONSTANT_F; }
+{D}+"."{D}*({E})?				{ yylval.string = new std::string(yytext); return CONSTANT_F; }
+
+
+
+
 [L]?["](\\.|[^\\"\n])*["]		{ yylval.string = new std::string(yytext);	return LITERAL;		}
 
 

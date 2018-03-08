@@ -382,14 +382,26 @@ class JumpStatement : public Statement{
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 
 			dst << "##### Return #####" << std::endl;
-			
 			if(expr != NULL){
-				auto destMemReg = ctx.assignNewStorage();
-				expr->to_mips(dst,ctx);
-				ctx.deAllocStorage();
-				std::string destReg = "v0";
-				ctx.memReg_read(destMemReg,destReg,dst);
-				dst <<"move $2,$"<<destReg<<std::endl;
+				if(expr->exprType(ctx).isIntegral()){
+					auto destMemReg = ctx.assignNewStorage();
+					expr->to_mips(dst,ctx);
+					ctx.deAllocStorage();
+					std::string destReg = "v0";
+					ctx.memReg_read(destMemReg,destReg,dst);
+					dst <<"move $2,$"<<destReg<<std::endl;
+				}
+				else{	//floating
+					auto destMemReg = ctx.assignNewStorage();
+					expr->to_mips(dst,ctx);
+					ctx.deAllocStorage();
+					std::string destReg = "f0";
+					ctx.memReg_read_f(destMemReg,destReg,dst);
+					dst<<".set	macro"<<std::endl;
+					dst<<"trunc.w.s $"<<destReg<<",$"<<destReg<<",$v0"<<std::endl;
+					dst<<".set	nomacro"<<std::endl;
+					dst<<"mfc1	$2,$"<<destReg<<std::endl;
+				}
 			}
 			dst <<"b " << ctx.return_label << std::endl; 
 			dst <<"nop"<< std::endl; 

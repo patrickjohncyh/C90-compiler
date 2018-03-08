@@ -27,6 +27,10 @@ int main(int argc, char* argv[]){
 		else if(std::string(argv[1]) == "-S"){
 			Context c;
 			root->to_mips(outfile,c);
+			for(auto it = c.labeled_constant.cbegin(); it !=  c.labeled_constant.cend(); ++it){
+   				 outfile << it->first << ":\n";
+   				 outfile << ".float " << it->second << "\n";
+			}
 		}
 	}
 	else{
@@ -41,6 +45,12 @@ int main(int argc, char* argv[]){
 		else if(std::string(argv[1]) == "-S"){
 			Context c;
 			root->to_mips(std::cout,c);
+			for(auto it = c.labeled_constant.cbegin(); it !=  c.labeled_constant.cend(); ++it){
+   				 std::cout << it->first << ":\n";
+   				 std::cout << ".float " << it->second << "\n";
+			}
+
+
 		}
 	}
 	return 0;
