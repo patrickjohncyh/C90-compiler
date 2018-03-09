@@ -78,7 +78,7 @@ class FloatingConstant : public Primitive{
 			ctx.labeled_constant[floatConstLabel] = str_val;
 			dst<<"la   $"<<addrReg<<","<< floatConstLabel << std::endl;	 //address of float label
 			dst<<ctx.memoryOffsetRead(exprType(ctx),destReg,addrReg,0);	 //read from address into v0
-			ctx.memReg_write(destMemReg, destReg,dst);				 //write from f0 into mem...
+			ctx.memReg_write(destMemReg, destReg,dst);					 //write from f0 into mem...
 
 		}
 

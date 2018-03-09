@@ -137,7 +137,7 @@ struct Context{
 		else 								ss<<"lw  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		return ss.str();
 	}
-	  
+
 	std::string memoryOffsetWrite(Type type, std::string r1, std::string r2, int offset){
 		std::stringstream ss;
 		if( type.is(Char)||type.is(UChar) ) 		ss<<"sb   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
@@ -146,7 +146,7 @@ struct Context{
 		else 										ss<<"sw   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		return ss.str();
 	}
-	Type integeralPromotion(Type t){
+	Type integralPromotion(Type t){
 		if(t.is(Char) || t.is(UChar) || t.is(Short) ||  t.is(UShort)){
 			return Type(Int);
 		}
@@ -164,8 +164,8 @@ struct Context{
 			return Type(Float);
 		}
 		else{
-			t1 = integeralPromotion(t1);	//perform integral promotion
-			t2 = integeralPromotion(t2);	//perform integral promotion
+			t1 = integralPromotion(t1);	//perform integral promotion
+			t2 = integralPromotion(t2);	//perform integral promotion
 
 			if(t1.is(ULong)|| t2.is(ULong)){
 				return Type(ULong);
@@ -187,6 +187,7 @@ struct Context{
 	}
 
 	void convertMemRegType(Type origT,Type targetT, memReg Reg, std::ostream& dst){
+		origT = integralPromotion(origT);
 		if(origT.isIntegral() && targetT.isIntegral()){	//both integral
 
 		}
@@ -198,6 +199,14 @@ struct Context{
 				memReg_read_f(Reg, "f0",dst); //load from mem into float_reg
 				dst<<"nop"				<<std::endl;
 				dst<<"cvt.s.w	$f0,$f0"<<std::endl;//onversion from word to single
+				memReg_write_f(Reg, "f0",dst); //store from float_reg into mem
+			}
+			else{	//float to integral
+				memReg_read_f(Reg, "f0",dst); //load from mem into float_reg
+				dst<<".set	macro"		<<std::endl;
+				dst<<"trunc.w.s $f0,$f0,$2"<<std::endl;
+				dst<<".set	nomacro"	<<std::endl;
+				dst<<"nop"				<<std::endl;
 				memReg_write_f(Reg, "f0",dst); //store from float_reg into mem
 			}
 		}
