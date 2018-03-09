@@ -111,6 +111,9 @@ class ArrayAccessExpression : public UnaryExpression{
 		}
 
 		virtual void to_mips_getAddr(std::ostream &dst, Context& ctx) const override{
+			Type lType = expr->exprType(ctx);
+
+
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
 			expr->to_mips(dst,ctx);	//addr of id from map if local or mem loc if arguemnt or some sort of pointer
@@ -123,7 +126,7 @@ class ArrayAccessExpression : public UnaryExpression{
 			ctx.memReg_read(destMemReg,destReg,dst);
 			ctx.memReg_read(offsetMemReg,offsetReg,dst);
 
-			int byteSize = 4;//ctx.type_size[exprType(ctx)];
+			int byteSize = lType.bytes();
 
 			dst << "sll  $"<<offsetReg<<",$"<<offsetReg<<","<<log2(byteSize) << std::endl;	//mult offset by 4 (for int)
 			dst << "addu $"<<destReg<<",$"<<destReg<<",$"<<offsetReg 		 << std::endl;	//address of element
@@ -356,8 +359,9 @@ class BinaryExpression : public Expression{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 
-			Type type = exprType(ctx);
-			//mem alloc will depend on type of left and right.. looking ahead for floats. focus on integrals now.
+			Type lType = left->exprType(ctx);
+			Type rType = right->exprType(ctx);
+			Type type  = ctx.arithmeticConversion(lType,rType);
 
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
@@ -366,9 +370,11 @@ class BinaryExpression : public Expression{
 			auto tempMemReg = ctx.assignNewStorage(); 
 			std::string tempReg = "v1";
 			right->to_mips(dst,ctx);
-
 			ctx.deAllocStorage();
 
+			ctx.convertMemRegType(lType,type,destMemReg,dst);
+			ctx.convertMemRegType(rType,type,tempMemReg,dst);
+			
 			ctx.memReg_read(destMemReg,destReg,dst);	
 			ctx.memReg_read(tempMemReg,tempReg,dst);	
 
@@ -482,9 +488,14 @@ class AddExpression : public BinaryExpression{
 			if(type.isIntegral())
 				dst <<"addu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
 			else{
-				//float
+				std::string left_f  = "f0";
+				std::string right_f = "f1";
+				dst<<"mtc1  $"<<left  <<",$"<<left_f  <<std::endl;
+				dst<<"mtc1  $"<<right <<",$"<<right_f <<std::endl;
+				dst<<"add.s $"<<left_f<<",$"<<left_f  <<",$"<<right_f<<std::endl;
+				dst<<"mfc1  $"<<left  <<",$"<<left_f  <<std::endl;
 			}
-		};
+		}
 
 		virtual const char *getOpcode() const override{
 			return "+";
@@ -499,7 +510,12 @@ class SubExpression : public BinaryExpression{
 			if(type.isIntegral())
 				dst <<"subu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
 			else{
-				//float
+				std::string left_f  = "f0";
+				std::string right_f = "f1";
+				dst<<"mtc1  $"<<left  <<",$"<<left_f  <<std::endl;
+				dst<<"mtc1  $"<<right <<",$"<<right_f <<std::endl;
+				dst<<"sub.s $"<<left_f<<",$"<<left_f  <<",$"<<right_f<<std::endl;
+				dst<<"mfc1  $"<<left  <<",$"<<left_f  <<std::endl;
 			}
 		};
 		virtual const char *getOpcode() const override{
@@ -534,13 +550,12 @@ class MoreThanExpression : public BinaryExpression{
 				else{
 					dst <<"sltu $"<<left<<",$"<<right<<",$"<<left<<std::endl;
 				}
-				
 			}
 			else{
-				//flaot
+				//
 			}
 			
-		};
+		}
 
 		virtual const char *getOpcode() const override{
 			return ">";

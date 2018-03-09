@@ -86,7 +86,7 @@ class ArrayDeclarator : public Declarator{
 			}
 			else if(ctx.getScope() == local){
 				for(int i=0;i<size;i++){
-					int offset = var.getAddr()+ (i*type.bytes());
+					int offset = var.getAddr() + (i*type.bytes());
 					dst<<ctx.memoryOffsetWrite(type,"0","fp", offset);
 				}
 			}
