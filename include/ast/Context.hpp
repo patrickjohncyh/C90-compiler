@@ -91,7 +91,6 @@ struct Context{
 		dst << "swc1 $"<<reg<<","<<loc<<"($fp)"<<std::endl;
 	}
 
-
 	memReg assignNewStorage(){
 		mem_fp_offset_count-=4;
 		mem_reg_count++;
@@ -128,25 +127,23 @@ struct Context{
 		exit(1);
 	}
 
-
-
 	std::string memoryOffsetRead(Type type, std::string r1, std::string r2, int offset){
 		std::stringstream ss;
-		if( type.is(Char) ) 				ss<<"lb   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.is(UChar) ) 			ss<<"lbu  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.is(Short) ) 			ss<<"lh   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.is(UShort))			ss<<"lhu  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.isIntegral()) 			ss<<"lw   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else 								ss<<"lwc1 $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		if( type.is(Char) ) 				ss<<"lb  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.is(UChar) ) 			ss<<"lbu $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.is(Short) ) 			ss<<"lh  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.is(UShort))			ss<<"lhu $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.isIntegral()) 			ss<<"lw  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else 								ss<<"lw  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		return ss.str();
 	}
-
+	  
 	std::string memoryOffsetWrite(Type type, std::string r1, std::string r2, int offset){
 		std::stringstream ss;
 		if( type.is(Char)||type.is(UChar) ) 		ss<<"sb   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		else if(type.is(Short) || type.is(UShort)) 	ss<<"sh   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		else if(type.isIntegral()) 					ss<<"sw   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else 										ss<<"swc1 $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else 										ss<<"sw   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		return ss.str();
 	}
 	Type integeralPromotion(Type t){
@@ -188,7 +185,43 @@ struct Context{
 			}
 		}
 	}
+
+	void convertMemRegType(Type origT,Type targetT, memReg Reg, std::ostream& dst){
+		if(origT.isIntegral() && targetT.isIntegral()){	//both integral
+
+		}
+		else if(!origT.isIntegral() && !targetT.isIntegral()){	//both float
+
+		}
+		else{	//one float, one integral...
+			if(origT.isIntegral()){ //integral to float
+				memReg_read_f(Reg, "f0",dst); //load from mem into float_reg
+				dst<<"nop"				<<std::endl;
+				dst<<"cvt.s.w	$f0,$f0"<<std::endl;//onversion from word to single
+				memReg_write_f(Reg, "f0",dst); //store from float_reg into mem
+			}
+		}
+
+	}
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

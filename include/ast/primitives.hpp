@@ -72,13 +72,13 @@ class FloatingConstant : public Primitive{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			auto destMemReg = ctx.getCurrStorage();
-			std::string destReg = "f0";
-			std::string addrReg = "v0";
+			std::string destReg = "v0";
+			std::string addrReg = "v1";
 			std::string floatConstLabel = ctx.generateLabel("$FC");
 			ctx.labeled_constant[floatConstLabel] = str_val;
 			dst<<"la   $"<<addrReg<<","<< floatConstLabel << std::endl;	 //address of float label
-			dst<<ctx.memoryOffsetRead(exprType(ctx),destReg,addrReg,0);	 //read from address in f0
-			ctx.memReg_write_f(destMemReg, destReg,dst);				 //write from f0 into mem...
+			dst<<ctx.memoryOffsetRead(exprType(ctx),destReg,addrReg,0);	 //read from address into v0
+			ctx.memReg_write(destMemReg, destReg,dst);				 //write from f0 into mem...
 
 		}
 
@@ -118,17 +118,9 @@ class Identifier : public Primitive{
 			Variable var = ctx.getVariable(id);
 
 			if(!var.isArray()){	//array identifier evaluates to its address, pointer too possibly
-				if(exprType(ctx).isIntegral()){
-					ctx.memReg_read(destMemReg, destReg,dst);
-					dst<<ctx.memoryOffsetRead(exprType(ctx),destReg,destReg,0);
-					ctx.memReg_write(destMemReg, destReg,dst);
-				}
-				else{
-					ctx.memReg_read(destMemReg, destReg,dst);
-					std::string destRegF = "f0";
-					dst<<ctx.memoryOffsetRead(exprType(ctx),destRegF,destReg,0);
-					ctx.memReg_write_f(destMemReg, destRegF,dst);
-				}
+				ctx.memReg_read(destMemReg, destReg,dst);
+				dst<<ctx.memoryOffsetRead(exprType(ctx),destReg,destReg,0);
+				ctx.memReg_write(destMemReg, destReg,dst);
 			}
 		}	
 

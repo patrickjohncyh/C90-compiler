@@ -5,18 +5,18 @@
 
 
 enum basicType {
-	Void,
-	Char,
-	UChar,
-	Short,
-	UShort,
-	Int,
-	UInt,
-	Long,
-	ULong,
-	Float,
-	Double,
-	LongDouble
+	Void,		//0
+	Char,		//1
+	UChar,		//2
+	Short,		//3
+	UShort,		//4
+	Int,		//5
+	UInt,		//6
+	Long,		//7
+	ULong,		//8
+	Float,		//9
+	Double,		//10
+	LongDouble	//11
 };
 
 

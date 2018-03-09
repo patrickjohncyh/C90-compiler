@@ -630,25 +630,27 @@ class DirectAssignmentExpression : public AssignmentExpression{
 		: AssignmentExpression(_lvalue,_expr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			dst << "##### DirectAssignment #####" << std::endl;
+			dst << "# ----- DirectAssignment ----- #" << std::endl;
 
 			auto destMemReg = ctx.getCurrStorage();
-			std::string destReg = "v0";
+			std::string destReg = "v0";	//addr
 			lvalue->to_mips_getAddr(dst,ctx);			
 			auto tempMemReg = ctx.assignNewStorage();
-			std::string tempReg = "v1";
+			std::string tempReg = "v1";	//val bit pattr
 			expr->to_mips(dst,ctx);
 			ctx.deAllocStorage();
 
+			Type lType = lvalue->exprType(ctx);
+			Type rType = expr->exprType(ctx);
+
+			ctx.convertMemRegType(rType,lType,tempMemReg,dst); //from rType to lType;
+
 			ctx.memReg_read(destMemReg, destReg, dst);
 			ctx.memReg_read(tempMemReg, tempReg, dst);
-
-			Type ltype = lvalue->exprType(ctx);
-
-			dst<<ctx.memoryOffsetWrite(ltype,tempReg,destReg,0);
-
+			dst<<ctx.memoryOffsetWrite(lType,tempReg,destReg,0);
 			dst<<"move $"<<destReg<<",$"<<tempReg<<std::endl;
 			ctx.memReg_write(destMemReg, destReg, dst);
+			
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{

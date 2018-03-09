@@ -234,32 +234,13 @@ class InitIdentifierDeclarator  : public Declarator{
 				dst<<".word "<<init_val<<std::endl;
 			}
 			else if(ctx.getScope() == local){
-
-				if(type.isIntegral()){
-					auto tempMemReg = ctx.assignNewStorage();
-					std::string tempReg = "v1";
-					init_expr->to_mips(dst,ctx);
-					ctx.deAllocStorage();
-
-					ctx.memReg_read(tempMemReg,tempReg,dst);
-					dst<<ctx.memoryOffsetWrite(type,tempReg,"fp",var.getAddr());
-				}
-				else{
-					//assuming float first... i.e 32 bits...
-					auto tempMemReg = ctx.assignNewStorage();
-					std::string tempReg = "f0";
-					init_expr->to_mips(dst,ctx);
-					ctx.deAllocStorage();
-
-					ctx.memReg_read_f(tempMemReg,tempReg,dst);
-					dst<<ctx.memoryOffsetWrite(type,tempReg,"fp",var.getAddr());
-
-				}
-
-
-
-
-
+				auto tempMemReg = ctx.assignNewStorage();
+				std::string tempReg = "v1";
+				init_expr->to_mips(dst,ctx);
+				ctx.deAllocStorage();
+				ctx.convertMemRegType(init_expr->exprType(ctx),type,tempMemReg,dst);
+				ctx.memReg_read(tempMemReg,tempReg,dst);
+				dst<<ctx.memoryOffsetWrite(type,tempReg,"fp",var.getAddr());
 			}
 		}
 
