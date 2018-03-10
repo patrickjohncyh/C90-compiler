@@ -63,7 +63,7 @@ void yyerror(const char *);
 %type <declaration_list_vector> declaration_list parameter_list
 
 
-%type<expression_node> base_expression postfix_expression prefix_expression 
+%type<expression_node> base_expression postfix_expression prefix_expression cast_expression
 %type<expression_node> mult_expression add_expression 
 %type<expression_node> bw_shift_expression  compare_expression  equality_expression
 %type<expression_node> bitwise_expression logical_expression ternary_expression 
@@ -155,15 +155,21 @@ postfix_expression	:	base_expression
 prefix_expression	:	postfix_expression
 					| 	INC_OP prefix_expression	{ $$ = new PreIncrementExpression($2);	}
 					| 	DEC_OP prefix_expression 	{ $$ = new PreDecrementExpression($2);	}
-					|	'!'	prefix_expression		{ $$ = new PreNotExpression($2); 		}
-					|   '+' prefix_expression		{ $$ = new PrePositiveExpression($2);	} 
-					|	'-' prefix_expression		{ $$ = new PreNegativeExpression($2);	}
-					|	'~' prefix_expression		{  ;}
+					|	'!'	cast_expression			{ $$ = new PreNotExpression($2); 		}
+					|   '+' cast_expression			{ $$ = new PrePositiveExpression($2);	} 
+					|	'-' cast_expression			{ $$ = new PreNegativeExpression($2);	}
+					|	'~' cast_expression			{  ;}
 
-mult_expression		:	prefix_expression				 	   { $$ = $1; }
-					| 	mult_expression '*' prefix_expression  { $$ = new MultExpression($1,$3);	}
-					| 	mult_expression '/' prefix_expression  { $$ = new DivExpression($1,$3);		}
-					|	mult_expression '%' prefix_expression  { $$ = new ModuloExpression($1,$3);	}
+cast_expression 	: prefix_expression
+					| '(' type_specifier ')' cast_expression	{$$ = new CastExpression($2,$4); }
+
+
+
+
+mult_expression		:	cast_expression 				 	   { $$ = $1; }
+					| 	mult_expression '*' cast_expression   { $$ = new MultExpression($1,$3);	}
+					| 	mult_expression '/' cast_expression   { $$ = new DivExpression($1,$3);		}
+					|	mult_expression '%' cast_expression   { $$ = new ModuloExpression($1,$3);	}
 
 
 add_expression		: 	mult_expression					  	{ $$ = $1; }

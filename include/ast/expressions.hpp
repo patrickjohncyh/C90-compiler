@@ -23,10 +23,39 @@ class Expression : public ASTNode{
 		}
 		virtual Type exprType(Context& ctx) const{
 		//	std::cout << "ERROR : exprType() Not implemented" << std::endl;
-		//	exit(1);
 			return Type(Int);
 		}
 };
+
+class CastExpression : public Expression{
+	protected:
+		Type* cast_type;
+		Expression* expr;
+	public:
+		CastExpression(Type* _cast_type, Expression* _expr)
+		:cast_type(_cast_type),expr(_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+			Type sourceType = expr->exprType(ctx);
+			Type destType = *cast_type;
+
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			expr->to_mips(dst,ctx);
+
+			ctx.convertMemRegType(sourceType,destType,destMemReg,dst);
+		}
+
+
+		virtual Type exprType(Context& ctx) const override{
+			return *cast_type;
+		}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+		}
+};
+
 
 
 /********************** Unary Expressions ************************/
@@ -103,16 +132,14 @@ class ArrayAccessExpression : public UnaryExpression{
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";		
 			to_mips_getAddr(dst,ctx);		//addr of expression operated on
+
 			ctx.memReg_read(destMemReg,destReg,dst);
-
-			dst<<ctx.memoryOffsetRead(exprType(ctx),destReg,destReg,0);
-
+			ctx.memoryOffsetRead(exprType(ctx),destReg,destReg,0,dst);
 			ctx.memReg_write(destMemReg,destReg,dst);			
 		}
 
 		virtual void to_mips_getAddr(std::ostream &dst, Context& ctx) const override{
 			Type lType = expr->exprType(ctx);
-
 
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
@@ -126,9 +153,7 @@ class ArrayAccessExpression : public UnaryExpression{
 			ctx.memReg_read(destMemReg,destReg,dst);
 			ctx.memReg_read(offsetMemReg,offsetReg,dst);
 
-			int byteSize = lType.bytes();
-
-			dst << "sll  $"<<offsetReg<<",$"<<offsetReg<<","<<log2(byteSize) << std::endl;	//mult offset by 4 (for int)
+			dst << "sll  $"<<offsetReg<<",$"<<offsetReg<<","<<log2(lType.bytes()) << std::endl;	//mult offset by 4 (for int)
 			dst << "addu $"<<destReg<<",$"<<destReg<<",$"<<offsetReg 		 << std::endl;	//address of element
 			ctx.memReg_write(destMemReg,destReg,dst);
 		}
@@ -321,19 +346,16 @@ class PreNegativeExpression : public UnaryExpression{
 				std::string zero_f  = "f2";
 				ctx.moveToFloatReg(destReg  ,left_f , dst);
 				ctx.moveToFloatReg("0"		,zero_f , dst);
-				dst<<"cvt.s.w $"<<zero_f<<",$"<<zero_f<<std::endl;//conversion from word to single
 				dst<<"sub.s   $"<<left_f<<",$"<<zero_f<<",$"<<left_f<<std::endl;
 				ctx.moveFromFloatReg(destReg,left_f,dst);
 			}
 			ctx.memReg_write(destMemReg, destReg, dst);
 		}
-
 		virtual Type exprType(Context& ctx) const override{
 			Type rType 	  = expr->exprType(ctx);
 			Type thisType = ctx.arithmeticConversion(rType,rType);
 			return thisType;
 		}
-
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst<< "-";
 			expr->to_c(dst,indent);
@@ -493,9 +515,6 @@ class DivExpression : public BinaryExpression{
 				dst <<"div.s $"<<left_f<<",$"<<left_f<<",$"<<right_f<<std::endl;
 				ctx.moveFromFloatReg(left,left_f,dst);
 			}
-
-			
-			
 		};
 		virtual const char *getOpcode() const override{
 			return "/";
@@ -520,9 +539,6 @@ class ModuloExpression : public BinaryExpression{
 				std::cout << "Error : Cannot perform % on non-integeral types"<<std::endl;
 				exit(1);
 			}
-
-
-
 		};
 		virtual const char *getOpcode() const override{
 			return "%";
@@ -545,11 +561,9 @@ class AddExpression : public BinaryExpression{
 				ctx.moveFromFloatReg(left,left_f,dst);
 			}
 		}
-
 		virtual double eval() const override{
 			return left->eval() + right->eval();	
 		}
-
 		virtual const char *getOpcode() const override{
 			return "+";
 		}
@@ -716,15 +730,14 @@ class DirectAssignmentExpression : public AssignmentExpression{
 
 			ctx.memReg_read(destMemReg, destReg, dst);
 			ctx.memReg_read(tempMemReg, tempReg, dst);
-			dst<<ctx.memoryOffsetWrite(lType,tempReg,destReg,0);
+			ctx.memoryOffsetWrite(lType,tempReg,destReg,0,dst);
 			dst<<"move $"<<destReg<<",$"<<tempReg<<std::endl;
 			ctx.memReg_write(destMemReg, destReg, dst);
-			
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			lvalue->to_c(dst,indent);
-			dst << " =";
+			dst << "=";
 			expr->to_c(dst," ");
 		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
@@ -736,8 +749,6 @@ class DirectAssignmentExpression : public AssignmentExpression{
 			dst << "DirectAssignemntExpression" << std::endl;
 		}
 };
-
-
 // TO IMPLMENET OTHER ASSIGNMENT I.E += ,-=, *= ETC
 
 /********************** Ternary Expressions ************************/

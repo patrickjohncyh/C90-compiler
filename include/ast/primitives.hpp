@@ -77,7 +77,7 @@ class FloatingConstant : public Primitive{
 			std::string floatConstLabel = ctx.generateLabel("$FC");
 			ctx.labeled_constant[floatConstLabel] = str_val;
 			dst<<"la   $"<<addrReg<<","<< floatConstLabel << std::endl;	 //address of float label
-			dst<<ctx.memoryOffsetRead(exprType(ctx),destReg,addrReg,0);	 //read from address into v0
+			ctx.memoryOffsetRead(exprType(ctx),destReg,addrReg,0,dst);	 //read from address into v0
 			ctx.memReg_write(destMemReg, destReg,dst);					 //write from f0 into mem...
 
 		}
@@ -119,7 +119,7 @@ class Identifier : public Primitive{
 
 			if(!var.isArray()){	//array identifier evaluates to its address, pointer too possibly
 				ctx.memReg_read(destMemReg, destReg,dst);
-				dst<<ctx.memoryOffsetRead(exprType(ctx),destReg,destReg,0);
+				ctx.memoryOffsetRead(exprType(ctx),destReg,destReg,0,dst);
 				ctx.memReg_write(destMemReg, destReg,dst);
 			}
 		}	

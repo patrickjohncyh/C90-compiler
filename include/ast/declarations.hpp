@@ -87,7 +87,7 @@ class ArrayDeclarator : public Declarator{
 			else if(ctx.getScope() == local){
 				for(int i=0;i<size;i++){
 					int offset = var.getAddr() + (i*type.bytes());
-					dst<<ctx.memoryOffsetWrite(type,"0","fp", offset);
+					ctx.memoryOffsetWrite(type,"0","fp", offset,dst);
 				}
 			}
 		}
@@ -154,7 +154,7 @@ class InitArrayDeclarator : public Declarator{
 					ctx.memReg_read(tempMemReg,tempReg,dst);
 
 					int offset = var.getAddr()+(i*type.bytes());
-					dst<<ctx.memoryOffsetWrite(type,tempReg,"fp", offset );
+					ctx.memoryOffsetWrite(type,tempReg,"fp", offset,dst);
 				}
 			}	
 		}
@@ -180,7 +180,7 @@ class IdentifierDeclarator  : public Declarator{
 			}
 			else if(ctx.getScope() == local){
 				Variable var = ctx.getVariable(id);
-				dst<<ctx.memoryOffsetWrite(var.getType(),"0","fp",var.getAddr());	
+				ctx.memoryOffsetWrite(var.getType(),"0","fp",var.getAddr(),dst);	
 			}
 		}
 
@@ -240,7 +240,7 @@ class InitIdentifierDeclarator  : public Declarator{
 				ctx.deAllocStorage();
 				ctx.convertMemRegType(init_expr->exprType(ctx),type,tempMemReg,dst);
 				ctx.memReg_read(tempMemReg,tempReg,dst);
-				dst<<ctx.memoryOffsetWrite(type,tempReg,"fp",var.getAddr());
+				ctx.memoryOffsetWrite(type,tempReg,"fp",var.getAddr(),dst);
 			}
 		}
 

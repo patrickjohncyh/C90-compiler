@@ -469,33 +469,23 @@ class ConditionSwitchStatement : public Statement{
 	virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 
 		dst << "##### Switch #####" << std::endl;
-		
-
 		std::stringstream ss; //temporarily store in ss;
-
-		
-
 		std::string switchStartLabel = ctx.generateLabel("$SWTICH_START");
 		std::string switchEndLabel = ctx.generateLabel("$SWTICH_END");
 		ctx.break_label.push(switchEndLabel);
-
-
 
 		case_pair start = std::make_pair(static_cast<Expression*>(NULL),""); //starting point
 		ctx.switch_case_data.push(start);
 		ctx.switch_case_default.push("start");
 		s_ptr->to_mips(ss,ctx);
 
-	
 		//evalute expr
 		auto switchMemReg = ctx.assignNewStorage();
 		std::string switchReg = "v0";
-
 		expr->to_mips(dst,ctx);
 		
 		auto caseMemReg = ctx.assignNewStorage();
 		std::string caseReg = "v1";
-
 
 		while( ctx.switch_case_data.top().first != NULL){  //EMIT CODE TO DO JUMP
 			case_pair cp = ctx.switch_case_data.top();
@@ -509,17 +499,12 @@ class ConditionSwitchStatement : public Statement{
 			ctx.switch_case_data.pop();
 		}
 
-
 		if( ctx.switch_case_default.top() != "start" ){  //check for default
 			std::string defaultLabel = ctx.switch_case_default.top();
-
 			dst << "b " << defaultLabel << std::endl;
 			dst << "nop" << std::endl;
-
 			ctx.switch_case_default.pop();
 		}
-
-
 
 		dst << "b " << switchEndLabel << std::endl;
 		dst << "nop" << std::endl;
@@ -527,10 +512,8 @@ class ConditionSwitchStatement : public Statement{
 		dst << ss.str() << std::endl;
 		dst << switchEndLabel << ":" <<std::endl;
 
-
 		ctx.deAllocStorage();
 		ctx.deAllocStorage();
-
 		ctx.switch_case_data.pop();
 		ctx.break_label.pop();
 

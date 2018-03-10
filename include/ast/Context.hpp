@@ -129,7 +129,8 @@ struct Context{
 		}
 		(*var_location)[name] = new Variable(scope,type,dtype,mem_fp_offset_count);
 	}
-	Variable getVariable(std::string name){		//returns Variable Object
+
+	Variable getVariable(std::string name){					//returns Variable Object
 		if((*var_location).count(name)){
 			return * ( (*var_location)[name] );
 		}
@@ -137,25 +138,22 @@ struct Context{
 		exit(1);
 	}
 
-	std::string memoryOffsetRead(Type type, std::string r1, std::string r2, int offset){
-		std::stringstream ss;
-		if( type.is(Char) ) 				ss<<"lb  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.is(UChar) ) 			ss<<"lbu $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.is(Short) ) 			ss<<"lh  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.is(UShort))			ss<<"lhu $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.isIntegral()) 			ss<<"lw  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else 								ss<<"lw  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		return ss.str();
+	void  memoryOffsetRead(Type type, std::string r1, std::string r2, int offset, std::ostream& dst){
+		if( type.is(Char) ) 				dst<<"lb  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.is(UChar) ) 			dst<<"lbu $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.is(Short) ) 			dst<<"lh  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.is(UShort))			dst<<"lhu $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.isIntegral()) 			dst<<"lw  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else 								dst<<"lw  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 	}
 
-	std::string memoryOffsetWrite(Type type, std::string r1, std::string r2, int offset){
-		std::stringstream ss;
-		if( type.is(Char)||type.is(UChar) ) 		ss<<"sb   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.is(Short) || type.is(UShort)) 	ss<<"sh   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else if(type.isIntegral()) 					ss<<"sw   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		else 										ss<<"sw   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
-		return ss.str();
+	void memoryOffsetWrite(Type type, std::string r1, std::string r2, int offset, std::ostream& dst){
+		if( type.is(Char)||type.is(UChar) ) 		dst<<"sb   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.is(Short) || type.is(UShort)) 	dst<<"sh   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else if(type.isIntegral()) 					dst<<"sw   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		else 										dst<<"sw   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 	}
+
 	Type integralPromotion(Type t){
 		if(t.is(Char) || t.is(UChar) || t.is(Short) ||  t.is(UShort)){
 			return Type(Int);
@@ -163,6 +161,7 @@ struct Context{
 		else
 			return t;
 	}
+
 	Type arithmeticConversion(Type t1, Type t2){
 		if(t1.is(LongDouble) || t1.is(LongDouble)){
 			return Type(LongDouble);
@@ -196,9 +195,10 @@ struct Context{
 		}
 	}
 
-	void convertMemRegType(Type origT,Type targetT, memReg Reg, std::ostream& dst){
+	void convertMemRegType(Type origT, Type targetT, memReg Reg, std::ostream& dst){
 		origT = integralPromotion(origT);
 		if(origT.isIntegral() && targetT.isIntegral()){	//both integral
+			//useful for casting?
 
 		}
 		else if(!origT.isIntegral() && !targetT.isIntegral()){	//both float
