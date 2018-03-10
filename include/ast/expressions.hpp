@@ -153,13 +153,15 @@ class ArrayAccessExpression : public UnaryExpression{
 			ctx.memReg_read(destMemReg,destReg,dst);
 			ctx.memReg_read(offsetMemReg,offsetReg,dst);
 
-			dst << "sll  $"<<offsetReg<<",$"<<offsetReg<<","<<log2(lType.bytes()) << std::endl;	//mult offset by 4 (for int)
-			dst << "addu $"<<destReg<<",$"<<destReg<<",$"<<offsetReg 		 << std::endl;	//address of element
+			dst << "sll  $"<<offsetReg<<",$"<<offsetReg<<","<<log2(lType.bytes())<< std::endl;	//mult offset by 4 (for int)
+			dst << "addu $"<<destReg  <<",$"<<destReg  <<",$"<<offsetReg 		 << std::endl;	//address of element
 			ctx.memReg_write(destMemReg,destReg,dst);
 		}
 
 		virtual Type exprType(Context& ctx) const override{
-			return expr->exprType(ctx);
+			Type type=expr->exprType(ctx);
+			type.dec_pLevel();
+			return type;
 		}
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
@@ -249,6 +251,65 @@ class FunctionCallExpression : public UnaryExpression{
 
 
 /********************** Pre Fix Expressions *********/
+class ReferenceExpression : public UnaryExpression{
+	public:
+		ReferenceExpression(Expression* _expr):UnaryExpression(_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			expr->to_mips_getAddr(dst,ctx);		//addr of expression in destReg	
+		}
+
+		virtual Type exprType(Context& ctx) const override{
+			Type type = expr->exprType(ctx);
+			type.inc_pLevel();
+			return type;
+		}
+
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst<< "&";
+			expr->to_c(dst,indent);
+
+		}
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << "&" << std::endl;
+			expr->print_struct(dst,m);
+		}
+};
+
+class DereferenceExpression : public UnaryExpression{
+	public:
+		DereferenceExpression(Expression* _expr):UnaryExpression(_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+			Type type = expr->exprType(ctx);
+			type.dec_pLevel();
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			expr->to_mips(dst,ctx);
+			ctx.memReg_read(destMemReg, destReg, dst);
+			ctx.memoryOffsetRead(type,destReg,destReg,0,dst);
+			ctx.memReg_write(destMemReg, destReg, dst);
+		}
+
+		virtual Type exprType(Context& ctx) const override{
+			Type type = expr->exprType(ctx);
+			type.dec_pLevel();
+			return type;
+		}
+
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst<< "*";
+			expr->to_c(dst,indent);
+
+		}
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << "*" << std::endl;
+			expr->print_struct(dst,m);
+		}
+};
 
 class PreIncrementExpression : public UnaryExpression{
 	public:
@@ -550,7 +611,7 @@ class AddExpression : public BinaryExpression{
 		AddExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
 		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right,Type type) const override{
-			if(type.isIntegral())
+			if(type.isIntegral() || type.isPointer())
 				dst <<"addu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
 			else{
 				std::string left_f  = "f0";

@@ -383,7 +383,7 @@ class JumpStatement : public Statement{
 
 			dst << "##### Return #####" << std::endl;
 			if(expr != NULL){
-				if(expr->exprType(ctx).isIntegral()){
+				if(expr->exprType(ctx).isIntegral() || expr->exprType(ctx).isPointer()){
 					auto destMemReg = ctx.assignNewStorage();
 					expr->to_mips(dst,ctx);
 					ctx.deAllocStorage();

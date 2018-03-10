@@ -159,6 +159,8 @@ prefix_expression	:	postfix_expression
 					|   '+' cast_expression			{ $$ = new PrePositiveExpression($2);	} 
 					|	'-' cast_expression			{ $$ = new PreNegativeExpression($2);	}
 					|	'~' cast_expression			{  ;}
+					|	'&'	cast_expression			{ $$ = new ReferenceExpression($2);		}
+					|	'*'	cast_expression			{ $$ = new DereferenceExpression($2);	}
 
 cast_expression 	: prefix_expression
 					| '(' type_specifier ')' cast_expression	{$$ = new CastExpression($2,$4); }
@@ -254,28 +256,29 @@ labeled_statement	:	CASE expression ':' statement 	{ $$ = new LabeledCaseStateme
 
 
 
-type_specifier		:	VOID				{ $$ = new Type(Void);	}
-					|	CHAR 				{ $$ = new Type(Char);	} 
-					|	SIGNED CHAR			{ $$ = new Type(Char);	} 
-					|	UNSIGNED CHAR 		{ $$ = new Type(UChar);	}
-					|	SHORT 				{ $$ = new Type(Short);	} 
-					|	SIGNED SHORT		{ $$ = new Type(Short);	} 
-					|	SHORT INT 			{ $$ = new Type(Short);	} 
-					|	SIGNED SHORT INT 	{ $$ = new Type(Short);	} 
-					|	UNSIGNED SHORT 		{ $$ = new Type(UShort);}
-					|	UNSIGNED SHORT INT	{ $$ = new Type(UShort);}
-					|	INT 				{ $$ = new Type(Int); 	}
-					|	SIGNED  			{ $$ = new Type(Int); 	}
-					|	SIGNED INT 			{ $$ = new Type(Int);	}
-					|	UNSIGNED 	 		{ $$ = new Type(UInt); 	}
-					|	UNSIGNED INT 		{ $$ = new Type(UInt); 	}
-					|	LONG				{ $$ = new Type(Long);  }
-					|	SIGNED LONG			{ $$ = new Type(Long); 	}
-					|	LONG INT			{ $$ = new Type(Long);	}
-					|	SIGNED LONG INT		{ $$ = new Type(Long); 	}
-					|	UNSIGNED LONG		{ $$ = new Type(ULong); }
-					|	UNSIGNED LONG INT	{ $$ = new Type(ULong); }
-					|	FLOAT 				{ $$ = new Type(Float);	} 
+type_specifier		:	VOID				{ $$ = new Type(Void);		}
+					|	CHAR 				{ $$ = new Type(Char);		} 
+					|	SIGNED CHAR			{ $$ = new Type(Char);		} 
+					|	UNSIGNED CHAR 		{ $$ = new Type(UChar);		}
+					|	SHORT 				{ $$ = new Type(Short);		} 
+					|	SIGNED SHORT		{ $$ = new Type(Short);		} 
+					|	SHORT INT 			{ $$ = new Type(Short);		} 
+					|	SIGNED SHORT INT 	{ $$ = new Type(Short);		} 
+					|	UNSIGNED SHORT 		{ $$ = new Type(UShort);	}
+					|	UNSIGNED SHORT INT	{ $$ = new Type(UShort);	}
+					|	INT 				{ $$ = new Type(Int); 		}
+					|	SIGNED  			{ $$ = new Type(Int);	 	}
+					|	SIGNED INT 			{ $$ = new Type(Int);		}
+					|	UNSIGNED 	 		{ $$ = new Type(UInt); 		}
+					|	UNSIGNED INT 		{ $$ = new Type(UInt); 		}
+					|	LONG				{ $$ = new Type(Long);  	}
+					|	SIGNED LONG			{ $$ = new Type(Long); 		}
+					|	LONG INT			{ $$ = new Type(Long);		}
+					|	SIGNED LONG INT		{ $$ = new Type(Long); 		}
+					|	UNSIGNED LONG		{ $$ = new Type(ULong); 	}
+					|	UNSIGNED LONG INT	{ $$ = new Type(ULong); 	}
+					|	FLOAT 				{ $$ = new Type(Float);		} 
+					|	type_specifier '*'	{ $1->inc_pLevel(); $$ = $1;}
 
 					/*|	DOUBLE 				{ $$ = new std::string("double");				}
 					|	LONG DOUBLE 		{ $$ = new std::string("double");				}*/

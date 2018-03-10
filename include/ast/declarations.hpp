@@ -277,7 +277,11 @@ class Declaration : public ExternalDeclaration{
 					std::string id 	  = (*it)->getId();
 					dType dtype 	  = (*it)->getDtype();
 					int size 		  = (*it)->getSize();
-					ctx.assignNewVariable(id,type,dtype,size);
+					Type newtype(type);
+					if(dtype == Array){
+						newtype.inc_pLevel();
+					}
+					ctx.assignNewVariable(id,newtype,dtype,size);
 					(*it)->to_mips(dst,ctx);	
 				}
 			}

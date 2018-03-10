@@ -7,6 +7,7 @@
 #include <stack>
 #include <cassert>
 #include <sstream>
+#include <cmath>
 
 
 
@@ -139,7 +140,9 @@ struct Context{
 	}
 
 	void  memoryOffsetRead(Type type, std::string r1, std::string r2, int offset, std::ostream& dst){
-		if( type.is(Char) ) 				dst<<"lb  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		if(type.isPointer())				dst<<"lw  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+
+		else if( type.is(Char) ) 			dst<<"lb  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		else if(type.is(UChar) ) 			dst<<"lbu $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		else if(type.is(Short) ) 			dst<<"lh  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		else if(type.is(UShort))			dst<<"lhu $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
@@ -148,7 +151,9 @@ struct Context{
 	}
 
 	void memoryOffsetWrite(Type type, std::string r1, std::string r2, int offset, std::ostream& dst){
-		if( type.is(Char)||type.is(UChar) ) 		dst<<"sb   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+		if(type.isPointer())						dst<<"sw  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+
+		else if( type.is(Char)||type.is(UChar) ) 	dst<<"sb   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		else if(type.is(Short) || type.is(UShort)) 	dst<<"sh   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		else if(type.isIntegral()) 					dst<<"sw   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		else 										dst<<"sw   $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
@@ -163,6 +168,28 @@ struct Context{
 	}
 
 	Type arithmeticConversion(Type t1, Type t2){
+
+		if(t1.isPointer()){
+			if(t2.isEqual(t1) || t2.isIntegral()){
+				return t1;
+			}
+			else{
+				std::cout << "Error : Unable to perform poitner arithmetic with given types" << std::endl;
+			}
+		}
+
+
+		if(t2.isPointer()){
+			if(t1.isEqual(t2) || t1.isIntegral()){
+				return t2;
+			}
+			else{
+				std::cout << "Error : Unable to perform poitner arithmetic with given types" << std::endl;
+			}
+		}
+
+		//neither pointers
+
 		if(t1.is(LongDouble) || t1.is(LongDouble)){
 			return Type(LongDouble);
 		}
@@ -197,30 +224,39 @@ struct Context{
 
 	void convertMemRegType(Type origT, Type targetT, memReg Reg, std::ostream& dst){
 		origT = integralPromotion(origT);
-		if(origT.isIntegral() && targetT.isIntegral()){	//both integral
-			//useful for casting?
+		if(!origT.isEqual(targetT)){
+			if(targetT.isPointer()){
+				if(origT.isIntegral()){	//double check..
+					memReg_read(Reg,"v0",dst); //load from mem into reg
+					dst<<"sll $v0,$v0,"<<log2(targetT.bytes())<<std::endl;
+					memReg_write(Reg, "v0",dst); //store from float_reg into mem
 
-		}
-		else if(!origT.isIntegral() && !targetT.isIntegral()){	//both float
-
-		}
-		else{	//one float, one integral...
-			if(origT.isIntegral()){ //integral to float
-				memReg_read_f(Reg, "f0",dst); //load from mem into float_reg
-				dst<<"nop"				<<std::endl;
-				dst<<"cvt.s.w	$f0,$f0"<<std::endl;//conversion from word to single
-				memReg_write_f(Reg, "f0",dst); //store from float_reg into mem
+				}
 			}
-			else{	//float to integral
-				memReg_read_f(Reg, "f0",dst); //load from mem into float_reg
-				dst<<".set	macro"		<<std::endl;
-				dst<<"trunc.w.s $f0,$f0,$2"<<std::endl;
-				dst<<".set	nomacro"	<<std::endl;
-				dst<<"nop"				<<std::endl;
-				memReg_write_f(Reg, "f0",dst); //store from float_reg into mem
+			else{
+				if(origT.isIntegral() && targetT.isIntegral()){	//both integral
+					//useful for casting?
+				}
+				else if(!origT.isIntegral() && !targetT.isIntegral()){	//both float
+
+				}
+				else{	//one float, one integral...
+					if(origT.isIntegral()){ //integral to float
+						memReg_read_f(Reg, "f0",dst); //load from mem into float_reg
+						dst<<"cvt.s.w	$f0,$f0"<<std::endl;//conversion from word to single
+						memReg_write_f(Reg, "f0",dst); //store from float_reg into mem
+					}
+					else{	//float to integral
+						memReg_read_f(Reg, "f0",dst); //load from mem into float_reg
+						dst<<".set	macro"		<<std::endl;
+						dst<<"trunc.w.s $f0,$f0,$2"<<std::endl;
+						dst<<".set	nomacro"	<<std::endl;
+						dst<<"nop"				<<std::endl;
+						memReg_write_f(Reg, "f0",dst); //store from float_reg into mem
+					}
+				}
 			}
 		}
-
 	}
 };
 

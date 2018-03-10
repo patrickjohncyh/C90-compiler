@@ -25,14 +25,27 @@ enum basicType {
 class Type{
 private:
 	basicType type;
+	int p_level=0;
 
 public:
 	Type();
 	Type(basicType _type):type(_type){}
+	Type(basicType _type, int _p_level):type(_type),p_level(_p_level){}
+
+
+	void inc_pLevel(){
+		p_level++;
+	}
+
+	void dec_pLevel(){
+		p_level--;
+	}
+
 
 	basicType getType(){
 		return type;
 	}
+
 
 	bool is(basicType t){
 		if(type == t)
@@ -40,13 +53,28 @@ public:
 		return false;
 	}
 
+	bool isEqual(Type t){
+		if(t.type != type)
+			return false;
+		if(t.p_level != p_level)
+			return false;
+		return true;
+	}
+
+	bool isPointer(){
+		return p_level>0;
+	}
+
+
 	bool isIntegral(){
-		if(type > 0 && type < 9 )
-			return true;
-		return false;
+		if(isPointer()) return false;
+
+		return  (type < Float && type > Void);
 	}
 
 	bool isSigned(){
+		if(isPointer()) return false;
+		
 		if(is(UChar) || is(UShort) || is(UInt) || is(ULong)){
 			return false;
 		}
@@ -55,6 +83,7 @@ public:
 
 
 	int bytes(){
+		if(isPointer()) return 4;
 		switch(type){
 			case Void:
 				return 0;
