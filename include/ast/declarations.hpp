@@ -92,7 +92,7 @@ class ArrayDeclarator : public Declarator{
 			}
 		}
 		virtual int getSize() const override {
-			return size_expr->to_mips_eval();
+			return size_expr->eval();
 		}
 		virtual std::string getId() const override{
 			return id;
@@ -142,7 +142,7 @@ class InitArrayDeclarator : public Declarator{
 				dst<<".globl "<<id<<std::endl;
 				dst<<id<<":"<<std::endl;
 				for(auto it=init_list->begin();it!=init_list->end();it++){
-					dst<<".word "<< (*it)->to_mips_eval() << std::endl;	//should change label based on type
+					dst<<".word "<< (*it)->eval() << std::endl;	//should change label based on type
 				}				
 			}
 			else if(ctx.getScope() == local){
@@ -227,7 +227,7 @@ class InitIdentifierDeclarator  : public Declarator{
 			Type type = var.getType();
 
 			if(ctx.getScope() == global){
-				int init_val = init_expr->to_mips_eval(); //global only allows constant init
+				int init_val = init_expr->eval(); //global only allows constant init
 				dst<<".data"<<std::endl;	
 				dst<<".globl "<<id<<std::endl;
 				dst<<id<<":"<<std::endl;

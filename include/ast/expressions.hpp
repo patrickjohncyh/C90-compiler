@@ -18,7 +18,7 @@ class Expression : public ASTNode{
 			exit(1);
 			return "";
 		}
-		virtual int to_mips_eval() const{
+		virtual double eval() const{
 			return 0;
 		}
 		virtual Type exprType(Context& ctx) const{
@@ -116,7 +116,7 @@ class ArrayAccessExpression : public UnaryExpression{
 
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
-			expr->to_mips(dst,ctx);	//addr of id from map if local or mem loc if arguemnt or some sort of pointer
+			expr->to_mips(dst,ctx);			//addr of id from map if local or mem loc if arguemnt or some sort of pointer
 
 			auto offsetMemReg = ctx.assignNewStorage();
 			std::string offsetReg = "v1";	
@@ -139,9 +139,7 @@ class ArrayAccessExpression : public UnaryExpression{
 
 		virtual void print_struct(std::ostream &dst, int m) const override{
 		}
-
 };
-
 
 class FunctionCallExpression : public UnaryExpression{
 	private:
@@ -304,13 +302,38 @@ class PreNegativeExpression : public UnaryExpression{
 		PreNegativeExpression(Expression* _expr):UnaryExpression(_expr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+			Type rType = expr->exprType(ctx);
+			Type type = ctx.arithmeticConversion(rType,rType);
+
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
 			expr->to_mips(dst,ctx);		
+
+			ctx.convertMemRegType(rType,type,destMemReg,dst);
+
 			ctx.memReg_read(destMemReg, destReg, dst);
-			dst<<"subu  $"<<destReg<<",$0,$"<<destReg<<std::endl;		//negate
+			if(type.isIntegral()){
+				dst<<"subu  $"<<destReg<<",$0,$"<<destReg<<std::endl;		//negate
+			}
+			else{
+				std::string left_f  = "f0";
+				std::string zero_f  = "f2";
+				ctx.moveToFloatReg(destReg  ,left_f , dst);
+				ctx.moveToFloatReg("0"		,zero_f , dst);
+				dst<<"cvt.s.w $"<<zero_f<<",$"<<zero_f<<std::endl;//conversion from word to single
+				dst<<"sub.s   $"<<left_f<<",$"<<zero_f<<",$"<<left_f<<std::endl;
+				ctx.moveFromFloatReg(destReg,left_f,dst);
+			}
 			ctx.memReg_write(destMemReg, destReg, dst);
 		}
+
+		virtual Type exprType(Context& ctx) const override{
+			Type rType 	  = expr->exprType(ctx);
+			Type thisType = ctx.arithmeticConversion(rType,rType);
+			return thisType;
+		}
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst<< "-";
 			expr->to_c(dst,indent);
@@ -428,11 +451,17 @@ class MultExpression : public BinaryExpression{
 					dst <<"mflo $"<<left<<std::endl;
 				}
 				else{
-					//unsigned 
+					dst <<"multu $"<<left<<",$"<<right<<std::endl; //
+					dst <<"mflo $"<<left<<std::endl;
 				}
 			}
 			else{
-				//float
+				std::string left_f  = "f0";
+				std::string right_f = "f2";
+				ctx.moveToFloatReg(left ,left_f , dst);
+				ctx.moveToFloatReg(right,right_f, dst);
+				dst <<"mul.s $"<<left_f<<",$"<<left_f<<",$"<<right_f<<std::endl;
+				ctx.moveFromFloatReg(left,left_f,dst);
 			}
 		}
 
@@ -453,14 +482,20 @@ class DivExpression : public BinaryExpression{
 				else{
 					dst <<"divu $0,$"<<left<<",$"<<right<<std::endl;
 				}
+				dst <<"mfhi $"<<left<<std::endl;
+				dst <<"mflo $"<<left<<std::endl;
 			}
 			else{
-				//floats
+				std::string left_f  = "f0";
+				std::string right_f = "f2";
+				ctx.moveToFloatReg(left ,left_f , dst);
+				ctx.moveToFloatReg(right,right_f, dst);
+				dst <<"div.s $"<<left_f<<",$"<<left_f<<",$"<<right_f<<std::endl;
+				ctx.moveFromFloatReg(left,left_f,dst);
 			}
 
 			
-			dst <<"mfhi $"<<left<<std::endl;
-			dst <<"mflo $"<<left<<std::endl;
+			
 		};
 		virtual const char *getOpcode() const override{
 			return "/";
@@ -472,8 +507,22 @@ class ModuloExpression : public BinaryExpression{
 		ModuloExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
 		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
-			dst <<"div $"<<left<<",$"<<right<<std::endl;
-			dst <<"mfhi $"<<left<<std::endl;
+			if(type.isIntegral())
+				if(type.isSigned()){
+					dst <<"div  $"<<left<<",$"<<right<<std::endl;
+					dst <<"mfhi $"<<left<<std::endl;	
+				}
+				else{
+					dst <<"divu $"<<left<<",$"<<right<<std::endl;
+					dst <<"mfhi $"<<left<<std::endl;
+				}
+			else{
+				std::cout << "Error : Cannot perform % on non-integeral types"<<std::endl;
+				exit(1);
+			}
+
+
+
 		};
 		virtual const char *getOpcode() const override{
 			return "%";
@@ -489,12 +538,16 @@ class AddExpression : public BinaryExpression{
 				dst <<"addu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
 			else{
 				std::string left_f  = "f0";
-				std::string right_f = "f1";
-				dst<<"mtc1  $"<<left  <<",$"<<left_f  <<std::endl;
-				dst<<"mtc1  $"<<right <<",$"<<right_f <<std::endl;
-				dst<<"add.s $"<<left_f<<",$"<<left_f  <<",$"<<right_f<<std::endl;
-				dst<<"mfc1  $"<<left  <<",$"<<left_f  <<std::endl;
+				std::string right_f = "f2";
+				ctx.moveToFloatReg(left ,left_f , dst);
+				ctx.moveToFloatReg(right,right_f, dst);
+				dst<<"add.s $"<<left_f<<",$"<<left_f<<",$"<<right_f<<std::endl;
+				ctx.moveFromFloatReg(left,left_f,dst);
 			}
+		}
+
+		virtual double eval() const override{
+			return left->eval() + right->eval();	
 		}
 
 		virtual const char *getOpcode() const override{
@@ -511,11 +564,12 @@ class SubExpression : public BinaryExpression{
 				dst <<"subu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
 			else{
 				std::string left_f  = "f0";
-				std::string right_f = "f1";
-				dst<<"mtc1  $"<<left  <<",$"<<left_f  <<std::endl;
-				dst<<"mtc1  $"<<right <<",$"<<right_f <<std::endl;
+				std::string right_f = "f2";
+				ctx.moveToFloatReg(left ,left_f , dst);
+				ctx.moveToFloatReg(right,right_f, dst);
 				dst<<"sub.s $"<<left_f<<",$"<<left_f  <<",$"<<right_f<<std::endl;
 				dst<<"mfc1  $"<<left  <<",$"<<left_f  <<std::endl;
+				ctx.moveFromFloatReg(left,left_f,dst);
 			}
 		};
 		virtual const char *getOpcode() const override{

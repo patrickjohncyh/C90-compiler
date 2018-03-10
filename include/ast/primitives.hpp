@@ -57,7 +57,7 @@ class IntegralConstant : public Primitive{
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << indent << val;
 		}
-		virtual int to_mips_eval() const{
+		virtual double eval() const{
 			return val;
 		}
 };
@@ -86,8 +86,8 @@ class FloatingConstant : public Primitive{
 			return Type(Float); //shld be double as per c90 spec;
 		}
 
-		virtual int to_mips_eval() const{
-			//return val;
+		virtual double eval() const{
+			return val;
 		}
 
 

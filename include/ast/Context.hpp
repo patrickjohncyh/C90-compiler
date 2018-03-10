@@ -76,20 +76,30 @@ struct Context{
 	}
 
 	void memReg_read(memReg loc, std::string reg, std::ostream& dst){
-		dst << "lw $"<<reg<<","<<loc<<"($fp)"<<std::endl;
+		dst<<"lw $"<<reg<<","<<loc<<"($fp)"<<std::endl;
 	}
 
 	void memReg_write(memReg loc, std::string reg, std::ostream& dst){
-		dst << "sw $"<<reg<<","<<loc<<"($fp)"<<std::endl;
+		dst<<"sw $"<<reg<<","<<loc<<"($fp)"<<std::endl;
 	}
 
 	void memReg_read_f(memReg loc, std::string reg, std::ostream& dst){
-		dst << "lwc1 $"<<reg<<","<<loc<<"($fp)"<<std::endl;
+		dst<<"lwc1 $"<<reg<<","<<loc<<"($fp)"<<std::endl;
 	}
 
 	void memReg_write_f(memReg loc, std::string reg, std::ostream& dst){
-		dst << "swc1 $"<<reg<<","<<loc<<"($fp)"<<std::endl;
+		dst<<"swc1 $"<<reg<<","<<loc<<"($fp)"<<std::endl;
 	}
+
+	void moveToFloatReg(std::string iReg, std::string fReg, std::ostream& dst){
+		dst<<"mtc1 $"<<iReg<<",$"<<fReg<<std::endl;
+	}
+
+	void moveFromFloatReg(std::string iReg,std::string fReg, std::ostream& dst){
+		dst<<"mfc1 $"<<iReg<<",$"<<fReg<<std::endl;
+	}
+
+
 
 	memReg assignNewStorage(){
 		mem_fp_offset_count-=4;
@@ -198,7 +208,7 @@ struct Context{
 			if(origT.isIntegral()){ //integral to float
 				memReg_read_f(Reg, "f0",dst); //load from mem into float_reg
 				dst<<"nop"				<<std::endl;
-				dst<<"cvt.s.w	$f0,$f0"<<std::endl;//onversion from word to single
+				dst<<"cvt.s.w	$f0,$f0"<<std::endl;//conversion from word to single
 				memReg_write_f(Reg, "f0",dst); //store from float_reg into mem
 			}
 			else{	//float to integral
