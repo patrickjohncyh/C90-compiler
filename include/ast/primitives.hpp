@@ -102,6 +102,56 @@ class FloatingConstant : public Primitive{
 		}
 };
 
+class CharacterConstant : public Primitive{
+	private:
+		std::string str_val;
+		unsigned int val;
+		bool wide;
+	public:
+		CharacterConstant(std::string _str_val):str_val(_str_val){
+			val = 0;
+			if(str_val.substr(0,1).find("L") == -1){ //normal
+				str_val = str_val.substr(1,str_val.length()-2);
+				for(int i=0; i <str_val.length();i++){
+					val = (val<<8) + (unsigned int)str_val.c_str()[i];
+				}
+			}
+			else{
+				str_val = str_val.substr(str_val.length()-2,1);
+				val = (unsigned int)str_val.c_str()[0];
+				wide = true;
+			}
+		}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			dst << "##### Character Constant #####" << std::endl;
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			dst <<"li $"<<destReg<<","<<val<<std::endl;
+			ctx.memReg_write(destMemReg, destReg,dst);	
+		}
+
+		virtual Type exprType(Context& ctx) const override{
+			if(wide)
+				return Type(Char);
+			return Type(Int);
+		}
+
+		virtual void print_struct(std::ostream &dst, int m) const override{
+			dst << val;
+		}
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst << indent << val;
+		}
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
+			dst << indent << val;
+		}
+		virtual double eval() const{
+			return val;
+		}
+};
+
+
 
 class Identifier : public Primitive{
 	private:

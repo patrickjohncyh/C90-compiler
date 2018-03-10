@@ -45,7 +45,7 @@ void yyerror(const char *);
 %token DEFAULT
 
 
-%token IDENTIFIER LITERAL CONSTANT_I CONSTANT_F
+%token IDENTIFIER LITERAL CONSTANT_I CONSTANT_F CONSTANT_C
 %token INC_OP DEC_OP
 
 %token EQ_OP NE_OP LT_OP GT_OP LE_OP GE_OP
@@ -80,7 +80,7 @@ void yyerror(const char *);
 
 
 
-%type <string> IDENTIFIER LITERAL INT RETURN CONSTANT_I	CONSTANT_F
+%type <string> IDENTIFIER LITERAL INT RETURN CONSTANT_I	CONSTANT_F CONSTANT_C
 %type <type_node> type_specifier 
 
 
@@ -138,11 +138,12 @@ parameter_list		:	parameter_declaration				     { $$ = new std::vector<Declarati
 /* Expressions */
 
 
-base_expression		: 	CONSTANT_I			{ $$ = new IntegralConstant(*$1);}
-					|	CONSTANT_F			{ $$ = new FloatingConstant(*$1);}
-					| 	IDENTIFIER		 	{ $$ = new Identifier(*$1);  	}	
-					| 	LITERAL			 	{ $$ = new StringLiteral(*$1); 	}	
-					| 	'(' expression ')'	{ $$ = $2; 						}
+base_expression		: 	CONSTANT_I			{ $$ = new IntegralConstant(*$1);	}
+					|	CONSTANT_F			{ $$ = new FloatingConstant(*$1);	}
+					|	CONSTANT_C			{ $$ = new CharacterConstant(*$1);	}
+					| 	IDENTIFIER		 	{ $$ = new Identifier(*$1);  		}	
+					| 	LITERAL			 	{ $$ = new StringLiteral(*$1); 		}	
+					| 	'(' expression ')'	{ $$ = $2; 							}
 					
 
 postfix_expression	:	base_expression	

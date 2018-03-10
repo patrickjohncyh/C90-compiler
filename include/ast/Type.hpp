@@ -80,8 +80,7 @@ public:
 		}
 		return true;
 	}
-
-
+	
 	int bytes(){
 		if(isPointer()) return 4;
 		switch(type){

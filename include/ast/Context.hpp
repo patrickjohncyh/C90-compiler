@@ -177,8 +177,7 @@ struct Context{
 				std::cout << "Error : Unable to perform poitner arithmetic with given types" << std::endl;
 			}
 		}
-
-
+		
 		if(t2.isPointer()){
 			if(t1.isEqual(t2) || t1.isIntegral()){
 				return t2;

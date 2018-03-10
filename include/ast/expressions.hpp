@@ -775,7 +775,6 @@ class DirectAssignmentExpression : public AssignmentExpression{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			dst << "# ----- DirectAssignment ----- #" << std::endl;
-
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";	//addr
 			lvalue->to_mips_getAddr(dst,ctx);			

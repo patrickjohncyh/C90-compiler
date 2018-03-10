@@ -38,7 +38,11 @@ default 						{ return DEFAULT; 	}
 
 {L}({L}|{D})*					{ yylval.string = new std::string(yytext); return IDENTIFIER;	}
 
+
+
 {D}+							{ yylval.string = new std::string(yytext); return CONSTANT_I; }
+
+L?'(\\.|[^\\'])+'				{ yylval.string = new std::string(yytext); return CONSTANT_C; }
 
 {D}+{E}?						{ yylval.string = new std::string(yytext); return CONSTANT_F; }
 {D}*"."{D}+({E})?				{ yylval.string = new std::string(yytext); return CONSTANT_F; }
