@@ -110,7 +110,7 @@ initializer_list 	:   expression 							{ $$ = new std::vector<Expression*>(1,$1
 
 
 init_declarator		: 	declarator 								{ $$ = $1;									}
-					| 	declarator '=' expression 				{ $$ = new InitIdentifierDeclarator($1,$3);	}
+					| 	declarator '=' expression 				{ $$ = new InitIdentifierDeclarator($1,$3);	} //could potentially init an array..
 					|	declarator '=' '{' initializer_list '}'	{ $$ = new InitArrayDeclarator($1,$4);		}
 
 

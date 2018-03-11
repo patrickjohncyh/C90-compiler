@@ -32,6 +32,9 @@ public:
 	Type(basicType _type):type(_type){}
 	Type(basicType _type, int _p_level):type(_type),p_level(_p_level){}
 
+	int get_pLevel(){
+		return p_level;
+	}
 
 	void inc_pLevel(){
 		p_level++;
@@ -68,7 +71,6 @@ public:
 
 	bool isIntegral(){
 		if(isPointer()) return false;
-
 		return  (type < Float && type > Void);
 	}
 
@@ -80,7 +82,7 @@ public:
 		}
 		return true;
 	}
-	
+
 	int bytes(){
 		if(isPointer()) return 4;
 		switch(type){
@@ -104,6 +106,22 @@ public:
 			default:
 				return 4;
 		}
+	}
+
+	std::string storage_type(){
+		if(isPointer()){
+			return "word";
+		}
+		if(isIntegral()){
+			if(bytes() == 1)
+				return "byte";
+			else if(bytes() == 2)
+				return "half";
+			else if(bytes() == 4)
+				return "word";
+		}
+		else
+			return "float";
 	}
 
 };

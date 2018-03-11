@@ -6,10 +6,6 @@
 #include <sstream>
 
 class Statement : public ASTNode{			//TEMPORARY FIX might consider using inline in the future
-	public:
-		virtual void to_mips_switch(std::ostream &dst, Context& ctx) const{
-			//do nothing by default
-		}
 };
 
 class TranslationUnit : public ASTNode{
@@ -41,8 +37,6 @@ class TranslationUnit : public ASTNode{
 			left->to_python(dst,indent,tc);
 			right->to_python(dst,indent,tc);
 		}
-
-
 };
 
 class ExternalDeclaration : public ASTNode{
@@ -60,6 +54,9 @@ class Declarator  : public ExternalDeclaration{
 		virtual dType getDtype() const{
 			return Basic;
 		}
+		virtual void to_mips_declare(std::ostream &dst, Context& ctx, Type t) const{}
+		virtual void to_mips_declare_init(std::ostream &dst, Context& ctx,Type t, std::vector<Expression*>* init) const{}
+		virtual void to_mips_declare_init(std::ostream &dst, Context& ctx,Type t, Expression* init) const{}
 };
 
 class ArrayDeclarator : public Declarator{
@@ -71,17 +68,114 @@ class ArrayDeclarator : public Declarator{
 		ArrayDeclarator(std::string _id, Expression *_size_expr)
 		:id(_id),size_expr(_size_expr){}
 
+		virtual void to_mips_declare(std::ostream &dst, Context& ctx,Type type) const override{ //normal non init array
+			int size = getSize();
+			type.inc_pLevel();
+			Variable var = ctx.assignNewVariable(id,type,Array,size);
+			if(size ==-1){
+				std::cout << "Erorr : Array Size Missing" << std::endl;
+				exit(1);
+			}
+			if(ctx.getScope() == global){
+				dst<<".data"<<std::endl;	
+				dst<<".globl "<<id<<std::endl;
+				dst<<id<<":"<<std::endl;
+				for(int i=0;i<size;i++){
+					dst<<"."<<type.storage_type()<<" 0"<<std::endl;
+				}	
+			}
+			else if(ctx.getScope() == local){
+				for(int i=0;i<size;i++){
+					int offset = var.getAddr() + (i*type.bytes());
+					ctx.memoryOffsetWrite(type,"0","fp", offset,dst);
+				}
+			}
+		}
+		virtual void to_mips_declare_init(std::ostream &dst, Context& ctx,Type type, std::vector<Expression*>* init) const override{ //normal init array
+			int size = init->size();
+			type.inc_pLevel();
+			ctx.assignNewVariable(id,type,Array,size);
+			Variable var = ctx.getVariable(id);
+			if(ctx.getScope() == global){
+				dst<<".data"<<std::endl;	
+				dst<<".globl "<<id<<std::endl;
+				dst<<id<<":"<<std::endl;
+				for(auto it=init->begin();it!=init->end();it++){
+					dst<<"."<<type.storage_type()<< " "<<(*it)->eval()<<std::endl;
+				}				
+			}
+			else if(ctx.getScope() == local){
+				for(int i=0;i<size;i++){
+					auto tempMemReg = ctx.assignNewStorage();
+					std::string tempReg = "v0";
+					(*init)[i]->to_mips(dst,ctx);
+					ctx.deAllocStorage();
+					ctx.memReg_read(tempMemReg,tempReg,dst);
+					int offset = var.getAddr()+(i*type.bytes());
+					ctx.memoryOffsetWrite(type,tempReg,"fp", offset,dst);
+				}
+			}	
+		}
+		virtual void to_mips_declare_init(std::ostream &dst, Context& ctx,Type type, Expression* init) const override{	//some string array 
+			//know to be a string literal...	
+			int size = 0;
+
+			std::stringstream ss;
+			init->to_c(ss,"");
+			std::string str = ss.str();
+			int array_size = getSize();
+			str = str.substr(1,str.size()-2); //remove " "
+			int str_size = str.size();
+
+
+			if(array_size == -1){
+				size = str_size+1; //null termiantor...
+				str = str + "\0";
+			}
+			else{
+				size = array_size;
+				str = str.substr(0,array_size);
+			}
+
+			ctx.assignNewVariable(id,type,Array,size);
+			Variable var = ctx.getVariable(id);
+
+			if(ctx.getScope() == global){
+				dst<<".data"<<std::endl;	
+				dst<<".globl "<<id<<std::endl;
+				dst<<id<<":"<<std::endl;
+				dst<<".ascii "<<str<<std::endl;
+			}
+			else if(ctx.getScope() == local){
+				for(int i=0;i<size;i++){
+					auto tempMemReg = ctx.assignNewStorage();
+					std::string tempReg = "v0";
+					init->to_mips(dst,ctx);
+					ctx.deAllocStorage();
+					ctx.memReg_read(tempMemReg,tempReg,dst);
+					int offset = var.getAddr()+(i*type.bytes());
+					ctx.memoryOffsetWrite(type,tempReg,"fp", offset,dst);
+				}
+			}	
+
+		}
+
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			Variable var = ctx.getVariable(id);
 			Type type = var.getType();
 			int size = getSize();
+
+			if(size ==-1){
+				std::cout << "Erorr : Array Size Missing" << std::endl;
+				exit(1);
+			}
 			
 			if(ctx.getScope() == global){
 				dst<<".data"<<std::endl;	
 				dst<<".globl "<<id<<std::endl;
 				dst<<id<<":"<<std::endl;
 				for(int i=0;i<size;i++){
-					dst<<".word "<< 0 << std::endl;		//should change based on type
+					dst<<"."<<type.storage_type()<< " 0"<<std::endl;
 				}	
 			}
 			else if(ctx.getScope() == local){
@@ -92,71 +186,15 @@ class ArrayDeclarator : public Declarator{
 			}
 		}
 		virtual int getSize() const override {
-			return size_expr->eval();
+			if(size_expr!=NULL)
+				return size_expr->eval();
+			return -1;
 		}
 		virtual std::string getId() const override{
 			return id;
 		}
 		virtual dType getDtype() const override{
 			return Array;
-		}
-
-		virtual void print_struct(std::ostream &dst, int m) const override{
-		}
-};
-
-class InitArrayDeclarator : public Declarator{
-	private:
-		Declarator* dec;
-		std::vector<Expression*>* init_list;
-
-	public:
-		InitArrayDeclarator(Declarator* _dec, std::vector<Expression*>* _init_list)
-		:dec(_dec),init_list(_init_list){}
-
-		virtual std::string getId() const override{
-			return dec->getId();
-		}
-
-		virtual int getSize() const override{
-			return dec->getSize();
-		}
-
-		virtual dType getDtype() const{
-			return Array;
-		}
-
-		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			std::string id = getId();
-			Variable var = ctx.getVariable(id);
-			Type type = var.getType();
-			int size = getSize();
-
-			if ((unsigned)size != init_list->size()){
-				dst << "Error : Array initializer does not match size" <<std::endl;
-				exit(1);
-			}
-
-			if(ctx.getScope() == global){
-				dst<<".data"<<std::endl;	
-				dst<<".globl "<<id<<std::endl;
-				dst<<id<<":"<<std::endl;
-				for(auto it=init_list->begin();it!=init_list->end();it++){
-					dst<<".word "<< (*it)->eval() << std::endl;	//should change label based on type
-				}				
-			}
-			else if(ctx.getScope() == local){
-				for(int i=0;i<size;i++){
-					auto tempMemReg = ctx.assignNewStorage();
-					std::string tempReg = "v0";
-					(*init_list)[i]->to_mips(dst,ctx);
-					ctx.deAllocStorage();
-					ctx.memReg_read(tempMemReg,tempReg,dst);
-
-					int offset = var.getAddr()+(i*type.bytes());
-					ctx.memoryOffsetWrite(type,tempReg,"fp", offset,dst);
-				}
-			}	
 		}
 		virtual void print_struct(std::ostream &dst, int m) const override{
 		}
@@ -168,28 +206,59 @@ class IdentifierDeclarator  : public Declarator{
 		std::string id;
 
 	public:
-		IdentifierDeclarator(std::string _id)
-		:id(_id){}
+		IdentifierDeclarator(std::string _id):id(_id){}
 
-		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+		virtual void to_mips_declare(std::ostream &dst, Context& ctx,Type type) const override{ //normal identifier, un-init
+			Variable var = ctx.assignNewVariable(id,type,Basic,1);
 			if(ctx.getScope() == global){
 				dst<<".data"<<std::endl;	
 				dst<<".globl "<<id<<std::endl;
 				dst<<id<<":"<<std::endl;
-				dst<<".word 0"<<std::endl;
+				dst<<"."<<type.storage_type()<< " 0"<<std::endl;
 			}
 			else if(ctx.getScope() == local){
-				Variable var = ctx.getVariable(id);
-				ctx.memoryOffsetWrite(var.getType(),"0","fp",var.getAddr(),dst);	
+				ctx.memoryOffsetWrite(type,"0","fp",var.getAddr(),dst);	
+			}
+		}
+		virtual void to_mips_declare_init(std::ostream &dst, Context& ctx,Type type, Expression* init_exp) const override{ //init identifier
+			Variable var = ctx.assignNewVariable(id,type,Basic,1);
+			if(ctx.getScope() == global){
+				int init_val = init_exp->eval(); //global only allows constant init
+				dst<<".data"<<std::endl;	
+				dst<<".globl "<<id<<std::endl;
+				dst<<id<<":"<<std::endl;
+				dst<<"."<<type.storage_type()<< " "<<init_val<<std::endl;
+			}
+			else if(ctx.getScope() == local){
+				auto tempMemReg = ctx.assignNewStorage();
+				std::string tempReg = "v1";
+				init_exp->to_mips(dst,ctx);
+				ctx.deAllocStorage();
+				ctx.convertMemRegType(init_exp->exprType(ctx),type,tempMemReg,dst);
+				ctx.memReg_read(tempMemReg,tempReg,dst);
+				ctx.memoryOffsetWrite(type,tempReg,"fp",var.getAddr(),dst);
 			}
 		}
 
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			Variable var = ctx.getVariable(id);
+			Type type = var.getType();
+
+			if(ctx.getScope() == global){
+				dst<<".data"<<std::endl;	
+				dst<<".globl "<<id<<std::endl;
+				dst<<id<<":"<<std::endl;
+				dst<<"."<<type.storage_type()<< " 0"<<std::endl;
+			}
+			else if(ctx.getScope() == local){
+				ctx.memoryOffsetWrite(type,"0","fp",var.getAddr(),dst);	
+			}
+		}
 		virtual std::string getId() const override{
 			return id;
 		}
-		virtual dType getDtype() const override{
-			return Basic;
-		}
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst << indent << id;
 		}
@@ -208,6 +277,7 @@ class IdentifierDeclarator  : public Declarator{
 };
 
 
+
 class InitIdentifierDeclarator  : public Declarator{
 	private:
 			Declarator* dec;
@@ -217,31 +287,15 @@ class InitIdentifierDeclarator  : public Declarator{
 		InitIdentifierDeclarator(Declarator* _dec, Expression* _init_expr)
 		:dec(_dec),init_expr(_init_expr){}
 
+		virtual void to_mips_declare(std::ostream &dst, Context& ctx,Type t) const override{
+			dec->to_mips_declare_init(dst,ctx,t,init_expr);
+		}
+
 		virtual std::string getId() const{
 			return dec->getId();
 		}
-
-		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			std::string id = dec->getId();
-			Variable var = ctx.getVariable(id);
-			Type type = var.getType();
-
-			if(ctx.getScope() == global){
-				int init_val = init_expr->eval(); //global only allows constant init
-				dst<<".data"<<std::endl;	
-				dst<<".globl "<<id<<std::endl;
-				dst<<id<<":"<<std::endl;
-				dst<<".word "<<init_val<<std::endl;
-			}
-			else if(ctx.getScope() == local){
-				auto tempMemReg = ctx.assignNewStorage();
-				std::string tempReg = "v1";
-				init_expr->to_mips(dst,ctx);
-				ctx.deAllocStorage();
-				ctx.convertMemRegType(init_expr->exprType(ctx),type,tempMemReg,dst);
-				ctx.memReg_read(tempMemReg,tempReg,dst);
-				ctx.memoryOffsetWrite(type,tempReg,"fp",var.getAddr(),dst);
-			}
+		virtual dType getDtype() const override{
+			return dec->getDtype();
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
@@ -260,6 +314,73 @@ class InitIdentifierDeclarator  : public Declarator{
 		}
 };
 
+class InitArrayDeclarator : public Declarator{
+	private:
+		Declarator* dec;
+		std::vector<Expression*>* init_list;
+
+	public:
+		InitArrayDeclarator(Declarator* _dec, std::vector<Expression*>* _init_list)
+		:dec(_dec),init_list(_init_list){}
+
+
+		virtual void to_mips_declare(std::ostream &dst, Context& ctx,Type t) const override{
+			dec->to_mips_declare_init(dst,ctx,t,init_list);
+		}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			std::string id = getId();
+			Variable var = ctx.getVariable(id);
+			Type type = var.getType();
+			int size = getSize();
+
+			if(ctx.getScope() == global){
+				dst<<".data"<<std::endl;	
+				dst<<".globl "<<id<<std::endl;
+				dst<<id<<":"<<std::endl;
+				for(auto it=init_list->begin();it!=init_list->end();it++){
+					dst<<"."<<type.storage_type()<< " "<<(*it)->eval()<<std::endl;
+				}				
+			}
+			else if(ctx.getScope() == local){
+				for(int i=0;i<size;i++){
+					auto tempMemReg = ctx.assignNewStorage();
+					std::string tempReg = "v0";
+					(*init_list)[i]->to_mips(dst,ctx);
+					ctx.deAllocStorage();
+					ctx.memReg_read(tempMemReg,tempReg,dst);
+
+					int offset = var.getAddr()+(i*type.bytes());
+					ctx.memoryOffsetWrite(type,tempReg,"fp", offset,dst);
+				}
+			}	
+		}
+
+		virtual std::string getId() const override{
+			return dec->getId();
+		}
+
+		virtual int getSize() const override{
+			int size = dec->getSize();
+			if(size != -1){	
+				if ((unsigned)size != init_list->size()){
+					std::cout << "Error : Array initializer size does not match Array size" <<std::endl;
+					exit(1);
+				}
+			}
+			else{
+				size = init_list->size();
+			}
+			return size;
+		}
+		virtual dType getDtype() const{
+			return Array;
+		}
+		virtual void print_struct(std::ostream &dst, int m) const override{
+		}
+};
+
+
 
 
 class Declaration : public ExternalDeclaration{
@@ -274,15 +395,7 @@ class Declaration : public ExternalDeclaration{
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			if(dec_list != NULL){
 				for(auto it=dec_list->begin();it!=dec_list->end();it++){
-					std::string id 	  = (*it)->getId();
-					dType dtype 	  = (*it)->getDtype();
-					int size 		  = (*it)->getSize();
-					Type newtype(type);
-					if(dtype == Array){
-						newtype.inc_pLevel();
-					}
-					ctx.assignNewVariable(id,newtype,dtype,size);
-					(*it)->to_mips(dst,ctx);	
+					(*it)->to_mips_declare(dst,ctx,type);
 				}
 			}
 		}

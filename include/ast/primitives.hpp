@@ -14,6 +14,15 @@ class StringLiteral : public Primitive{
 	public:
 		StringLiteral(std::string _str):str(_str){}
 
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			std::string stringConstLabel = ctx.generateLabel("$SC");
+			ctx.labeled_constant[stringConstLabel] = str;
+			dst<<"la   $"<<destReg<<","<<stringConstLabel<<std::endl;	 //load address of string label
+			ctx.memReg_write(destMemReg, destReg,dst);						 
+		}
+
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << str;
 		}
@@ -194,7 +203,7 @@ class Identifier : public Primitive{
 		}
 		virtual Type exprType(Context& ctx) const override{
 			Variable var = ctx.getVariable(id);
-			return var.getType();;
+			return var.getType();
 		}
 		virtual void print_struct(std::ostream &dst, int m) const override{
 			dst << id;

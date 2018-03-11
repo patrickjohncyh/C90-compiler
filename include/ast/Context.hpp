@@ -123,12 +123,13 @@ struct Context{
 		(*var_location)[name] = new Variable(local,type,dtype,addr);
 	}
 
-	void assignNewVariable(std::string name,Type type, dType dtype, int size = 1){
+	Variable assignNewVariable(std::string name,Type type, dType dtype, int size = 1){
 		if(scope == local){
 			mem_fp_offset_count-= size *  type.bytes();
 			mem_fp_offset_count-= (-mem_fp_offset_count)%4;	//make aligned
 		}
 		(*var_location)[name] = new Variable(scope,type,dtype,mem_fp_offset_count);
+		return *( (*var_location)[name] );
 	}
 
 	Variable getVariable(std::string name){					//returns Variable Object
@@ -177,7 +178,7 @@ struct Context{
 				std::cout << "Error : Unable to perform poitner arithmetic with given types" << std::endl;
 			}
 		}
-		
+
 		if(t2.isPointer()){
 			if(t1.isEqual(t2) || t1.isIntegral()){
 				return t2;
