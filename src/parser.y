@@ -48,7 +48,7 @@ void yyerror(const char *);
 %token IDENTIFIER LITERAL CONSTANT_I CONSTANT_F CONSTANT_C
 %token INC_OP DEC_OP
 
-%token EQ_OP NE_OP LT_OP GT_OP LE_OP GE_OP
+%token EQ_OP NE_OP LT_OP GT_OP LE_OP GE_OP LS_OP RS_OP AND_OP OR_OP
 
 
 
@@ -66,7 +66,7 @@ void yyerror(const char *);
 %type<expression_node> base_expression postfix_expression prefix_expression cast_expression
 %type<expression_node> mult_expression add_expression 
 %type<expression_node> bw_shift_expression  compare_expression  equality_expression
-%type<expression_node> bitwise_expression logical_expression ternary_expression 
+%type<expression_node> bitwise_and_expression bitwise_or_expression bitwise_xor_expression logical_and_expression logical_or_expression ternary_expression 
 %type<expression_node> assign_expression  expression 
 
 %type<argument_list_vector> argument_list
@@ -179,7 +179,9 @@ add_expression		: 	mult_expression					  	{ $$ = $1; }
 					| 	add_expression '+' mult_expression	{ $$ = new AddExpression($1,$3);	}
 					| 	add_expression '-' mult_expression  { $$ = new SubExpression($1,$3);	}
 
-bw_shift_expression	:	add_expression	/*implement bw shift*/
+bw_shift_expression	:	add_expression
+					|	bw_shift_expression LS_OP add_expression { $$ = new LeftShiftExpression($1,$3);	}
+					|	bw_shift_expression RS_OP add_expression { $$ = new RightShiftExpression($1,$3);}
 
 compare_expression	: 	bw_shift_expression
 					|	compare_expression LT_OP bw_shift_expression	{ $$ = new LessThanExpression($1,$3); 		}
@@ -191,11 +193,24 @@ equality_expression	: 	compare_expression
 					|	equality_expression EQ_OP compare_expression	{ $$ = new EqualityExpression($1,$3); 		}
 					|	equality_expression NE_OP compare_expression	{ $$ = new NotEqualityExpression($1,$3); 	}
 
-bitwise_expression	: 	equality_expression /* to expand into bitwise AND,XOR,OR for precedence */
 
-logical_expression	: 	bitwise_expression /* to expand into logical  AND,OR for precedence */
 
-ternary_expression 	: 	logical_expression /* to implement conidtional expression */
+bitwise_and_expression	:	equality_expression
+						|	bitwise_and_expression '&' equality_expression		{$$ = new BwAndExpression($1,$3);}
+
+bitwise_xor_expression	:	bitwise_and_expression
+						|	bitwise_xor_expression  '^' bitwise_and_expression	{$$ = new BwXorExpression($1,$3);}
+
+bitwise_or_expression	: 	bitwise_xor_expression
+						|	bitwise_or_expression '|' bitwise_xor_expression 	{$$ = new BwOrExpression($1,$3);}
+
+logical_and_expression	: 	bitwise_or_expression
+						|   logical_and_expression AND_OP bitwise_or_expression {$$ = new LogicalAndExpression($1,$3);}
+
+logical_or_expression	:	logical_and_expression
+						|	logical_or_expression OR_OP logical_and_expression				{$$ = new LogicalOrExpression($1,$3);}
+
+ternary_expression 	: 	logical_or_expression /* to implement conidtional expression */
 
 assign_expression	: 	ternary_expression 
 					|	postfix_expression '=' assign_expression { $$ = new DirectAssignmentExpression($1,$3); }	

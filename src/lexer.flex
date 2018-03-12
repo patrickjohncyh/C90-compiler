@@ -73,7 +73,9 @@ L?'(\\.|[^\\'])+'				{ yylval.string = new std::string(yytext); return CONSTANT_
 [-]				{ return ('-'); }
 [~]				{ return ('~'); }
 [!]				{ return ('!'); }
-[&]				{ return ('&'); }		
+[&]				{ return ('&'); }
+[\^]				{ return ('^'); }
+[|]				{ return ('|'); }		
 
 
 \==				{ return EQ_OP;	}
@@ -89,10 +91,10 @@ L?'(\\.|[^\\'])+'				{ yylval.string = new std::string(yytext); return CONSTANT_
 
 \++				{ return INC_OP;}
 \--				{ return DEC_OP;}
-
-
-
-
+\<<				{ return LS_OP; }
+\>>				{ return RS_OP;	}
+\&&				{ return AND_OP;}
+\|\|				{ return OR_OP;}
 
 
 

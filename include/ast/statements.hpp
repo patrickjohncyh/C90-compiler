@@ -20,15 +20,6 @@ class ExprStatement : public Statement{
 				ctx.deAllocStorage();
 			}	
 		}
-
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			if(expr!=NULL){
-				dst << std::setw(m) << "";
-				dst << "ExpressionStatement [ ";
-				expr->print_struct(dst,m);
-				dst << " ]" << std::endl;
-			}
-		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			if(expr!=NULL){
 				expr->to_c(dst,indent);
@@ -99,22 +90,7 @@ class CompoundStatement : public Statement{
 			//	dst << std::endl;
 			}
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst <<  std::setw(m) << "";
-			dst << "CompoundStatement [" << std::endl;
-			if(d_list != NULL){			//print declaration list
-				for(auto it=d_list->begin();it!=d_list->end();it++){
-					(*it)->print_struct(dst,m+2);
-				}
-			}
-			if(s_list !=NULL){			//print statement list
-				for(auto it=s_list->begin();it!=s_list->end();it++){
-					(*it)->print_struct(dst,m+2);
-				}
-			}
-			dst << std::setw(m) << "";
-			dst << "]" << std::endl;
-		}
+	
 };
 
 class ConditionIfStatement : public Statement{
@@ -159,15 +135,7 @@ class ConditionIfStatement : public Statement{
 			s_true->to_python(dst,indent+"  ",tc);
 			dst << std::endl;
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << std::setw(m) << "";
-			dst << "IfStatement [ " ;
-			cond_expr->print_struct(dst,m+2);
-			dst << std::endl;
-			s_true->print_struct(dst,m+2);
-			dst << std::setw(m) << "";
-			dst << " ]" << std::endl;
-		}
+		
 };
 
 
@@ -223,27 +191,7 @@ class ConditionIfElseStatement : public Statement{
 			dst << indent << "else:" << std::endl;
 			s_false->to_python(dst,indent+"  ",tc);
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << std::setw(m) << "";
-			dst << "IfElseStatement [ " ;
-			cond_expr->print_struct(dst,m+2);
-			dst << std::endl;
-
-			dst << std::setw(m+2) << "";
-			dst << "ConditionTrue [ " << std::endl;
-			s_true->print_struct(dst,m+4);
-			dst << std::setw(m+2) << "";
-			dst << "]" << std::endl;
-
-			dst << std::setw(m+2) << "";
-			dst << "ConditionFalse [ " << std::endl;
-			s_false->print_struct(dst,m+4);
-			dst << std::setw(m+2) << "";
-			dst << "]" << std::endl;
-
-			dst << std::setw(m) << "";
-			dst << "]" << std::endl;
-		}
+		
 };
 
 class WhileStatement : public Statement{
@@ -297,15 +245,7 @@ class WhileStatement : public Statement{
 			s_true->to_python(dst,indent+"  ",tc);
 			dst << std::endl;
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << std::setw(m) << "";
-			dst << "WhileStatement [ " ;
-			cond_expr->print_struct(dst,m+2);
-			dst << std::endl;
-			s_true->print_struct(dst,m+2);
-			dst << std::setw(m) << "";
-			dst << " ]" << std::endl;
-		}
+		
 
 };
 
@@ -365,9 +305,7 @@ class ForStatement : public Statement{
 			dst << ")" << std::endl;
 			s_true->to_c(dst,indent);
 		} 
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "ForStatement" << std::endl;
-		}
+		
 };
 
 
@@ -417,14 +355,7 @@ class JumpStatement : public Statement{
 			if(expr != NULL) expr->to_python(dst," ",tc);
 			dst << std::endl;
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << std::setw(m) << "";
-			dst << "JumpStatement [ ";
-			if(expr!=NULL){
-				expr->print_struct(dst,m);
-			}
-			dst << "; ]" << std::endl;
-		}
+
 };
 
 
@@ -450,8 +381,7 @@ class JumpBreakStatement : public Statement{
 			}
 		}
 
-		virtual void print_struct(std::ostream &dst, int m) const override{
-		}
+
 };
 
 
@@ -519,7 +449,6 @@ class ConditionSwitchStatement : public Statement{
 
 	}
 
-	virtual void print_struct(std::ostream &dst, int m) const override{};
 };
 
 class LabeledCaseStatement : public Statement{
@@ -542,7 +471,6 @@ class LabeledCaseStatement : public Statement{
 
 		}
 
-		virtual void print_struct(std::ostream &dst, int m) const override{};
 };
 
 class LabeledDefaultStatement : public Statement{
@@ -562,7 +490,6 @@ class LabeledDefaultStatement : public Statement{
 			s_ptr->to_mips(dst,ctx);
 		}
 
-		virtual void print_struct(std::ostream &dst, int m) const override{};
 };
 
 

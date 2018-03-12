@@ -22,7 +22,6 @@ class Expression : public ASTNode{
 			return 0;
 		}
 		virtual Type exprType(Context& ctx) const{
-		//	std::cout << "ERROR : exprType() Not implemented" << std::endl;
 			return Type(Int);
 		}
 };
@@ -50,9 +49,6 @@ class CastExpression : public Expression{
 
 		virtual Type exprType(Context& ctx) const override{
 			return *cast_type;
-		}
-
-		virtual void print_struct(std::ostream &dst, int m) const override{
 		}
 };
 
@@ -89,10 +85,7 @@ class PostIncrementExpression : public UnaryExpression{
 			expr->to_c(dst,indent);
 			dst<< "++";
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			expr->print_struct(dst,m);
-			dst << "++" << std::endl;
-		}
+
 };
 
 class PostDecrementExpression : public UnaryExpression{
@@ -115,10 +108,7 @@ class PostDecrementExpression : public UnaryExpression{
 			expr->to_c(dst,indent);
 			dst<< "--";
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			expr->print_struct(dst,m);
-			dst << "--" << std::endl;
-		}
+
 };
 
 class ArrayAccessExpression : public UnaryExpression{
@@ -162,9 +152,6 @@ class ArrayAccessExpression : public UnaryExpression{
 			Type type=expr->exprType(ctx);
 			type.dec_pLevel();
 			return type;
-		}
-
-		virtual void print_struct(std::ostream &dst, int m) const override{
 		}
 };
 
@@ -225,15 +212,7 @@ class FunctionCallExpression : public UnaryExpression{
 			}
 			dst << ")";
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "FunctionCallExpression [ Identifier ( ";  expr->print_struct(dst,m); dst << " ) ";
-			if(a_list->size() !=0){
-				for(auto it = a_list->begin(); it != a_list->end(); it++){
-					(*it)->print_struct(dst,m);
-				}
-			}
-			dst << "]" << std::endl;
-		}
+
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			expr->to_python(dst,indent,tc);
 			dst << "(";
@@ -256,6 +235,8 @@ class ReferenceExpression : public UnaryExpression{
 		ReferenceExpression(Expression* _expr):UnaryExpression(_expr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			dst<<"# ------- REFERENCE ------- #"<<std::endl;
+
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
 			expr->to_mips_getAddr(dst,ctx);		//addr of expression in destReg	
@@ -272,10 +253,7 @@ class ReferenceExpression : public UnaryExpression{
 			expr->to_c(dst,indent);
 
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "&" << std::endl;
-			expr->print_struct(dst,m);
-		}
+
 };
 
 class DereferenceExpression : public UnaryExpression{
@@ -283,6 +261,7 @@ class DereferenceExpression : public UnaryExpression{
 		DereferenceExpression(Expression* _expr):UnaryExpression(_expr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			dst<<"# ------ DEREFERENCE ------ #"<<std::endl;
 
 			Type type = expr->exprType(ctx);
 			type.dec_pLevel();
@@ -305,10 +284,7 @@ class DereferenceExpression : public UnaryExpression{
 			expr->to_c(dst,indent);
 
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "*" << std::endl;
-			expr->print_struct(dst,m);
-		}
+
 };
 
 class PreIncrementExpression : public UnaryExpression{
@@ -332,11 +308,7 @@ class PreIncrementExpression : public UnaryExpression{
 			expr->to_c(dst,indent);
 
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "++" << std::endl;
-			expr->print_struct(dst,m);
 
-		}
 };
 
 class PreDecrementExpression : public UnaryExpression{
@@ -359,10 +331,7 @@ class PreDecrementExpression : public UnaryExpression{
 			dst<< "--";
 			expr->to_c(dst,indent);
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "--" << std::endl;
-			expr->print_struct(dst,m);
-		}
+
 };
 
 class PrePositiveExpression : public UnaryExpression{
@@ -377,10 +346,7 @@ class PrePositiveExpression : public UnaryExpression{
 			dst<< "+";
 			expr->to_c(dst,indent);
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "+" << std::endl;
-			expr->print_struct(dst,m);
-		}
+
 };
 
 class PreNegativeExpression : public UnaryExpression{
@@ -421,10 +387,7 @@ class PreNegativeExpression : public UnaryExpression{
 			dst<< "-";
 			expr->to_c(dst,indent);
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "-" << std::endl;
-			expr->print_struct(dst,m);
-		}
+	
 };
 
 class PreNotExpression : public UnaryExpression{
@@ -443,10 +406,7 @@ class PreNotExpression : public UnaryExpression{
 			dst<< "!";
 			expr->to_c(dst,indent);
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "!" << std::endl;
-			expr->print_struct(dst,m);
-		}
+
 };
 
 
@@ -510,15 +470,7 @@ class BinaryExpression : public Expression{
 			right->to_python(dst,"",tc);
 			dst <<")";
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst<<"( ";
-	        left->print_struct(dst,m);
-	        dst<<" ";
-	        dst<<getOpcode();
-	        dst<<" ";
-	        right->print_struct(dst,m);
-	        dst<<" )";
-		}
+
 };
 
 /********* Arithmetic Binary Expressions *********/
@@ -534,7 +486,7 @@ class MultExpression : public BinaryExpression{
 					dst <<"mflo $"<<left<<std::endl;
 				}
 				else{
-					dst <<"multu $"<<left<<",$"<<right<<std::endl; //
+					dst <<"multu $"<<left<<",$"<<right<<std::endl;
 					dst <<"mflo $"<<left<<std::endl;
 				}
 			}
@@ -635,7 +587,7 @@ class SubExpression : public BinaryExpression{
 		SubExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
 		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right,Type type) const override{
-			if(type.isIntegral())
+			if(type.isIntegral() || type.isPointer())
 				dst <<"subu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
 			else{
 				std::string left_f  = "f0";
@@ -643,12 +595,46 @@ class SubExpression : public BinaryExpression{
 				ctx.moveToFloatReg(left ,left_f , dst);
 				ctx.moveToFloatReg(right,right_f, dst);
 				dst<<"sub.s $"<<left_f<<",$"<<left_f  <<",$"<<right_f<<std::endl;
-				dst<<"mfc1  $"<<left  <<",$"<<left_f  <<std::endl;
 				ctx.moveFromFloatReg(left,left_f,dst);
 			}
 		};
 		virtual const char *getOpcode() const override{
 			return "-";
+		}
+};
+
+/********* Shift Binary Expressions *********/
+
+class LeftShiftExpression : public BinaryExpression{
+	public:
+		LeftShiftExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
+			if(type.isIntegral()){
+				dst <<"sllv $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+			}
+		}
+		virtual const char *getOpcode() const override{
+			return "<<";
+		}
+};
+
+class RightShiftExpression : public BinaryExpression{
+	public:
+		RightShiftExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
+			if(type.isIntegral()){
+				if(type.isSigned()){
+					dst <<"srav $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+				}
+				else{
+					dst <<"srlv $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+				}	
+			}
+		}
+		virtual const char *getOpcode() const override{
+			return ">>";
 		}
 };
 
@@ -659,9 +645,33 @@ class LessThanExpression : public BinaryExpression{
 		LessThanExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
 		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
-			dst <<"slt $"<<left<<",$"<<left<<",$"<<right<<std::endl;
-		};
-
+			if(type.isPointer() || type.isIntegral()){
+				if(type.isSigned()){
+					dst <<"sltu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+				}
+				else{
+					dst <<"sltu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+				}
+			}
+			else{
+				std::string condTrue = ctx.generateLabel("$LT_T");
+				std::string left_f  = "f0";
+				std::string right_f = "f2";
+				ctx.moveToFloatReg(left ,left_f , dst);
+				ctx.moveToFloatReg(right,right_f, dst);
+				dst <<"addiu  $"<<left  <<",$0,1"<<std::endl;
+				dst <<"c.lt.s $"<<left_f<<",$"<<right_f<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"bc1t " <<condTrue<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"move   $"<<left  <<",$0"<<std::endl;
+				dst <<condTrue<< ":" << std::endl;
+				
+			}	
+		}
+		virtual Type exprType(Context& ctx) const override{
+			return Type(Int);
+		}
 		virtual const char *getOpcode() const override{
 			return "<";
 		}
@@ -672,7 +682,7 @@ class MoreThanExpression : public BinaryExpression{
 		MoreThanExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
 		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
-			if(type.isIntegral()){
+			if(type.isIntegral() || type.isPointer()){
 				if(type.isSigned()){
 					dst <<"slt $"<<left<<",$"<<right<<",$"<<left<<std::endl;
 				}
@@ -681,11 +691,25 @@ class MoreThanExpression : public BinaryExpression{
 				}
 			}
 			else{
-				//
+				std::string condTrue = ctx.generateLabel("$MT_T");
+				std::string left_f  = "f0";
+				std::string right_f = "f2";
+				ctx.moveToFloatReg(left ,left_f , dst);
+				ctx.moveToFloatReg(right,right_f, dst);
+				dst <<"addiu  $"<<left  <<",$0,1"<<std::endl;
+				dst <<"c.lt.s $"<<right_f<<",$"<<left_f<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"bc1t " <<condTrue<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"move   $"<<left  <<",$0"<<std::endl;
+				dst <<condTrue<< ":" << std::endl;
 			}
 			
 		}
 
+		virtual Type exprType(Context& ctx) const override{
+			return Type(Int);
+		}
 		virtual const char *getOpcode() const override{
 			return ">";
 		}
@@ -696,9 +720,36 @@ class LessThanEqExpression : public BinaryExpression{
 		LessThanEqExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 		
 		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
-			dst <<"slt  $"<<left<<",$"<<right<<",$"<<left<<std::endl;
-			dst <<"xori	$"<<left<<",$"<<left<<","<<0x1<<std::endl;
-		};
+			if(type.isIntegral() || type.isPointer()){
+				if(type.isSigned()){
+					dst <<"slt  $"<<left<<",$"<<right<<",$"<<left<<std::endl;
+					dst <<"xori	$"<<left<<",$"<<left<<","<<0x1<<std::endl;
+				}
+				else{
+					dst <<"sltu $"<<left<<",$"<<right<<",$"<<left<<std::endl;
+					dst <<"xori	$"<<left<<",$"<<left<<","<<0x1<<std::endl;
+				}
+			}
+			else{
+				std::string condTrue = ctx.generateLabel("$LTE_T");
+				std::string left_f  = "f0";
+				std::string right_f = "f2";
+				ctx.moveToFloatReg(left ,left_f , dst);
+				ctx.moveToFloatReg(right,right_f, dst);
+				dst <<"addiu  $"<<left  <<",$0,1"<<std::endl;
+				dst <<"c.le.s $"<<left_f<<",$"<<right_f<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"bc1t " <<condTrue<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"move   $"<<left  <<",$0"<<std::endl;
+				dst <<condTrue<< ":" << std::endl;
+			}
+
+		}
+
+		virtual Type exprType(Context& ctx) const override{
+			return Type(Int);
+		}
 
 		virtual const char *getOpcode() const override{
 			return "<=";
@@ -710,9 +761,34 @@ class MoreThanEqExpression : public BinaryExpression{
 		MoreThanEqExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
 		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
-			dst <<"slt  $"<<left<<",$"<<left<<",$"<<right<<std::endl;
-			dst <<"xori	$"<<left<<",$"<<left<<","<<0x1<<std::endl;
-		};
+			if(type.isIntegral() || type.isPointer()){
+				if(type.isSigned()){
+					dst <<"slt  $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+					dst <<"xori	$"<<left<<",$"<<left<<","<<0x1<<std::endl;
+				}
+				else{
+					dst <<"sltu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+					dst <<"xori	$"<<left<<",$"<<left<<","<<0x1<<std::endl;
+				}
+			}
+			else{
+				std::string condTrue = ctx.generateLabel("$MTE_F");
+				std::string left_f  = "f0";
+				std::string right_f = "f2";
+				ctx.moveToFloatReg(left ,left_f , dst);
+				ctx.moveToFloatReg(right,right_f, dst);
+				dst <<"addiu  $"<<left  <<",$0,1"<<std::endl;
+				dst <<"c.le.s $"<<right_f<<",$"<<left_f<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"bc1t " <<condTrue<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"move   $"<<left  <<",$0"<<std::endl;
+				dst <<condTrue<< ":" << std::endl;
+			}
+		}
+		virtual Type exprType(Context& ctx) const override{
+			return Type(Int);
+		}
 
 		virtual const char *getOpcode() const override{
 			return ">=";
@@ -724,9 +800,30 @@ class EqualityExpression : public BinaryExpression{
 		EqualityExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
 		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
-			dst <<"xor   $"<<left<<",$"<<left<<",$"<<right<<std::endl;
-			dst <<"sltiu $"<<left<<",$"<<left<<",1"<<std::endl;
-		};
+			if(type.isIntegral() || type.isPointer()){
+					dst <<"xor   $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+					dst <<"sltiu $"<<left<<",$"<<left<<",1"<<std::endl;
+			}
+			else{
+				std::string condTrue = ctx.generateLabel("$EQ_T");
+				std::string left_f  = "f0";
+				std::string right_f = "f2";
+				ctx.moveToFloatReg(left ,left_f , dst);
+				ctx.moveToFloatReg(right,right_f, dst);
+				dst <<"addiu  $"<<left  <<",$0,1"<<std::endl;
+				dst <<"c.eq.s $"<<right_f<<",$"<<left_f<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"bc1t " <<condTrue<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"move   $"<<left  <<",$0"<<std::endl;
+				dst <<condTrue<< ":" << std::endl;
+			}
+		}
+
+		virtual Type exprType(Context& ctx) const override{
+			return Type(Int);
+		}
+
 		virtual const char *getOpcode() const override{
 			return "==";
 		}
@@ -737,10 +834,27 @@ class NotEqualityExpression : public BinaryExpression{
 		NotEqualityExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
 		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type)const override{
-			dst <<"xor  $"<<left<<",$"<<left<<",$"<<right<<std::endl;
-			dst <<"sltu $"<<left<<",$0,$"<<left<<std::endl;
-		};
-
+			if(type.isIntegral() || type.isPointer()){
+					dst <<"xor  $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+					dst <<"sltu $"<<left<<",$0,$"<<left<<std::endl;
+			}
+			else{
+				std::string condTrue = ctx.generateLabel("$:NE_T");
+				std::string left_f  = "f0";
+				std::string right_f = "f2";
+				ctx.moveToFloatReg(left ,left_f , dst);
+				ctx.moveToFloatReg(right,right_f, dst);
+				dst <<"addiu  $"<<left  <<",$0,1"<<std::endl;
+				dst <<"c.eq.s $"<<right_f<<",$"<<left_f<<std::endl;
+				dst <<"bc1f " <<condTrue<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"move   $"<<left  <<",$0"<<std::endl;
+				dst <<condTrue<< ":" << std::endl;
+			}
+		}
+		virtual Type exprType(Context& ctx) const override{
+			return Type(Int);
+		}
 		virtual const char *getOpcode() const override{
 			return "!=";
 		}
@@ -749,11 +863,187 @@ class NotEqualityExpression : public BinaryExpression{
 
 /********* Bitwise Binary Expressions *********/
 
+class BwAndExpression : public BinaryExpression{
+	public:
+		BwAndExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
+			if(type.isIntegral()){
+				dst <<"and $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+			}
+		}
+		virtual const char *getOpcode() const override{
+			return "&";
+		}
+};
+
+class BwXorExpression : public BinaryExpression{
+	public:
+		BwXorExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
+			if(type.isIntegral()){
+				dst <<"xor $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+			}
+		}
+		virtual const char *getOpcode() const override{
+			return "^";
+		}
+};
+
+class BwOrExpression : public BinaryExpression{
+	public:
+		BwOrExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
+			if(type.isIntegral()){
+				dst <<"or $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+			}
+		}
+		virtual const char *getOpcode() const override{
+			return "|";
+		}
+};
 
 
 
 /********* Logical Binary Expressions *********/
 
+class LogicalAndExpression : public BinaryExpression{
+	public:
+		LogicalAndExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			std::string exitLabel = ctx.generateLabel("$AND");
+			Type lType = left->exprType(ctx);
+			Type rType = right->exprType(ctx);
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			left->to_mips(dst,ctx);
+			auto tempMemReg = ctx.assignNewStorage(); 
+			std::string tempReg = "v1";
+			right->to_mips(dst,ctx);
+			ctx.deAllocStorage();
+			
+			ctx.memReg_read(destMemReg,destReg,dst);	
+			ctx.memReg_read(tempMemReg,tempReg,dst);
+
+			if(lType.isIntegral()){
+				dst<<"beq $"<<destReg<<",$0,"<<exitLabel<<std::endl;
+				dst<<"nop"<<std::endl;
+			}
+			else{
+				std::string destReg_f = "f0";
+				std::string zero_f    = "f2";
+				ctx.moveToFloatReg(destReg  ,destReg_f , dst);
+				ctx.moveToFloatReg("0"		,zero_f , dst);
+				dst <<"move   $"<<destReg<<",$0"<<std::endl;
+				dst <<"c.eq.s $"<<destReg_f<<",$"<<zero_f<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"bc1t " <<exitLabel<<std::endl;
+				dst <<"nop"<<std::endl;
+			}
+
+			if(rType.isIntegral()){
+				dst<<"move $"<<destReg<<",$0"<<std::endl;
+				dst<<"beq  $"<<tempReg<<",$0,"<<exitLabel<<std::endl;
+				dst<<"nop"<<std::endl;
+			}
+			else{
+				std::string tempReg_f = "f0";
+				std::string zero_f    = "f2";
+				ctx.moveToFloatReg(tempReg  ,tempReg_f , dst);
+				ctx.moveToFloatReg("0"		,zero_f , dst);
+				dst <<"move   $"<<destReg<<",$0"<<std::endl;
+				dst <<"c.eq.s $"<<tempReg_f<<",$"<<zero_f<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"bc1t " <<exitLabel<<std::endl;
+				dst <<"nop"<<std::endl;
+			}
+
+			dst <<"addiu  $"<<destReg<<",$0,1"<<std::endl;
+			dst<<exitLabel<<":"<<std::endl;			
+			ctx.memReg_write(destMemReg, destReg,dst);	
+			
+		}
+
+
+		virtual Type exprType(Context& ctx) const override{
+			return Type(Int);
+		}
+
+		virtual const char *getOpcode() const override{
+			return "&&";
+		}
+};
+
+class LogicalOrExpression : public BinaryExpression{
+	public:
+		LogicalOrExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			std::string intermediateLabel = ctx.generateLabel("$OR");
+			std::string exitLabel = ctx.generateLabel("$OR");
+			Type lType = left->exprType(ctx);
+			Type rType = right->exprType(ctx);
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			left->to_mips(dst,ctx);
+			auto tempMemReg = ctx.assignNewStorage(); 
+			std::string tempReg = "v1";
+			right->to_mips(dst,ctx);
+			ctx.deAllocStorage();
+			
+			ctx.memReg_read(destMemReg,destReg,dst);	
+			ctx.memReg_read(tempMemReg,tempReg,dst);
+
+			if(lType.isIntegral()){
+				dst<<"bne   $"<<destReg<<",$0,"<<intermediateLabel<<std::endl;
+				dst<<"nop"<<std::endl;
+			}
+			else{
+				std::string destReg_f = "f0";
+				std::string zero_f    = "f2";
+				ctx.moveToFloatReg(destReg  ,destReg_f , dst);
+				ctx.moveToFloatReg("0"		,zero_f , dst);
+				dst <<"move   $"<<destReg<<",$0"<<std::endl;
+				dst <<"c.eq.s $"<<destReg_f<<",$"<<zero_f<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"bc1t " <<exitLabel<<std::endl;
+				dst <<"nop"<<std::endl;
+			}
+
+			if(rType.isIntegral()){
+				dst<<"move $"<<destReg<<",$0"<<std::endl;
+				dst<<"beq  $"<<tempReg<<",$0,"<<exitLabel<<std::endl;
+				dst<<"nop"<<std::endl;
+			}
+			else{
+				std::string tempReg_f = "f0";
+				std::string zero_f    = "f2";
+				ctx.moveToFloatReg(tempReg  ,tempReg_f , dst);
+				ctx.moveToFloatReg("0"		,zero_f , dst);
+				dst <<"move   $"<<destReg<<",$0"<<std::endl;
+				dst <<"c.eq.s $"<<tempReg_f<<",$"<<zero_f<<std::endl;
+				dst <<"nop"<<std::endl;
+				dst <<"bc1t " <<exitLabel<<std::endl;
+				dst <<"nop"<<std::endl;
+			}
+
+			dst<<intermediateLabel<<":"<<std::endl;
+			dst<<"addiu  $"<<destReg<<",$0,1"<<std::endl;
+			dst<<exitLabel<<":"<<std::endl;			
+			ctx.memReg_write(destMemReg, destReg,dst);	
+		}
+
+		virtual Type exprType(Context& ctx) const override{
+			return Type(Int);
+		}
+
+		virtual const char *getOpcode() const override{
+			return "||";
+		}
+};
 
 
 
@@ -805,9 +1095,7 @@ class DirectAssignmentExpression : public AssignmentExpression{
 			dst << "=";
 			expr->to_python(dst,"",tc);
 		}
-		virtual void print_struct(std::ostream &dst, int m) const override{
-			dst << "DirectAssignemntExpression" << std::endl;
-		}
+
 };
 // TO IMPLMENET OTHER ASSIGNMENT I.E += ,-=, *= ETC
 
