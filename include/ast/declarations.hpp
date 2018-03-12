@@ -64,7 +64,7 @@ public:
 
 	virtual void to_mips_declare(std::ostream &dst, Context& ctx,Type type) const override{ //normal non init array
 		int size = getSize();
-		type.inc_pLevel();
+		type.inc_aLevel();	//1D ARRAY..
 		Variable var = ctx.assignNewVariable(id,type,Array,size);
 		if(size ==-1){
 			std::cout << "Erorr : Array Size Missing" << std::endl;
@@ -87,9 +87,8 @@ public:
 	}
 	virtual void to_mips_declare_init(std::ostream &dst, Context& ctx,Type type, std::vector<Expression*>* init) const override{ //normal init array
 		int size = init->size();
-		type.inc_pLevel();
-		ctx.assignNewVariable(id,type,Array,size);
-		Variable var = ctx.getVariable(id);
+		type.inc_aLevel();	//1D ARRAY..
+		Variable var = ctx.assignNewVariable(id,type,Array,size);
 		if(ctx.getScope() == global){
 			dst<<".data"<<std::endl;	
 			dst<<".globl "<<id<<std::endl;

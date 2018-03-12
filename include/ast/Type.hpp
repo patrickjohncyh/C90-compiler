@@ -26,11 +26,21 @@ class Type{
 private:
 	basicType type;
 	int p_level=0;
+	int a_level=0;
 
 public:
 	Type();
 	Type(basicType _type):type(_type){}
 	Type(basicType _type, int _p_level):type(_type),p_level(_p_level){}
+
+
+	void inc_aLevel(){
+		a_level++;
+	}
+
+	int get_aLevel(){
+		return a_level;
+	}
 
 	int get_pLevel(){
 		return p_level;
@@ -41,14 +51,19 @@ public:
 	}
 
 	void dec_pLevel(){
-		p_level--;
+		if(p_level == 0){
+			if(a_level){
+				a_level--;
+			}
+		}
+		else{
+			p_level--;
+		}		
 	}
-
 
 	basicType getType(){
 		return type;
 	}
-
 
 	bool is(basicType t){
 		if(type == t)
@@ -59,13 +74,13 @@ public:
 	bool isEqual(Type t){
 		if(t.type != type)
 			return false;
-		if(t.p_level != p_level)
+		if(t.p_level + t.a_level != p_level + a_level) //super hacky. idk if it is correct. some sort of pointer equivalence..
 			return false;
 		return true;
 	}
 
 	bool isPointer(){
-		return p_level>0;
+		return (p_level>0 || a_level>0);
 	}
 
 

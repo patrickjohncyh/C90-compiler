@@ -226,11 +226,10 @@ struct Context{
 		origT = integralPromotion(origT);
 		if(!origT.isEqual(targetT)){
 			if(targetT.isPointer()){
-				if(origT.isIntegral()){	//double check..
+				if(origT.isIntegral()){			//double check..
 					memReg_read(Reg,"v0",dst); //load from mem into reg
 					dst<<"sll $v0,$v0,"<<log2(targetT.bytes())<<std::endl;
 					memReg_write(Reg, "v0",dst); //store from float_reg into mem
-
 				}
 			}
 			else{

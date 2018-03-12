@@ -265,12 +265,19 @@ class DereferenceExpression : public UnaryExpression{
 
 			Type type = expr->exprType(ctx);
 			type.dec_pLevel();
-			auto destMemReg = ctx.getCurrStorage();
-			std::string destReg = "v0";
-			expr->to_mips(dst,ctx);
-			ctx.memReg_read(destMemReg, destReg, dst);
-			ctx.memoryOffsetRead(type,destReg,destReg,0,dst);
-			ctx.memReg_write(destMemReg, destReg, dst);
+			if(type.get_aLevel() && type.get_pLevel() == 0){	// identifier to an array... return the address i suppose..
+				auto destMemReg = ctx.getCurrStorage();
+				std::string destReg = "v0";
+				expr->to_mips(dst,ctx);
+			}
+			else{
+				auto destMemReg = ctx.getCurrStorage();
+				std::string destReg = "v0";
+				expr->to_mips(dst,ctx);
+				ctx.memReg_read(destMemReg, destReg, dst);
+				ctx.memoryOffsetRead(type,destReg,destReg,0,dst);
+				ctx.memReg_write(destMemReg, destReg, dst);
+			}
 		}
 
 		virtual Type exprType(Context& ctx) const override{
@@ -427,7 +434,7 @@ class BinaryExpression : public Expression{
 
 			Type lType = left->exprType(ctx);
 			Type rType = right->exprType(ctx);
-			Type type  = ctx.arithmeticConversion(lType,rType);
+			Type type  = ctx.arithmeticConversion(lType,rType);			
 
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
@@ -1008,7 +1015,7 @@ class LogicalOrExpression : public BinaryExpression{
 				dst <<"move   $"<<destReg<<",$0"<<std::endl;
 				dst <<"c.eq.s $"<<destReg_f<<",$"<<zero_f<<std::endl;
 				dst <<"nop"<<std::endl;
-				dst <<"bc1t " <<intermediateLabel<<std::endl;
+				dst <<"bc1f " <<intermediateLabel<<std::endl;
 				dst <<"nop"<<std::endl;
 			}
 
