@@ -470,7 +470,6 @@ class BinaryExpression : public Expression{
 			right->to_python(dst,"",tc);
 			dst <<")";
 		}
-
 };
 
 /********* Arithmetic Binary Expressions *********/
@@ -1009,7 +1008,7 @@ class LogicalOrExpression : public BinaryExpression{
 				dst <<"move   $"<<destReg<<",$0"<<std::endl;
 				dst <<"c.eq.s $"<<destReg_f<<",$"<<zero_f<<std::endl;
 				dst <<"nop"<<std::endl;
-				dst <<"bc1t " <<exitLabel<<std::endl;
+				dst <<"bc1t " <<intermediateLabel<<std::endl;
 				dst <<"nop"<<std::endl;
 			}
 
@@ -1044,7 +1043,6 @@ class LogicalOrExpression : public BinaryExpression{
 			return "||";
 		}
 };
-
 
 
 /********************** Assignment Expressions ************************/

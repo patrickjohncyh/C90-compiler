@@ -208,9 +208,10 @@ logical_and_expression	: 	bitwise_or_expression
 						|   logical_and_expression AND_OP bitwise_or_expression {$$ = new LogicalAndExpression($1,$3);}
 
 logical_or_expression	:	logical_and_expression
-						|	logical_or_expression OR_OP logical_and_expression				{$$ = new LogicalOrExpression($1,$3);}
+						|	logical_or_expression OR_OP logical_and_expression	{$$ = new LogicalOrExpression($1,$3);}
 
 ternary_expression 	: 	logical_or_expression /* to implement conidtional expression */
+
 
 assign_expression	: 	ternary_expression 
 					|	postfix_expression '=' assign_expression { $$ = new DirectAssignmentExpression($1,$3); }	
