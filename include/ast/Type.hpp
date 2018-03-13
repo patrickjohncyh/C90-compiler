@@ -19,9 +19,6 @@ enum basicType {
 	LongDouble	//11
 };
 
-
-
-
 class Type{
 private:
 	basicType type;

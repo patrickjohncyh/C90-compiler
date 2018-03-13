@@ -926,13 +926,9 @@ class LogicalAndExpression : public BinaryExpression{
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
 			left->to_mips(dst,ctx);
-			auto tempMemReg = ctx.assignNewStorage(); 
-			std::string tempReg = "v1";
-			right->to_mips(dst,ctx);
-			ctx.deAllocStorage();
 			
 			ctx.memReg_read(destMemReg,destReg,dst);	
-			ctx.memReg_read(tempMemReg,tempReg,dst);
+		
 
 			if(lType.isIntegral()){
 				dst<<"beq $"<<destReg<<",$0,"<<exitLabel<<std::endl;
@@ -949,6 +945,12 @@ class LogicalAndExpression : public BinaryExpression{
 				dst <<"bc1t " <<exitLabel<<std::endl;
 				dst <<"nop"<<std::endl;
 			}
+
+			auto tempMemReg = ctx.assignNewStorage(); 
+			std::string tempReg = "v1";
+			right->to_mips(dst,ctx);
+			ctx.deAllocStorage();
+			ctx.memReg_read(tempMemReg,tempReg,dst);
 
 			if(rType.isIntegral()){
 				dst<<"move $"<<destReg<<",$0"<<std::endl;
@@ -987,21 +989,19 @@ class LogicalOrExpression : public BinaryExpression{
 	public:
 		LogicalOrExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
 
-		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{	//need to split the evaluation...
 			std::string intermediateLabel = ctx.generateLabel("$OR");
 			std::string exitLabel = ctx.generateLabel("$OR");
+			
 			Type lType = left->exprType(ctx);
 			Type rType = right->exprType(ctx);
+
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";
-			left->to_mips(dst,ctx);
-			auto tempMemReg = ctx.assignNewStorage(); 
-			std::string tempReg = "v1";
-			right->to_mips(dst,ctx);
-			ctx.deAllocStorage();
-			
+			left->to_mips(dst,ctx);		//execute left operand first.
+
 			ctx.memReg_read(destMemReg,destReg,dst);	
-			ctx.memReg_read(tempMemReg,tempReg,dst);
+			
 
 			if(lType.isIntegral()){
 				dst<<"bne   $"<<destReg<<",$0,"<<intermediateLabel<<std::endl;
@@ -1018,6 +1018,13 @@ class LogicalOrExpression : public BinaryExpression{
 				dst <<"bc1f " <<intermediateLabel<<std::endl;
 				dst <<"nop"<<std::endl;
 			}
+
+			auto tempMemReg = ctx.assignNewStorage(); 
+			std::string tempReg = "v1";
+			right->to_mips(dst,ctx);	//execute second operand if fail...
+			ctx.deAllocStorage();
+			ctx.memReg_read(tempMemReg,tempReg,dst);
+
 
 			if(rType.isIntegral()){
 				dst<<"move $"<<destReg<<",$0"<<std::endl;
