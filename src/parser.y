@@ -50,7 +50,7 @@ void yyerror(const char *);
 
 %token EQ_OP NE_OP LT_OP GT_OP LE_OP GE_OP LS_OP RS_OP AND_OP OR_OP
 
-
+%token RIGHT_ASSIGN LEFT_ASSIGN ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN AND_ASSIGN  XOR_ASSIGN OR_ASSIGN
 
 
 %type <node> translation_unit global_declaration function_definition
@@ -70,10 +70,6 @@ void yyerror(const char *);
 %type<expression_node> assign_expression  expression 
 
 %type<argument_list_vector> argument_list
-
-
-
-
 
 %type <statement_node> jump_statement statement compound_statement expr_statement condition_statement iteration_statement labeled_statement
 %type <statement_list_vector> statement_list
@@ -214,7 +210,18 @@ ternary_expression 	: 	logical_or_expression /* to implement conidtional express
 
 
 assign_expression	: 	ternary_expression 
-					|	postfix_expression '=' assign_expression { $$ = new DirectAssignmentExpression($1,$3); }	
+				|	prefix_expression '=' 			assign_expression { $$ = new DirectAssignmentExpression($1,$3); }
+				|	prefix_expression RIGHT_ASSIGN assign_expression { $$ = new DirectAssignmentExpression($1, new RightShiftExpression($1,$3));}
+				|	prefix_expression LEFT_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new LeftShiftExpression($1,$3)); }
+				|	prefix_expression ADD_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new AddExpression($1,$3));		 }
+				|	prefix_expression SUB_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new SubExpression($1,$3)); 		 }
+				|	prefix_expression MUL_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new MultExpression($1,$3)); 	 }
+				|	prefix_expression DIV_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new DivExpression($1,$3)); 		 }
+				|	prefix_expression MOD_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new ModuloExpression($1,$3)); 	 }
+				|	prefix_expression AND_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new BwAndExpression($1,$3)); 	 }
+				|	prefix_expression XOR_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new BwXorExpression($1,$3)); 	 }
+				|	prefix_expression OR_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new BwOrExpression($1,$3)); 	 }
+
 
 expression 			:	assign_expression
 

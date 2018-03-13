@@ -86,6 +86,16 @@ L?'(\\.|[^\\'])+'				{ yylval.string = new std::string(yytext); return CONSTANT_
 \>=				{ return GE_OP; }
 
 
+\>>=			{ return RIGHT_ASSIGN; 	}
+\<<=			{ return LEFT_ASSIGN; 	}
+\+=				{ return ADD_ASSIGN; 	}
+\-=				{ return SUB_ASSIGN; 	}
+\*=				{ return MUL_ASSIGN; 	}
+\/=				{ return DIV_ASSIGN; 	}
+\%=				{ return MOD_ASSIGN; 	}
+\&=				{ return AND_ASSIGN; 	}
+\^=				{ return XOR_ASSIGN; 	}
+\|=				{ return OR_ASSIGN; 	}
 
 
 
@@ -94,7 +104,7 @@ L?'(\\.|[^\\'])+'				{ yylval.string = new std::string(yytext); return CONSTANT_
 \<<				{ return LS_OP; }
 \>>				{ return RS_OP;	}
 \&&				{ return AND_OP;}
-\|\|				{ return OR_OP;}
+\|\|			{ return OR_OP;}
 
 
 

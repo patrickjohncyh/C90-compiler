@@ -280,6 +280,10 @@ class DereferenceExpression : public UnaryExpression{
 			}
 		}
 
+		virtual void to_mips_getAddr(std::ostream &dst, Context& ctx) const{
+			
+		}
+
 		virtual Type exprType(Context& ctx) const override{
 			Type type = expr->exprType(ctx);
 			type.dec_pLevel();
@@ -1109,7 +1113,6 @@ class DirectAssignmentExpression : public AssignmentExpression{
 		}
 
 };
-// TO IMPLMENET OTHER ASSIGNMENT I.E += ,-=, *= ETC
 
 /********************** Ternary Expressions ************************/
 
