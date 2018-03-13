@@ -280,8 +280,19 @@ class DereferenceExpression : public UnaryExpression{
 			}
 		}
 
-		virtual void to_mips_getAddr(std::ostream &dst, Context& ctx) const{
-			
+		virtual void to_mips_getAddr(std::ostream &dst, Context& ctx) const{ //unsure about this....
+			Type type = expr->exprType(ctx);
+			type.dec_pLevel();
+			if(type.get_aLevel() && type.get_pLevel() == 0){	
+				auto destMemReg = ctx.getCurrStorage();
+				std::string destReg = "v0";
+				expr->to_mips(dst,ctx);
+			}
+			else{
+				auto destMemReg = ctx.getCurrStorage();
+				std::string destReg = "v0";
+				expr->to_mips(dst,ctx);
+			}
 		}
 
 		virtual Type exprType(Context& ctx) const override{
@@ -1111,7 +1122,6 @@ class DirectAssignmentExpression : public AssignmentExpression{
 			dst << "=";
 			expr->to_python(dst,"",tc);
 		}
-
 };
 
 /********************** Ternary Expressions ************************/

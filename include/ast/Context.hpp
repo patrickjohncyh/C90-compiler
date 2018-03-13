@@ -224,7 +224,7 @@ struct Context{
 
 	void convertMemRegType(Type origT, Type targetT, memReg Reg, std::ostream& dst){
 		origT = integralPromotion(origT);
-		if(!origT.isEqual(targetT)){
+		if(!origT.isEqual(targetT)){		//only convert if they differ...
 			if(targetT.isPointer()){
 				if(origT.isIntegral()){			//double check..
 					memReg_read(Reg,"v0",dst); //load from mem into reg
@@ -234,10 +234,30 @@ struct Context{
 			}
 			else{
 				if(origT.isIntegral() && targetT.isIntegral()){	//both integral
-					//useful for casting?
+					memReg_read(Reg,"v0",dst); //load from mem into reg
+					if(targetT.is(UChar)){
+						dst<<"andi $v0,$v0,0x000000ff"<<std::endl;
+					}
+					else if(targetT.is(UShort)){
+						dst<<"andi $v0,$v0,0x0000ffff"<<std::endl;
+					}
+					else if(targetT.is(UInt) || targetT.is(ULong)){
+						//dst<<"andi $v0,$v0,0xffffffff"<<std::endl;
+					}
+					else if(targetT.is(Char)){
+						dst<<"sll $v0,$v0,24"<<std::endl;
+						dst<<"sra $v0,$v0,24"<<std::endl;
+					}
+					else if(targetT.is(Short)){
+						dst<<"sll $v0,$v0,16"<<std::endl;
+						dst<<"sra $v0,$v0,16"<<std::endl;
+					}
+					else if(targetT.is(Int) || targetT.is(Long)){
+					}
+					memReg_write(Reg, "v0",dst); //store from float_reg into mem
 				}
 				else if(!origT.isIntegral() && !targetT.isIntegral()){	//both float
-
+					//assume single float only so do nothing
 				}
 				else{	//one float, one integral...
 					if(origT.isIntegral()){ //integral to float
@@ -245,13 +265,14 @@ struct Context{
 						dst<<"cvt.s.w	$f0,$f0"<<std::endl;//conversion from word to single
 						memReg_write_f(Reg, "f0",dst); //store from float_reg into mem
 					}
-					else{	//float to integral
+					else{	//float to signed int
 						memReg_read_f(Reg, "f0",dst); //load from mem into float_reg
 						dst<<".set	macro"		<<std::endl;
 						dst<<"trunc.w.s $f0,$f0,$2"<<std::endl;
 						dst<<".set	nomacro"	<<std::endl;
 						dst<<"nop"				<<std::endl;
 						memReg_write_f(Reg, "f0",dst); //store from float_reg into mem
+						convertMemRegType(Type(Int), targetT, Reg, dst); //signed int to target.
 					}
 				}
 			}
