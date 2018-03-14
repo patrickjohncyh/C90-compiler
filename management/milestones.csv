@@ -10,13 +10,19 @@ TestbenchSetup,,1.5,pjc316,20bcff0dac2d9f7706d54562320e4fd622f14ee5,determine st
 ExpandParser_b,,2,pjc316,c5c8210138c3c487be6b6d4fab7b9fb4b013760b,Expand Grammar and AST for expressions and statements
 RefactorParser_Expression_Statement,,3,pjc316,472a2908db7e70dc7fb9005c39684cee5daa8ada,Refactor grammar and AST for expressions and statements
 ExpandCodeGen_b,,2,pjc316,d67ebc01d3f16040a380b0371c8dda00d27ec53a,Try to implement codegen for higher level constructs
-ExpandParser_c,,2,pjc316,,Fill in most if not all cases of expressions and statements
+ExpandParser_c,,2,pjc316,a8f92c8d7a215f4fda7a21cb4d6d6d3787894f42,Fill in most if not all cases of expressions and statements
 ExpandCodeGen_c,,2,pjc316,9a6e738d56cb3cfc15fe69eede34f6415e7a5296,Implement codgen for more statements
-RefactorParser_declarations,,3,pjc316,,Refactor and expand declarations to handle more complex cases
+Refactor_declarations,,3,pjc316,2ce1cad5b63f0c04373a4f7be717178edda264ba,Refactor codegen for declarator and declarations
 PaserTestbenchSetup,,1,pjc316,this,Setup automated framerwork for testing parser
 ExpandTranslator_b,,3,pjc316,9a79ddd1e18ec4a91a68a1172b9be22dde7ee5ee,Implement translator for more of the grammar
 RedesignContextObject,,4,pjc316,2ba813df5af61b29eb11c3e1932f690d78437a50,Come up with better implementation of context object for codegen; Try to consider more possible cases such as handling lvalue access etc
-WriteParserTests,,4,pjc316,,
 WriteCodeGenTests,,4,pjc316,0ebe6330212bddb78774fce9e66e11982676be9c,Write codegen tests for expressions
-WriteCodeGenTests_b,,4,pjc316,,
-ExapndCodeGen_d,,4,pjc316,,Implement codegen for arrays
+ExapndCodeGen_d,,4,pjc316,acbd6fcdec0d89bfee435875282f37540af37682,Implement codegen for arrays
+Impl_floating_point,,4,pjc316,51ed08fe3cc1c109679e9ad1ab7046823275db3d,Introduce floating point
+Impl_ternay_tilde,,0.5,pjc316,,implement ternary expression and tilde
+Impl_dowhile,,0.5,pjc316,,implement do while
+Impl_continue_goto_labelled,,1,pjc316,,implement continue goto and labelled
+Impl_float_w_statements,,1.5,pjc316,,integrate floating point with statements
+test_statements,,4,pjc316,,write tests for statements
+Complete_python_translator,,2,pjc316,,complete python translator
+create_testcase_delierables,,1.5,pjc316,,create 10 tests for deliverable

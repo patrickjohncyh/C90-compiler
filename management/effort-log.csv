@@ -24,3 +24,11 @@ Date,Effort,Developers,Milestones
 02/03/2018,5,pjc316,ExpandCodeGen_c
 03/03/2018,4,pjc316,ExapndCodeGen_d
 04/03/2018,6,pjc316,WriteCodeGenTests;ExpandParser_c
+05/03/2018,2,pjc316,ExapndCodeGen_d
+06/03/2018,5,pjc316,ExapndCodeGen_d
+08/03/2018,10,pjc316,RefactorParser_declarations;Impl_floating_point
+09/03/2018,10,pjc316,Impl_floating_point
+10/03/2018,6,pjc316,Impl_floating_point;ExpandParser_c
+11/03/2018,6,pjc316,Refactor_declarations
+12/03/2018,6,pjc316,ExpandParser_c
+13/03/2018,6,pjc316,ExpandParser_c
