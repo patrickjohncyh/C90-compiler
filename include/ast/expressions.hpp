@@ -202,13 +202,9 @@ class FunctionCallExpression : public UnaryExpression{
 
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";		//result of function call stored here
-
-		//	ctx.saveArgumentRegisters(dst);
-
-			dst << "addiu $sp,$sp," << -totalSize + ctx.getCurrStorage() << std::endl;		//sp to correct position
-
-			for(int i =0; i < totalSize/4;i++){ //temporarily set offset to after sp....
-				ctx.assignNewStorage();
+			int funcStackTop;
+			for(int i =0; i < totalSize/4;i++){ //assign enough memory for arguments
+				funcStackTop = (int)ctx.assignNewStorage();
 			}
 
 			
@@ -220,11 +216,11 @@ class FunctionCallExpression : public UnaryExpression{
 				ctx.deAllocStorage();
 				std::string tempReg = "v1";
 				ctx.memReg_read(tempMemReg,tempReg,dst);
-				dst<<"sw $"<<tempReg<<","<< offset <<"($sp)"<<std::endl;	
+				dst<<"sw $"<<tempReg<<","<< funcStackTop + offset <<"($fp)"<<std::endl;	
 				offset = offset + size;
 			}
-			//based on signature.. put argumnets into correct palce
 
+			//based on signature.. put argumnets into correct palce
 			int mode = 1; //default use floating reg first..
 			std::string areg[4]  = {"a0","a1","a2","a3"};
 			offset = 0;
@@ -232,34 +228,32 @@ class FunctionCallExpression : public UnaryExpression{
 				int size =  ( ctx.integralPromotion(sig[i]) ).bytes();
 				if(sig[i].isIntegral() || sig[i].isPointer()) mode = 0; //switch to int register mode..
 				if(offset + size <= 16){ //can fit into registers
-				std::string reg = "";
+					std::string reg = "";
 					if(mode == 1){	//f12,f14
 						if(offset < 4) reg = "f12";
 						else 		   reg = "f14";
-						dst<<"lwc1 $"<<reg<<","<<offset<<"($sp)"<<std::endl;
+						dst<<"lwc1 $"<<reg<<","<< funcStackTop + offset <<"($fp)"<<std::endl;
 					}
 					else{	
 						int regNum = offset/4;
 						reg = areg[regNum]; // a0,a1,a2,a3
-						dst<<"lw   $"<<reg<<","<<offset<<"($sp)"<<std::endl;		
+						dst<<"lw   $"<<reg<<","<< funcStackTop + offset <<"($fp)"<<std::endl;		
 					}
 				}
 				offset = offset + size;
 			}
-			for(int i =0; i < totalSize/4;i++){ //put offset back 
+
+			dst << "addiu $sp,$sp," << ctx.getCurrStorage() << std::endl;		//sp to correct position
+			dst << "jal "<< id << std::endl; 									//call function, Assumes that it is an Identifier
+			dst << "nop "<<std::endl;
+			dst << "addiu $sp,$sp," << -ctx.getCurrStorage() << std::endl;		//sp to original position
+	
+			for(int i =0; i < totalSize/4;i++){ //dealloc argument memory
 				ctx.deAllocStorage();
 			}
 
-			dst << "jal "<< id << std::endl; 											//call function, Assumes that it is an Identifier
-			dst << "nop "<<std::endl;
-			dst << "addiu $sp,$sp," << -ctx.getCurrStorage()  + totalSize << std::endl;	//sp to original position
-			
-		//	ctx.loadArugmentRegisters(dst);
-
-
-
 			Variable var = ctx.getVariable(id);
-			if(var.getType().isIntegral() || var.getType().isPointer()){ //check type of return ....
+			if(var.getType().isIntegral() || var.getType().isPointer()){ 	//check type of return ....
 				dst << "move $"<<destReg<<",$2" << std::endl;
 				ctx.memReg_write(destMemReg,destReg,dst);			
 			}
