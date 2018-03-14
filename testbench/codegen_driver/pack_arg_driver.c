@@ -1,4 +1,4 @@
-float f(float a){
+float f(float a,float b){
 	return a + 5;
 }
 

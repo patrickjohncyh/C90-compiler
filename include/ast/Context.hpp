@@ -134,6 +134,17 @@ struct Context{
 		return *( (*var_location)[name] );
 	}
 
+
+	bool isFunctionDeclared(std::string name){					//returns Variable Object
+		if((*var_location).count(name)){
+			//lets just assume that it is a correct dtype...
+			return 1;
+		}
+		else{
+			return 0;	// function has not been declared...
+		}
+	}
+
 	Variable getVariable(std::string name){					//returns Variable Object
 		if((*var_location).count(name)){
 			return * ( (*var_location)[name] );

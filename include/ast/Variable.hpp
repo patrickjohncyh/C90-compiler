@@ -26,7 +26,7 @@ class Variable{
 
 
 	public:
-		Variable();
+		Variable(){};
 
 		Variable(Scope _scope, Type _type, dType _dtype,  int _addr)
 		:scope(_scope),type(_type),dtype(_dtype),addr(_addr){}

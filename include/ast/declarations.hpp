@@ -432,10 +432,14 @@ public:
 			}
 		}
 
+	
 		Type funcType(*type); // copy it so can modify... haha
 		funcType.setSignature(sig);
 
 		ctx.assignNewVariable(id,funcType,Function);
+
+		ctx.open_scope();
+
 		ctx.scopeLocal();
 		ctx.returnType = *type;//set return type...
 		ctx.return_label = ctx.generateLabel("RETURN");
@@ -485,17 +489,9 @@ public:
 			offset = offset + size;
 		}
 
-		/*if(p_list!=NULL){
-			for(unsigned int i=0;i<p_list->size();i++){
-				if(i<4) dst<<"sw $a"<<i<<","<<(i*4+8)<<"($fp)"<<std::endl;	
-				
-			}
-		}*/
-
-		if(s_ptr!=NULL){
-			s_ptr->to_mips(dst,ctx);
-		}
-
+	
+		s_ptr->to_mips(dst,ctx);
+	
 		dst<<ctx.return_label<<":"<<std::endl;
 		dst<<"# Start Epilouge #"<<std::endl;
 		dst<<"addiu $sp,$sp,8"<<std::endl;
@@ -510,6 +506,7 @@ public:
 		dst<<".set reorder"<<std::endl;
 
 
+		ctx.close_scope();
 		ctx.scopeGlobal();
 	}
 

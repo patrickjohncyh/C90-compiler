@@ -37,6 +37,10 @@ public:
 		sig = _sig; // copy it.
 	}
 
+	std::vector<Type> getSignature(){
+		return sig;
+	}
+
 	void inc_aLevel(){
 		a_level++;
 	}
