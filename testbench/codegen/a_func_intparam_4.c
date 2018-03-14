@@ -1,5 +1,5 @@
 int f(int a,int b, int c, int d){
-  	return a + b + c + d;
+  	return a + b/2 + c *2+ d*3;
 }
 
 int main(){
