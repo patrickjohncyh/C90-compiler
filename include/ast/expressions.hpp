@@ -191,9 +191,6 @@ class FunctionCallExpression : public UnaryExpression{
 				ctx.assignNewVariable(id,fType,Function); //need to somehow write this to the global stack ideally.. but assume input is correct
 				ctx.scopeLocal();
 			}
-			 
-			auto destMemReg = ctx.getCurrStorage();
-			std::string destReg = "v0";		//result of function call stored here
 
 			int totalSize = 0; 		
 			for(int i =0; i < sig.size(); i++){
@@ -203,55 +200,64 @@ class FunctionCallExpression : public UnaryExpression{
 				totalSize = 16;	//4 guaranteed.
 			}
 
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";		//result of function call stored here
+
+		//	ctx.saveArgumentRegisters(dst);
+
 			dst << "addiu $sp,$sp," << -totalSize + ctx.getCurrStorage() << std::endl;		//sp to correct position
 
 			for(int i =0; i < totalSize/4;i++){ //temporarily set offset to after sp....
 				ctx.assignNewStorage();
 			}
 
-			//based on signature.. put argumnets into correct palce
+			
 			int offset = 0;
-			int mode = 1; //default use floating reg first..
-			std::string areg[4]  = {"a0","a1","a2","a3"};
-			for(int i =0; i < sig.size(); i++){
-				
+			for(int i =0; i < sig.size(); i++){	
+				int size =  ( ctx.integralPromotion(sig[i]) ).bytes();
 				auto tempMemReg = ctx.assignNewStorage(); 
 				(*a_list)[i]->to_mips(dst,ctx); //eval expression
 				ctx.deAllocStorage();
+				std::string tempReg = "v1";
+				ctx.memReg_read(tempMemReg,tempReg,dst);
+				dst<<"sw $"<<tempReg<<","<< offset <<"($sp)"<<std::endl;	
+				offset = offset + size;
+			}
+			//based on signature.. put argumnets into correct palce
 
+			int mode = 1; //default use floating reg first..
+			std::string areg[4]  = {"a0","a1","a2","a3"};
+			offset = 0;
+			for(int i =0; i < sig.size(); i++){	
 				int size =  ( ctx.integralPromotion(sig[i]) ).bytes();
 				if(sig[i].isIntegral() || sig[i].isPointer()) mode = 0; //switch to int register mode..
 				if(offset + size <= 16){ //can fit into registers
-					std::string reg = "";
+				std::string reg = "";
 					if(mode == 1){	//f12,f14
 						if(offset < 4) reg = "f12";
 						else 		   reg = "f14";
-						ctx.memReg_read_f(tempMemReg,reg,dst);
+						dst<<"lwc1 $"<<reg<<","<<offset<<"($sp)"<<std::endl;
 					}
 					else{	
 						int regNum = offset/4;
 						reg = areg[regNum]; // a0,a1,a2,a3
-						ctx.memReg_read(tempMemReg,reg,dst);
+						dst<<"lw   $"<<reg<<","<<offset<<"($sp)"<<std::endl;		
 					}
-				}
-				else{	
-					std::string tempReg = "v1";
-					ctx.memReg_read(tempMemReg,tempReg,dst);
-					dst<<"sw $"<<tempReg<<","<< offset <<"($sp)"<<std::endl;	//NB : arg pos relative to new sp
 				}
 				offset = offset + size;
 			}
-
 			for(int i =0; i < totalSize/4;i++){ //put offset back 
 				ctx.deAllocStorage();
 			}
 
-
-		
 			dst << "jal "<< id << std::endl; 											//call function, Assumes that it is an Identifier
 			dst << "nop "<<std::endl;
 			dst << "addiu $sp,$sp," << -ctx.getCurrStorage()  + totalSize << std::endl;	//sp to original position
 			
+		//	ctx.loadArugmentRegisters(dst);
+
+
+
 			Variable var = ctx.getVariable(id);
 			if(var.getType().isIntegral() || var.getType().isPointer()){ //check type of return ....
 				dst << "move $"<<destReg<<",$2" << std::endl;

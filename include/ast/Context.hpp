@@ -291,6 +291,49 @@ struct Context{
 			}
 		}
 	}
+
+
+
+	void saveArgumentRegisters(std::ostream& dst){
+		auto a0MemReg = assignNewStorage();
+		auto a1MemReg = assignNewStorage();
+		auto a2MemReg = assignNewStorage();
+		auto a3MemReg = assignNewStorage();
+		auto f12MemReg = assignNewStorage();
+		auto f13MemReg = assignNewStorage();
+		auto f14MemReg = assignNewStorage();
+		auto f15MemReg = assignNewStorage();
+
+		memReg_write(a0MemReg,"a0",dst);
+		memReg_write(a1MemReg,"a1",dst);
+		memReg_write(a2MemReg,"a2",dst);
+		memReg_write(a3MemReg,"a3",dst);
+		memReg_write_f(f12MemReg,"f12",dst);
+		memReg_write_f(f13MemReg,"f13",dst);
+		memReg_write_f(f14MemReg,"f14",dst);
+		memReg_write_f(f15MemReg,"f15",dst);
+
+	}
+
+	void loadArugmentRegisters(std::ostream& dst){
+		memReg_read_f(getCurrStorage(),"f15",dst); 	deAllocStorage();
+		memReg_read_f(getCurrStorage(),"f14",dst);	deAllocStorage();
+		memReg_read_f(getCurrStorage(),"f13",dst);	deAllocStorage();
+		memReg_read_f(getCurrStorage(),"f12",dst);	deAllocStorage();
+		memReg_read(getCurrStorage(),"a3",dst);		deAllocStorage();
+		memReg_read(getCurrStorage(),"a2",dst);		deAllocStorage();
+		memReg_read(getCurrStorage(),"a1",dst);		deAllocStorage();
+		memReg_read(getCurrStorage(),"a0",dst);		deAllocStorage();
+		
+
+
+	}
+
+
+
+			
+
+
 };
 
 
