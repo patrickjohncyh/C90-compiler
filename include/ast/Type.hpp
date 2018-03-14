@@ -1,6 +1,8 @@
 #ifndef TYPE_HPP
 #define TYPE_HPP
 
+#include <vector>
+
 
 
 
@@ -22,14 +24,18 @@ enum basicType {
 class Type{
 private:
 	basicType type;
+	std::vector<Type> sig;
 	int p_level=0;
 	int a_level=0;
 
 public:
-	Type();
+	Type(){};
 	Type(basicType _type):type(_type){}
 	Type(basicType _type, int _p_level):type(_type),p_level(_p_level){}
 
+	void setSignature( std::vector<Type> _sig ){
+		sig = _sig; // copy it.
+	}
 
 	void inc_aLevel(){
 		a_level++;

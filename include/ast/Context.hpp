@@ -12,6 +12,7 @@
 
 
 class Expression; //forward declaration
+class Declaration;
 
 typedef std::tuple <int,std::string,std::string,std::string> var_pair;	// loc, scope (global,local), primitive_type, derived_type ;
 typedef std::pair <Expression*,std::string> case_pair;
@@ -38,6 +39,7 @@ struct Context{
 	std::stack<std::string> switch_case_default;
 	std::stack<std::string> break_label;
 	std::string return_label;
+	Type returnType;
 
 	std::map<std::string,std::string> labeled_constant;
 
@@ -278,6 +280,22 @@ struct Context{
 			}
 		}
 	}
+
+
+
+	std::vector<Type> buildSingature(std::vector<Declaration*>*	p_list){
+		std::vector<Type> sig;
+
+		
+		return sig;
+	}
+
+
+
+
+
+
+
 };
 
 

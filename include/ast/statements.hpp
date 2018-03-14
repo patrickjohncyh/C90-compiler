@@ -318,13 +318,31 @@ class JumpStatement : public Statement{
 		:expr(_expr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-
-			dst << "##### Return #####" << std::endl;
 			if(expr != NULL){
+				dst << "# ----- Return General  -----#" << std::endl;
+				Type type = expr->exprType(ctx);
+				auto destMemReg = ctx.assignNewStorage();
+				expr->to_mips(dst,ctx);
+				ctx.deAllocStorage();
+				ctx.convertMemRegType(type,ctx.returnType, destMemReg, dst);
+
+				if(ctx.returnType.isIntegral() || ctx.returnType.isPointer() ){
+					dst << "# ----- Return Integral -----#" << std::endl;
+					std::string destReg = "v0";
+					ctx.memReg_read(destMemReg,destReg,dst);
+					dst <<"move $2,$"<<destReg<<std::endl;
+				}
+				else{
+					dst << "# ----- Return Float-----#" << std::endl;
+					std::string destReg = "f0";
+					ctx.memReg_read_f(destMemReg,destReg,dst);
+				}
+				
+			/*
 				if(expr->exprType(ctx).isIntegral() || expr->exprType(ctx).isPointer()){
 					auto destMemReg = ctx.assignNewStorage();
 					expr->to_mips(dst,ctx);
-					ctx.deAllocStorage();
+			
 					std::string destReg = "v0";
 					ctx.memReg_read(destMemReg,destReg,dst);
 					dst <<"move $2,$"<<destReg<<std::endl;
@@ -339,7 +357,7 @@ class JumpStatement : public Statement{
 					dst<<"trunc.w.s $"<<destReg<<",$"<<destReg<<",$v0"<<std::endl;
 					dst<<".set	nomacro"<<std::endl;
 					dst<<"mfc1	$2,$"<<destReg<<std::endl;
-				}
+				}*/
 			}
 			dst <<"b " << ctx.return_label << std::endl; 
 			dst <<"nop"<< std::endl; 

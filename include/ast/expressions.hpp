@@ -190,13 +190,23 @@ class FunctionCallExpression : public UnaryExpression{
 			dst << "jal "<< id << std::endl; 											//call function, Assumes that it is an Identifier
 			dst << "nop "<<std::endl;
 			dst << "addiu $sp,$sp," << -ctx.getCurrStorage()  + numArgs*4 << std::endl;	//sp to original position
-			dst << "move $"<<destReg<<",$2" << std::endl;
-			ctx.memReg_write(destMemReg,destReg,dst);
+			//check type of return ....
+			Variable var = ctx.getVariable(id);
+			if(var.getType().isIntegral() || var.getType().isPointer()  ){
+				dst << "move $"<<destReg<<",$2" << std::endl;
+				ctx.memReg_write(destMemReg,destReg,dst);			
+			}
+			else{
+				ctx.moveFromFloatReg(destReg, "f0",dst);
+				ctx.memReg_write(destMemReg,destReg,dst);
+			}
 
 		}
 
 		virtual Type exprType(Context& ctx) const override{
-			return Type(Int); //should be the type of the function declared...
+			std::string id = expr->to_mips_getId();
+			Variable var = ctx.getVariable(id);
+			return var.getType(); //should be the type of the function declared...
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{

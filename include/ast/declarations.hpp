@@ -4,6 +4,7 @@
 #include "expressions.hpp"
 #include <iomanip>
 #include <sstream>
+#include <vector>
 
 class Statement : public ASTNode{			//TEMPORARY FIX might consider using inline in the future
 };
@@ -420,7 +421,23 @@ public:
 	:type(_type), id(_id), p_list(_p_list), s_ptr(_s_ptr){}
 
 	virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+		//get signature of function....
+		//build the signature...
+		std::vector<Type> sig;
+
+		if(p_list!=NULL){
+			for(unsigned int i=0;i<p_list->size();i++){
+				Type paramType = (*p_list)[i]->getParam_type();
+				sig.push_back(paramType);
+			}
+		}
+
+		Type funcType(*type); // copy it so can modify... haha
+		funcType.setSignature(sig);
+
+		ctx.assignNewVariable(id,funcType,Function);
 		ctx.scopeLocal();
+		ctx.returnType = *type;//set return type...
 		ctx.return_label = ctx.generateLabel("RETURN");
 			
 		dst<<"# Start Prologue #"<<std::endl;
@@ -437,12 +454,43 @@ public:
 		dst<<"move $fp,$sp"<<std::endl;
 		dst<<"# End Prologue #"<<std::endl;
 		
-		if(p_list!=NULL){
+
+		//based on signature.. assign arguments...
+		int offset = 0;
+		int mode = 1; //default use floating reg first..
+		std::string areg[4]  = {"a0","a1","a2","a3"};
+		for(int i =0; i < sig.size(); i++){
+			int size =  ( ctx.integralPromotion(sig[i]) ).bytes();
+			if(sig[i].isIntegral() || sig[i].isPointer()) mode = 0; //switch to int register mode..
+			if(offset + size <= 16){ //can fit into registers
+				std::string reg = "";
+				if(mode == 1){	//f12,f14
+					if(offset < 4){
+						reg = "f12";
+					}
+					else{
+						reg = "f14";
+					}
+					ctx.memReg_write_f((memReg)(offset+8),reg,dst);
+				}
+				else{	// a0,a1,a2,a3
+					int regNum = offset/4;
+					reg = areg[regNum];
+					ctx.memReg_write((memReg)(offset+8),reg,dst);
+				}
+			}
+			else{	//params in stack
+			}
+			ctx.assignNewArgument( (*p_list)[i]->getParam(),sig[i],Basic,offset+8);
+			offset = offset + size;
+		}
+
+		/*if(p_list!=NULL){
 			for(unsigned int i=0;i<p_list->size();i++){
 				if(i<4) dst<<"sw $a"<<i<<","<<(i*4+8)<<"($fp)"<<std::endl;	
-				ctx.assignNewArgument( (*p_list)[i]->getParam(),(*p_list)[i]->getParam_type() ,Basic,i*4+8);
+				
 			}
-		}
+		}*/
 
 		if(s_ptr!=NULL){
 			s_ptr->to_mips(dst,ctx);
