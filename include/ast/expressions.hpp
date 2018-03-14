@@ -171,12 +171,11 @@ class FunctionCallExpression : public UnaryExpression{
 			Variable fVar;
 			Type fType;
 			std::vector<Type> sig;
+
 			if(ctx.isFunctionDeclared(id)){		//function has been decalred already...
 				fVar = ctx.getVariable(id);
 				fType = fVar.getType();
 				sig   = fType.getSignature();
-				std::cout << "NUMBER OF PARAMETERS : " << sig.size() << std::endl;
-				//extract the signature...
 			}
 			else{
 				//build a declaration for the function.
@@ -188,7 +187,9 @@ class FunctionCallExpression : public UnaryExpression{
 					sig.push_back(argType);
 				}
 				fType.setSignature(sig);
+				ctx.scopeGlobal();
 				ctx.assignNewVariable(id,fType,Function); //need to somehow write this to the global stack ideally.. but assume input is correct
+				ctx.scopeLocal();
 			}
 			 
 			auto destMemReg = ctx.getCurrStorage();
@@ -202,8 +203,11 @@ class FunctionCallExpression : public UnaryExpression{
 				totalSize = 16;	//4 guaranteed.
 			}
 
-
 			dst << "addiu $sp,$sp," << -totalSize + ctx.getCurrStorage() << std::endl;		//sp to correct position
+
+			for(int i =0; i < totalSize/4;i++){ //temporarily set offset to after sp....
+				ctx.assignNewStorage();
+			}
 
 			//based on signature.. put argumnets into correct palce
 			int offset = 0;
@@ -238,13 +242,18 @@ class FunctionCallExpression : public UnaryExpression{
 				offset = offset + size;
 			}
 
+			for(int i =0; i < totalSize/4;i++){ //put offset back 
+				ctx.deAllocStorage();
+			}
+
+
 		
 			dst << "jal "<< id << std::endl; 											//call function, Assumes that it is an Identifier
 			dst << "nop "<<std::endl;
 			dst << "addiu $sp,$sp," << -ctx.getCurrStorage()  + totalSize << std::endl;	//sp to original position
-			//check type of return ....
+			
 			Variable var = ctx.getVariable(id);
-			if(var.getType().isIntegral() || var.getType().isPointer()  ){
+			if(var.getType().isIntegral() || var.getType().isPointer()){ //check type of return ....
 				dst << "move $"<<destReg<<",$2" << std::endl;
 				ctx.memReg_write(destMemReg,destReg,dst);			
 			}
@@ -252,7 +261,6 @@ class FunctionCallExpression : public UnaryExpression{
 				ctx.moveFromFloatReg(destReg, "f0",dst);
 				ctx.memReg_write(destMemReg,destReg,dst);
 			}
-
 		}
 
 		virtual Type exprType(Context& ctx) const override{

@@ -306,12 +306,7 @@ type_specifier		:	VOID				{ $$ = new Type(Void);		}
 
 					/*|	DOUBLE 				{ $$ = new std::string("double");				}
 					|	LONG DOUBLE 		{ $$ = new std::string("double");				}*/
-					
-				
-
-						
-
-
+								
 %%
 
 const ASTNode *root; // Definition of variable (to match declaration earlier)

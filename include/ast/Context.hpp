@@ -291,22 +291,6 @@ struct Context{
 			}
 		}
 	}
-
-
-
-	std::vector<Type> buildSingature(std::vector<Declaration*>*	p_list){
-		std::vector<Type> sig;
-
-		
-		return sig;
-	}
-
-
-
-
-
-
-
 };
 
 

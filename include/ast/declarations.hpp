@@ -431,8 +431,7 @@ public:
 				sig.push_back(paramType);
 			}
 		}
-
-	
+		
 		Type funcType(*type); // copy it so can modify... haha
 		funcType.setSignature(sig);
 
