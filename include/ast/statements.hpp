@@ -301,7 +301,6 @@ class ForStatement : public Statement{
 
 			std::string forStartLabel = ctx.generateLabel("$FOR_START");
 			std::string forEndLabel = ctx.generateLabel("$FOR_END");
-
 			ctx.break_label.push(forEndLabel);
 
 			if(init_expr!=NULL){
@@ -309,8 +308,7 @@ class ForStatement : public Statement{
 				init_expr->to_mips(dst,ctx);
 				ctx.deAllocStorage();
 			}
-			
-
+		
 			dst<<forStartLabel<<":"<<std::endl;
 
 			auto condMemReg = ctx.assignNewStorage();
@@ -318,7 +316,7 @@ class ForStatement : public Statement{
 			Type condType(Int);
 			if(cond_expr!=NULL){
 				condType = cond_expr->exprType(ctx);
-				init_expr->to_mips(dst,ctx);
+				cond_expr->to_mips(dst,ctx);
 			}
 			else{
 				dst<< "li $v0,1"<< std::endl;
