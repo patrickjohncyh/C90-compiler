@@ -34,6 +34,7 @@ switch							{ return SWITCH; 	}
 case							{ return CASE;	 	}
 break 							{ return BREAK; 	}
 default 						{ return DEFAULT; 	}
+continue						{ return CONTINUE;	}
 
 
 {L}({L}|{D})*					{ yylval.string = new std::string(yytext); return IDENTIFIER;	}

@@ -38,6 +38,7 @@ struct Context{
 	std::stack<case_pair> switch_case_data;
 	std::stack<std::string> switch_case_default;
 	std::stack<std::string> break_label;
+	std::stack<std::string> cont_label;
 	std::string return_label;
 	Type returnType;
 

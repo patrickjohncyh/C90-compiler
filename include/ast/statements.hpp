@@ -233,6 +233,7 @@ class WhileStatement : public Statement{
 			std::string whileEndLabel = ctx.generateLabel("$WHILE_END");
 
 			ctx.break_label.push(whileEndLabel);
+			ctx.cont_label.push(whileStartLabel);
 
 
 			dst<<whileStartLabel<<":"<<std::endl;
@@ -267,6 +268,7 @@ class WhileStatement : public Statement{
 			dst<<whileEndLabel<<":"<<std::endl;
 
 			ctx.break_label.pop();
+			ctx.cont_label.pop();
 		}
 
 		virtual void to_c(std::ostream &dst, std::string indent) const override{
@@ -295,16 +297,19 @@ class DoWhileStatement : public Statement{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 
-			std::string whileStartLabel = ctx.generateLabel("$DOWHILE_START");
-			std::string whileEndLabel = ctx.generateLabel("$DOWHILE_END");
+			std::string whileStartLabel  = ctx.generateLabel("$DOWHILE_START");
+			std::string whileEndLabel    = ctx.generateLabel("$DOWHILE_END");
+			std::string doWhileCondLabel = ctx.generateLabel("$DOWHILE_COND");
 
 			ctx.break_label.push(whileEndLabel);
+			ctx.cont_label.push(doWhileCondLabel);
 
 
 			dst<<whileStartLabel<<":"<<std::endl;
 
 			s_true->to_mips(dst,ctx);
 
+			dst<<doWhileCondLabel<<":"<<std::endl;
 
 			auto condMemReg = ctx.assignNewStorage();
 			cond_expr->to_mips(dst,ctx);
@@ -330,6 +335,7 @@ class DoWhileStatement : public Statement{
 			dst<<whileEndLabel<<":"<<std::endl;
 
 			ctx.break_label.pop();
+			ctx.cont_label.pop();
 		}
 
 		virtual void to_c(std::ostream &dst, std::string indent) const override{
@@ -367,7 +373,9 @@ class ForStatement : public Statement{
 
 			std::string forStartLabel = ctx.generateLabel("$FOR_START");
 			std::string forEndLabel = ctx.generateLabel("$FOR_END");
+			std::string forIncLabel = ctx.generateLabel("$FOR_INC");
 			ctx.break_label.push(forEndLabel);
+			ctx.cont_label.push(forIncLabel);
 
 			if(init_expr!=NULL){
 				ctx.assignNewStorage();
@@ -406,6 +414,8 @@ class ForStatement : public Statement{
 
 			s_true->to_mips(dst,ctx);
 
+			dst<<forIncLabel<<":"<<std::endl;
+
 			if(update_expr!=NULL){
 				ctx.assignNewStorage();
 				std::string updateReg = "v0";
@@ -418,6 +428,7 @@ class ForStatement : public Statement{
 			dst<<forEndLabel<<":"<<std::endl;
 
 			ctx.break_label.pop();
+			ctx.cont_label.pop();
 		}
 
 
@@ -518,11 +529,39 @@ class JumpBreakStatement : public Statement{
 				dst << "nop" << std::endl;
 			}
 			else{
-				dst << "Error : Using Break Outside Loop" << std::endl;
+				std::cout << "Error : Using Break Outside Loop" << std::endl;
 				exit(1);
 			}
 		}
 };
+
+class ContinueStatement : public Statement{
+	private:
+		Expression* expr;
+
+	public:
+		ContinueStatement(){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+			dst << "##### Continue #####" << std::endl;
+
+			if(!ctx.cont_label.empty()){
+				std::string contLabel = ctx.cont_label.top();
+				dst << "b " << contLabel << std::endl;
+				dst << "nop" << std::endl;
+			}
+			else{
+				std::cout << "Error : Using Conitnue Outside Loop" << std::endl;
+				exit(1);
+			}
+		}
+};
+
+
+
+
+
 
 class ConditionSwitchStatement : public Statement{
 	private:

@@ -44,6 +44,7 @@ void yyerror(const char *);
 %token CASE
 %token BREAK
 %token DEFAULT
+%token CONTINUE
 
 
 %token IDENTIFIER LITERAL CONSTANT_I CONSTANT_F CONSTANT_C
@@ -255,12 +256,12 @@ compound_statement  : 	'{' '}'										{ $$ = new CompoundStatement();	  		}
 jump_statement		: 	RETURN ';'				{ $$ = new JumpStatement()		; 	}
 					| 	RETURN expression ';'	{ $$ = new JumpStatement($2)	;	}
 					|	BREAK ';'				{ $$ = new JumpBreakStatement()	;	}
+					|	CONTINUE ';'			{ $$ = new ContinueStatement()	;	}
 
 
 expr_statement		:  expression ';'			{ $$ = new ExprStatement($1);	}
 					|			  ';'			{ $$ = new ExprStatement();		}	
 					
-
 
 condition_statement :	IF '(' expression ')' statement 				{ $$ = new ConditionIfStatement($3,$5); 		}	
 					|	IF '(' expression ')' statement ELSE statement 	{ $$ = new ConditionIfElseStatement($3,$5,$7); 	}
