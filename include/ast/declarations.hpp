@@ -6,7 +6,7 @@
 #include <sstream>
 #include <vector>
 
-class Statement : public ASTNode{			//TEMPORARY FIX might consider using inline in the future
+class Statement : public ASTNode{			//TEMPORARY FIX 
 };
 
 class TranslationUnit : public ASTNode{
@@ -431,7 +431,7 @@ public:
 				sig.push_back(paramType);
 			}
 		}
-		
+
 		Type funcType(*type); // copy it so can modify... haha
 		funcType.setSignature(sig);
 

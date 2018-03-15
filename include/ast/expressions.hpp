@@ -166,12 +166,11 @@ class FunctionCallExpression : public UnaryExpression{
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			std::string id = expr->to_mips_getId();	//get id of function...
 
-			//check if function is declared...
-
 			Variable fVar;
 			Type fType;
 			std::vector<Type> sig;
 
+			//check if function is declared...
 			if(ctx.isFunctionDeclared(id)){		//function has been decalred already...
 				fVar = ctx.getVariable(id);
 				fType = fVar.getType();
@@ -207,7 +206,6 @@ class FunctionCallExpression : public UnaryExpression{
 				funcStackTop = (int)ctx.assignNewStorage();
 			}
 
-			
 			int offset = 0;
 			for(int i =0; i < sig.size(); i++){	
 				int size =  ( ctx.integralPromotion(sig[i]) ).bytes();
@@ -220,11 +218,11 @@ class FunctionCallExpression : public UnaryExpression{
 				offset = offset + size;
 			}
 
-			//based on signature.. put argumnets into correct palce
+
 			int mode = 1; //default use floating reg first..
 			std::string areg[4]  = {"a0","a1","a2","a3"};
 			offset = 0;
-			for(int i =0; i < sig.size(); i++){	
+			for(int i =0; i < sig.size(); i++){	 //based on signature.. put argumnets into correct palce
 				int size =  ( ctx.integralPromotion(sig[i]) ).bytes();
 				if(sig[i].isIntegral() || sig[i].isPointer()) mode = 0; //switch to int register mode..
 				if(offset + size <= 16){ //can fit into registers
@@ -300,6 +298,91 @@ class FunctionCallExpression : public UnaryExpression{
 
 
 /********************** Pre Fix Expressions *********/
+
+class PrePositiveExpression : public UnaryExpression{
+	public:
+		PrePositiveExpression(Expression* _expr):UnaryExpression(_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			ctx.getCurrStorage();
+			expr->to_mips(dst,ctx);	
+		}
+		virtual Type exprType(Context& ctx) const override{
+			Type type 	  = expr->exprType(ctx);
+			Type thisType = ctx.integralPromotion(type);
+			return thisType;
+		}
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst<< "+";
+			expr->to_c(dst,indent);
+		}
+
+};
+
+class PreNegativeExpression : public UnaryExpression{
+	public:
+		PreNegativeExpression(Expression* _expr):UnaryExpression(_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+			Type rType = expr->exprType(ctx);
+			Type type = ctx.integralPromotion(rType);
+
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			expr->to_mips(dst,ctx);		
+
+			ctx.convertMemRegType(rType,type,destMemReg,dst);
+
+			ctx.memReg_read(destMemReg, destReg, dst);
+			if(type.isIntegral()){
+				dst<<"subu  $"<<destReg<<",$0,$"<<destReg<<std::endl;		//negate
+			}
+			else{
+				std::string left_f  = "f0";
+				std::string zero_f  = "f2";
+				ctx.moveToFloatReg(destReg  ,left_f , dst);
+				ctx.moveToFloatReg("0"		,zero_f , dst);
+				dst<<"sub.s   $"<<left_f<<",$"<<zero_f<<",$"<<left_f<<std::endl;
+				ctx.moveFromFloatReg(destReg,left_f,dst);
+			}
+			ctx.memReg_write(destMemReg, destReg, dst);
+		}
+		virtual Type exprType(Context& ctx) const override{
+			Type type 	  = expr->exprType(ctx);
+			Type thisType = ctx.integralPromotion(type);
+			return thisType;
+		}
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst<< "-";
+			expr->to_c(dst,indent);
+		}
+	
+};
+
+
+class BwNotExpression : public UnaryExpression{
+	public:
+		BwNotExpression(Expression* _expr):UnaryExpression(_expr){}
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			Type type = exprType(ctx);
+			if(type.isIntegral()){
+				auto destMemReg = ctx.getCurrStorage();
+				std::string destReg = "v0";
+				expr->to_mips(dst,ctx);
+				ctx.memReg_read(destMemReg, destReg, dst);
+				dst <<"li $v1,0xFFFFFFFF"<<std::endl;
+				dst <<"xor $"<<destReg<<",$"<<destReg<<",$v1"<<std::endl;
+				ctx.memReg_write(destMemReg, destReg, dst);
+			}
+		}
+		virtual Type exprType(Context& ctx) const override{
+			Type rType 	  = expr->exprType(ctx);
+			Type thisType = ctx.integralPromotion(rType);
+			return thisType;
+		}
+};
+
 class ReferenceExpression : public UnaryExpression{
 	public:
 		ReferenceExpression(Expression* _expr):UnaryExpression(_expr){}
@@ -376,9 +459,34 @@ class DereferenceExpression : public UnaryExpression{
 			expr->to_c(dst,indent);
 
 		}
-
 };
 
+/*
+class PreNotExpression : public UnaryExpression{
+	public:
+		PreNotExpression(Expression* _expr):UnaryExpression(_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			expr->to_mips(dst,ctx);	
+			ctx.memReg_read(destMemReg, destReg, dst);
+			dst << "sltiu $"<<destReg<<",$0,1"<<std::endl;
+			ctx.memReg_write(destMemReg, destReg, dst);
+		}
+		virtual Type exprType(Context& ctx) const override{
+			Type rType 	  = expr->exprType(ctx);
+			Type thisType = ctx.arithmeticConversion(rType,rType);
+			return thisType;
+		}
+		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst<< "!";
+			expr->to_c(dst,indent);
+		}
+
+};*/
+
+/*
 class PreIncrementExpression : public UnaryExpression{
 	public:
 		PreIncrementExpression(Expression* _expr):UnaryExpression(_expr){}
@@ -424,83 +532,7 @@ class PreDecrementExpression : public UnaryExpression{
 			expr->to_c(dst,indent);
 		}
 
-};
-
-class PrePositiveExpression : public UnaryExpression{
-	public:
-		PrePositiveExpression(Expression* _expr):UnaryExpression(_expr){}
-
-		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			ctx.getCurrStorage();
-			expr->to_mips(dst,ctx);	
-		}
-		virtual void to_c(std::ostream &dst,std::string indent) const override{
-			dst<< "+";
-			expr->to_c(dst,indent);
-		}
-
-};
-
-class PreNegativeExpression : public UnaryExpression{
-	public:
-		PreNegativeExpression(Expression* _expr):UnaryExpression(_expr){}
-
-		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-
-			Type rType = expr->exprType(ctx);
-			Type type = ctx.arithmeticConversion(rType,rType);
-
-			auto destMemReg = ctx.getCurrStorage();
-			std::string destReg = "v0";
-			expr->to_mips(dst,ctx);		
-
-			ctx.convertMemRegType(rType,type,destMemReg,dst);
-
-			ctx.memReg_read(destMemReg, destReg, dst);
-			if(type.isIntegral()){
-				dst<<"subu  $"<<destReg<<",$0,$"<<destReg<<std::endl;		//negate
-			}
-			else{
-				std::string left_f  = "f0";
-				std::string zero_f  = "f2";
-				ctx.moveToFloatReg(destReg  ,left_f , dst);
-				ctx.moveToFloatReg("0"		,zero_f , dst);
-				dst<<"sub.s   $"<<left_f<<",$"<<zero_f<<",$"<<left_f<<std::endl;
-				ctx.moveFromFloatReg(destReg,left_f,dst);
-			}
-			ctx.memReg_write(destMemReg, destReg, dst);
-		}
-		virtual Type exprType(Context& ctx) const override{
-			Type rType 	  = expr->exprType(ctx);
-			Type thisType = ctx.arithmeticConversion(rType,rType);
-			return thisType;
-		}
-		virtual void to_c(std::ostream &dst,std::string indent) const override{
-			dst<< "-";
-			expr->to_c(dst,indent);
-		}
-	
-};
-
-class PreNotExpression : public UnaryExpression{
-	public:
-		PreNotExpression(Expression* _expr):UnaryExpression(_expr){}
-
-		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			auto destMemReg = ctx.getCurrStorage();
-			std::string destReg = "v0";
-			expr->to_mips(dst,ctx);	
-			ctx.memReg_read(destMemReg, destReg, dst);
-			dst << "sltiu $"<<destReg<<",$0,1"<<std::endl;
-			ctx.memReg_write(destMemReg, destReg, dst);
-		}
-		virtual void to_c(std::ostream &dst,std::string indent) const override{
-			dst<< "!";
-			expr->to_c(dst,indent);
-		}
-
-};
-
+};*/
 
 /********************** Binary Expressions ************************/
 class BinaryExpression : public Expression{

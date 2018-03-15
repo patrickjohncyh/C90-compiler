@@ -267,7 +267,7 @@ struct Context{
 					}
 					else if(targetT.is(Int) || targetT.is(Long)){
 					}
-					memReg_write(Reg, "v0",dst); //store from float_reg into mem
+					memReg_write(Reg, "v0",dst); //store  into mem
 				}
 				else if(!origT.isIntegral() && !targetT.isIntegral()){	//both float
 					//assume single float only so do nothing

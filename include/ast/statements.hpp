@@ -13,6 +13,11 @@ class ExprStatement : public Statement{
 	public:
 		ExprStatement( Expression* _expr = NULL):expr(_expr){}
 
+
+		Expression* getExpr(){
+			return expr;
+		}
+
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			if(expr!=NULL){
 				ctx.assignNewStorage();
@@ -90,7 +95,6 @@ class CompoundStatement : public Statement{
 			//	dst << std::endl;
 			}
 		}
-	
 };
 
 class ConditionIfStatement : public Statement{
@@ -113,9 +117,19 @@ class ConditionIfStatement : public Statement{
 			std::string condReg = "v0";
 			ctx.memReg_read(condMemReg, condReg,dst);	
 
-			dst << "beq $0,$"<<condReg<<","<<bottom_label<<std::endl;
-			dst << "nop" << std::endl;
-			
+			if(cond_expr->exprType(ctx).isIntegral() || cond_expr->exprType(ctx).isPointer()){
+				dst << "beq $0,$"<<condReg<<","<<bottom_label<<std::endl;
+				dst << "nop" << std::endl;	
+			}
+			else{	//float...
+				std::string condReg_f = "f0";
+				std::string zero_f = "f2";
+				ctx.moveToFloatReg(condReg,condReg_f,dst);
+				ctx.moveToFloatReg("0",zero_f,dst);
+				dst<<"c.eq.s  $"<<condReg_f<<",$"<<zero_f<<std::endl;
+				dst<<"bc1t "    <<bottom_label<<std::endl;
+			}
+
 			s_true->to_mips(dst,ctx);
 			dst << bottom_label << ":" << std::endl;
 		}
@@ -134,10 +148,8 @@ class ConditionIfStatement : public Statement{
 			dst << "):" << std::endl;
 			s_true->to_python(dst,indent+"  ",tc);
 			dst << std::endl;
-		}
-		
+		}	
 };
-
 
 class ConditionIfElseStatement : public Statement{
 	private:
@@ -159,8 +171,18 @@ class ConditionIfElseStatement : public Statement{
 			std::string condReg = "v0";
 			ctx.memReg_read(condMemReg,condReg,dst);
 
-			dst << "beq $0,$"<<condReg<<","<<if_bottom_label<<std::endl;
-			dst << "nop" << std::endl;
+			if(cond_expr->exprType(ctx).isIntegral() || cond_expr->exprType(ctx).isPointer()){
+				dst << "beq $0,$"<<condReg<<","<<if_bottom_label<<std::endl;
+				dst << "nop" << std::endl;	
+			}
+			else{	//float...
+				std::string condReg_f = "f0";
+				std::string zero_f = "f2";
+				ctx.moveToFloatReg(condReg,condReg_f,dst);
+				ctx.moveToFloatReg("0",zero_f,dst);
+				dst<<"c.eq.s  $"<<condReg_f<<",$"<<zero_f<<std::endl;
+				dst<<"bc1t "    <<if_bottom_label<<std::endl;
+			}
 
 			s_true->to_mips(dst,ctx);
 
@@ -190,8 +212,7 @@ class ConditionIfElseStatement : public Statement{
 			s_true->to_python(dst,indent+"  ",tc);
 			dst << indent << "else:" << std::endl;
 			s_false->to_python(dst,indent+"  ",tc);
-		}
-		
+		}	
 };
 
 class WhileStatement : public Statement{
@@ -221,7 +242,20 @@ class WhileStatement : public Statement{
 			std::string condReg = "v0";
 			ctx.memReg_read(condMemReg,condReg,dst);
 
-			dst << "beq $0,$"<<condReg<<","<<whileEndLabel<<std::endl;
+			if(cond_expr->exprType(ctx).isIntegral() || cond_expr->exprType(ctx).isPointer()){
+				dst << "beq $0,$"<<condReg<<","<<whileEndLabel<<std::endl;
+				dst << "nop" << std::endl;	
+			}
+			else{	//float...
+				std::string condReg_f = "f0";
+				std::string zero_f = "f2";
+				ctx.moveToFloatReg(condReg,condReg_f,dst);
+				ctx.moveToFloatReg("0",zero_f,dst);
+				dst<<"c.eq.s  $"<<condReg_f<<",$"<<zero_f<<std::endl;
+				dst<<"bc1t "    <<whileEndLabel<<std::endl;
+			}
+
+
 
 			s_true->to_mips(dst,ctx);
 
@@ -245,8 +279,6 @@ class WhileStatement : public Statement{
 			s_true->to_python(dst,indent+"  ",tc);
 			dst << std::endl;
 		}
-		
-
 };
 
 class ForStatement : public Statement{
@@ -261,23 +293,53 @@ class ForStatement : public Statement{
 		:init_stat(_init_stat),cond_stat(_cond_stat),update_expr(_update_expr),s_true(_s_true){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			Expression* init_expr;
+			Expression* cond_expr;
+			init_expr = static_cast<ExprStatement*>(init_stat)->getExpr();
+			cond_expr = static_cast<ExprStatement*>(cond_stat)->getExpr();
+
 
 			std::string forStartLabel = ctx.generateLabel("$FOR_START");
 			std::string forEndLabel = ctx.generateLabel("$FOR_END");
 
 			ctx.break_label.push(forEndLabel);
+
+			if(init_expr!=NULL){
+				ctx.assignNewStorage();
+				init_expr->to_mips(dst,ctx);
+				ctx.deAllocStorage();
+			}
 			
-			init_stat->to_mips(dst,ctx);
 
 			dst<<forStartLabel<<":"<<std::endl;
 
 			auto condMemReg = ctx.assignNewStorage();
 			std::string condReg = "v0";
+			Type condType(Int);
+			if(cond_expr!=NULL){
+				condType = cond_expr->exprType(ctx);
+				init_expr->to_mips(dst,ctx);
+			}
+			else{
+				dst<< "li $v0,1"<< std::endl;
+				ctx.memReg_write(condMemReg, condReg,dst);
+			}
 			ctx.deAllocStorage();
-			cond_stat->to_mips(dst,ctx);
 
 			ctx.memReg_read(condMemReg,condReg,dst);
-			dst<<"beq $0,$"<<condReg<<","<<forEndLabel<<std::endl;
+			if(condType.isIntegral() || condType.isPointer()){
+				dst<<"beq $0,$"<<condReg<<","<<forEndLabel<<std::endl;
+			}
+			else{
+				std::string condReg_f = "f0";
+				std::string zero_f 	  = "f2";
+				ctx.moveToFloatReg(condReg,condReg_f,dst);
+				ctx.moveToFloatReg("0",zero_f,dst);
+				dst<<"c.eq.s  $"<<condReg_f<<",$"<<zero_f<<std::endl;
+				dst<<"bc1t "    <<forEndLabel<<std::endl;
+			}
+	
+
 			s_true->to_mips(dst,ctx);
 
 			if(update_expr!=NULL){
@@ -304,10 +366,8 @@ class ForStatement : public Statement{
 			update_expr->to_c(dst,"");
 			dst << ")" << std::endl;
 			s_true->to_c(dst,indent);
-		} 
-		
+		} 		
 };
-
 
 class JumpStatement : public Statement{
 	private:
@@ -375,9 +435,7 @@ class JumpStatement : public Statement{
 			if(expr != NULL) expr->to_python(dst," ",tc);
 			dst << std::endl;
 		}
-
 };
-
 
 class JumpBreakStatement : public Statement{
 	private:
@@ -400,10 +458,7 @@ class JumpBreakStatement : public Statement{
 				exit(1);
 			}
 		}
-
-
 };
-
 
 class ConditionSwitchStatement : public Statement{
 	private:

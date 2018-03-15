@@ -150,12 +150,12 @@ postfix_expression	:	base_expression
 					|	postfix_expression 	'[' expression ']'		{ $$ = new ArrayAccessExpression($1,$3); 	}
 
 prefix_expression	:	postfix_expression
-					| 	INC_OP prefix_expression	{ $$ = new PreIncrementExpression($2);	}
-					| 	DEC_OP prefix_expression 	{ $$ = new PreDecrementExpression($2);	}
-					|	'!'	cast_expression			{ $$ = new PreNotExpression($2); 		}
+					| 	INC_OP prefix_expression	{ $$ = new DirectAssignmentExpression($2, new AddExpression($2,new IntegralConstant("1"))); }
+					| 	DEC_OP prefix_expression 	{ $$ = new DirectAssignmentExpression($2, new SubExpression($2,new IntegralConstant("1")));	}
+					|	'!'	cast_expression			{ $$ = new EqualityExpression(new IntegralConstant("0"),$2);	}
 					|   '+' cast_expression			{ $$ = new PrePositiveExpression($2);	} 
 					|	'-' cast_expression			{ $$ = new PreNegativeExpression($2);	}
-					|	'~' cast_expression			{  ;}
+					|	'~' cast_expression			{ $$ = new BwNotExpression($2);			}
 					|	'&'	cast_expression			{ $$ = new ReferenceExpression($2);		}
 					|	'*'	cast_expression			{ $$ = new DereferenceExpression($2);	}
 
@@ -211,7 +211,7 @@ ternary_expression 	: 	logical_or_expression /* to implement conidtional express
 
 assign_expression	: 	ternary_expression 
 				|	prefix_expression '=' 			assign_expression { $$ = new DirectAssignmentExpression($1,$3); }
-				|	prefix_expression RIGHT_ASSIGN assign_expression { $$ = new DirectAssignmentExpression($1, new RightShiftExpression($1,$3));}
+				|	prefix_expression RIGHT_ASSIGN assign_expression  { $$ = new DirectAssignmentExpression($1, new RightShiftExpression($1,$3));}
 				|	prefix_expression LEFT_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new LeftShiftExpression($1,$3)); }
 				|	prefix_expression ADD_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new AddExpression($1,$3));		 }
 				|	prefix_expression SUB_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new SubExpression($1,$3)); 		 }
