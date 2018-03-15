@@ -1175,6 +1175,34 @@ class LogicalOrExpression : public BinaryExpression{
 		}
 };
 
+/********* Comma Binary Expressions *********/
+class CommaExpression : public BinaryExpression{
+	public:
+		CommaExpression(Expression* _left, Expression* _right):BinaryExpression(_left,_right){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			dst<<"# ------ COMMA ------ #"<<std::endl;
+			Type lType = left->exprType(ctx);
+			Type rType = right->exprType(ctx);
+	
+			auto destMemReg = ctx.getCurrStorage();
+			std::string destReg = "v0";
+			left->to_mips(dst,ctx);
+			right->to_mips(dst,ctx);
+		}
+
+		virtual Type exprType(Context& ctx) const override{
+			return right->exprType(ctx);
+		}
+
+		virtual double eval() const override{
+			return right->eval();	
+		}
+		virtual const char *getOpcode() const override{
+			return ",";
+		}
+
+};
 
 /********************** Assignment Expressions ************************/
 

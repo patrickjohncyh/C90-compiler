@@ -103,8 +103,8 @@ declarator			: 	IDENTIFIER 						{ $$ = new IdentifierDeclarator(*$1);				}
 					|   IDENTIFIER '['  ']'				{ $$ = new ArrayDeclarator(*$1,NULL);				}
 
 
-initializer_list 	:   expression 							{ $$ = new std::vector<Expression*>(1,$1);	}
-					|	initializer_list ',' expression 	{ $1->push_back($3); $$=$1;					}
+initializer_list 	:   assign_expression 							{ $$ = new std::vector<Expression*>(1,$1);	}
+					|	initializer_list ',' assign_expression 		{ $1->push_back($3); $$=$1;					}
 
 
 init_declarator		: 	declarator 								{ $$ = $1;									}
@@ -226,9 +226,10 @@ assign_expression	: 	ternary_expression
 
 
 expression 			:	assign_expression
+					|	expression ',' assign_expression	{ $$ = new CommaExpression($1,$3);			}
 
-argument_list		: 	expression 						{ $$ = new std::vector<Expression*>(1,$1);	}
-					| 	argument_list ',' expression 	{ $1->push_back($3); $$ = $1;		 		}
+argument_list		: 	assign_expression 					{ $$ = new std::vector<Expression*>(1,$1);	}
+					| 	argument_list ',' assign_expression { $1->push_back($3); $$ = $1;		 		}
 
 
 /*---------------------------------------------------------------------------------------------------------------------*/
