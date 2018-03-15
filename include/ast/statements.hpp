@@ -128,6 +128,7 @@ class ConditionIfStatement : public Statement{
 				ctx.moveToFloatReg("0",zero_f,dst);
 				dst<<"c.eq.s  $"<<condReg_f<<",$"<<zero_f<<std::endl;
 				dst<<"bc1t "    <<bottom_label<<std::endl;
+				dst<<"nop  "	<<std::endl;
 			}
 
 			s_true->to_mips(dst,ctx);
@@ -182,6 +183,7 @@ class ConditionIfElseStatement : public Statement{
 				ctx.moveToFloatReg("0",zero_f,dst);
 				dst<<"c.eq.s  $"<<condReg_f<<",$"<<zero_f<<std::endl;
 				dst<<"bc1t "    <<if_bottom_label<<std::endl;
+				dst<<"nop  "	<<std::endl;
 			}
 
 			s_true->to_mips(dst,ctx);
@@ -253,6 +255,7 @@ class WhileStatement : public Statement{
 				ctx.moveToFloatReg("0",zero_f,dst);
 				dst<<"c.eq.s  $"<<condReg_f<<",$"<<zero_f<<std::endl;
 				dst<<"bc1t "    <<whileEndLabel<<std::endl;
+				dst<<"nop  "	<<std::endl;
 			}
 
 
@@ -278,6 +281,69 @@ class WhileStatement : public Statement{
 			dst << "):" << std::endl;
 			s_true->to_python(dst,indent+"  ",tc);
 			dst << std::endl;
+		}
+};
+
+class DoWhileStatement : public Statement{
+	private:
+		Statement* s_true;
+		Expression* cond_expr;
+		
+	public:
+		DoWhileStatement(Statement* _s_true,Expression* _cond_expr)
+		:cond_expr(_cond_expr),s_true(_s_true){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+			std::string whileStartLabel = ctx.generateLabel("$DOWHILE_START");
+			std::string whileEndLabel = ctx.generateLabel("$DOWHILE_END");
+
+			ctx.break_label.push(whileEndLabel);
+
+
+			dst<<whileStartLabel<<":"<<std::endl;
+
+			s_true->to_mips(dst,ctx);
+
+
+			auto condMemReg = ctx.assignNewStorage();
+			cond_expr->to_mips(dst,ctx);
+			ctx.deAllocStorage();
+			std::string condReg = "v0";
+			ctx.memReg_read(condMemReg,condReg,dst);
+
+			if(cond_expr->exprType(ctx).isIntegral() || cond_expr->exprType(ctx).isPointer()){
+				dst << "beq $0,$"<<condReg<<","<<whileEndLabel<<std::endl;
+				dst << "nop" << std::endl;	
+			}
+			else{	//float...
+				std::string condReg_f = "f0";
+				std::string zero_f = "f2";
+				ctx.moveToFloatReg(condReg,condReg_f,dst);
+				ctx.moveToFloatReg("0",zero_f,dst);
+				dst<<"c.eq.s  $"<<condReg_f<<",$"<<zero_f<<std::endl;
+				dst<<"bc1t "    <<whileEndLabel<<std::endl;
+				dst<<"nop  "	<<std::endl;
+			}
+			dst << "b "<<whileStartLabel<<std::endl;
+			dst << "nop" << std::endl;
+			dst<<whileEndLabel<<":"<<std::endl;
+
+			ctx.break_label.pop();
+		}
+
+		virtual void to_c(std::ostream &dst, std::string indent) const override{
+			/*dst << indent << "while (";
+			cond_expr->to_c(dst,"");
+			dst << ")" << std::endl;
+			s_true->to_c(dst,indent);*/
+		}
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
+			/*dst << indent << "while (";
+			cond_expr->to_python(dst,"",tc);
+			dst << "):" << std::endl;
+			s_true->to_python(dst,indent+"  ",tc);
+			dst << std::endl;*/
 		}
 };
 

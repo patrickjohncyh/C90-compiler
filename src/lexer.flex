@@ -24,7 +24,7 @@ short							{ return SHORT;		}
 float							{ return FLOAT;		}
 double							{ return DOUBLE;	}
 
-
+do 								{ return DO;		}
 return							{ return RETURN;	}
 if 								{ return IF;		}
 else							{ return ELSE; 		}

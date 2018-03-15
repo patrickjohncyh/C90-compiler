@@ -37,6 +37,7 @@ void yyerror(const char *);
 %token RETURN
 %token IF
 %token ELSE
+%token DO
 %token WHILE
 %token FOR
 %token SWITCH
@@ -267,8 +268,10 @@ condition_statement :	IF '(' expression ')' statement 				{ $$ = new ConditionIf
 
 
 iteration_statement	:	WHILE '(' expression ')' statement 								{ $$ = new WhileStatement($3,$5);		}
+					|	DO statement WHILE '(' expression ')' ';'						{ $$ = new DoWhileStatement($2,$5);		}
 					|	FOR '(' expr_statement expr_statement ')' statement				{ $$ = new ForStatement($3,$4,NULL,$6);	}
 					| 	FOR '(' expr_statement expr_statement expression ')' statement 	{ $$ = new ForStatement($3,$4,$5,$7);	}
+
 
 
 labeled_statement	:	CASE expression ':' statement 	{ $$ = new LabeledCaseStatement($2,$4); }
