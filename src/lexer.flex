@@ -8,6 +8,7 @@
 D	[0-9]
 L	[a-zA-Z_]
 E	[Ee][+-]?{D}+
+H	[a-fA-F0-9]
 
 
 
@@ -40,10 +41,16 @@ continue						{ return CONTINUE;	}
 {L}({L}|{D})*					{ yylval.string = new std::string(yytext); return IDENTIFIER;	}
 
 
-
+0{D}+							{ yylval.string = new std::string(yytext); return CONSTANT_I; }
+0[xX]{H}+						{ yylval.string = new std::string(yytext); return CONSTANT_I; }
 {D}+							{ yylval.string = new std::string(yytext); return CONSTANT_I; }
 
+
+
 L?'(\\.|[^\\'])+'				{ yylval.string = new std::string(yytext); return CONSTANT_C; }
+
+
+
 
 {D}+{E}?						{ yylval.string = new std::string(yytext); return CONSTANT_F; }
 {D}*"."{D}+({E})?				{ yylval.string = new std::string(yytext); return CONSTANT_F; }

@@ -293,7 +293,7 @@ class DoWhileStatement : public Statement{
 		
 	public:
 		DoWhileStatement(Statement* _s_true,Expression* _cond_expr)
-		:cond_expr(_cond_expr),s_true(_s_true){}
+		:s_true(_s_true),cond_expr(_cond_expr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 

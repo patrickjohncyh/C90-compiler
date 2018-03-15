@@ -211,14 +211,21 @@ public:
 			ctx.memoryOffsetWrite(type,"0","fp",var.getAddr(),dst);	
 		}
 	}
+
 	virtual void to_mips_declare_init(std::ostream &dst, Context& ctx,Type type, Expression* init_exp) const override{ //init identifier
 		Variable var = ctx.assignNewVariable(id,type,Basic,1);
 		if(ctx.getScope() == global){
-			int init_val = init_exp->eval(); //global only allows constant init
-			dst<<".data"<<std::endl;	
-			dst<<".globl "<<id<<std::endl;
-			dst<<id<<":"<<std::endl;
-			dst<<"."<<type.storage_type()<< " "<<init_val<<std::endl;
+			if(type.isPointer()){
+
+			}
+			else{
+				int init_val = init_exp->eval(); //global only allows constant init
+				dst<<".data"<<std::endl;	
+				dst<<".globl "<<id<<std::endl;
+				dst<<id<<":"<<std::endl;
+				dst<<"."<<type.storage_type()<< " "<<init_val<<std::endl;
+			}
+		
 		}
 		else if(ctx.getScope() == local){
 			auto tempMemReg = ctx.assignNewStorage();
@@ -462,7 +469,7 @@ public:
 		int offset = 0;
 		int mode = 1; //default use floating reg first..
 		std::string areg[4]  = {"a0","a1","a2","a3"};
-		for(int i =0; i < sig.size(); i++){
+		for(unsigned int i =0; i < sig.size(); i++){
 			int size =  ( ctx.integralPromotion(sig[i]) ).bytes();
 			if(sig[i].isIntegral() || sig[i].isPointer()) mode = 0; //switch to int register mode..
 			if(offset + size <= 16){ //can fit into registers

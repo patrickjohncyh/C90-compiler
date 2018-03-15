@@ -21,6 +21,11 @@ class Expression : public ASTNode{
 		virtual double eval() const{
 			return 0;
 		}
+
+		std::string eval(Context& ctx){
+			exit(1);
+		}
+
 		virtual Type exprType(Context& ctx) const{
 			return Type(Int);
 		}
@@ -45,7 +50,6 @@ class CastExpression : public Expression{
 
 			ctx.convertMemRegType(sourceType,destType,destMemReg,dst);
 		}
-
 
 		virtual Type exprType(Context& ctx) const override{
 			return *cast_type;
@@ -192,7 +196,7 @@ class FunctionCallExpression : public UnaryExpression{
 			}
 
 			int totalSize = 0; 		
-			for(int i =0; i < sig.size(); i++){
+			for(unsigned int i =0; i < sig.size(); i++){
 				totalSize +=   ( ctx.integralPromotion(sig[i]) ).bytes();
 			}
 			if(totalSize<16){
@@ -207,7 +211,7 @@ class FunctionCallExpression : public UnaryExpression{
 			}
 
 			int offset = 0;
-			for(int i =0; i < sig.size(); i++){	
+			for(unsigned int i =0; i < sig.size(); i++){	
 				int size =  ( ctx.integralPromotion(sig[i]) ).bytes();
 				auto tempMemReg = ctx.assignNewStorage(); 
 				(*a_list)[i]->to_mips(dst,ctx); //eval expression
@@ -222,7 +226,7 @@ class FunctionCallExpression : public UnaryExpression{
 			int mode = 1; //default use floating reg first..
 			std::string areg[4]  = {"a0","a1","a2","a3"};
 			offset = 0;
-			for(int i =0; i < sig.size(); i++){	 //based on signature.. put argumnets into correct palce
+			for(unsigned int i =0; i < sig.size(); i++){	 //based on signature.. put argumnets into correct palce
 				int size =  ( ctx.integralPromotion(sig[i]) ).bytes();
 				if(sig[i].isIntegral() || sig[i].isPointer()) mode = 0; //switch to int register mode..
 				if(offset + size <= 16){ //can fit into registers
@@ -242,8 +246,9 @@ class FunctionCallExpression : public UnaryExpression{
 			}
 
 			dst << "addiu $sp,$sp," << ctx.getCurrStorage() << std::endl;		//sp to correct position
-			dst << "jal "<< id << std::endl; 									//call function, Assumes that it is an Identifier
-			dst << "nop "<<std::endl;
+			dst << "la   $2,"<<id<<std::endl;
+			dst << "jalr $2"<< std::endl; 									//call function, Assumes that it is an Identifier
+			dst << "nop   "<<std::endl;
 			dst << "addiu $sp,$sp," << -ctx.getCurrStorage() << std::endl;		//sp to original position
 	
 			for(int i =0; i < totalSize/4;i++){ //dealloc argument memory
@@ -389,9 +394,8 @@ class ReferenceExpression : public UnaryExpression{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			dst<<"# ------- REFERENCE ------- #"<<std::endl;
-
-			auto destMemReg = ctx.getCurrStorage();
-			std::string destReg = "v0";
+			//auto destMemReg = ctx.getCurrStorage();
+			//std::string destReg = "v0";
 			expr->to_mips_getAddr(dst,ctx);		//addr of expression in destReg	
 		}
 
@@ -419,8 +423,8 @@ class DereferenceExpression : public UnaryExpression{
 			Type type = expr->exprType(ctx);
 			type.dec_pLevel();
 			if(type.get_aLevel() && type.get_pLevel() == 0){	// identifier to an array... return the address i suppose..
-				auto destMemReg = ctx.getCurrStorage();
-				std::string destReg = "v0";
+				//auto destMemReg = ctx.getCurrStorage();
+				//std::string destReg = "v0";
 				expr->to_mips(dst,ctx);
 			}
 			else{
@@ -437,13 +441,13 @@ class DereferenceExpression : public UnaryExpression{
 			Type type = expr->exprType(ctx);
 			type.dec_pLevel();
 			if(type.get_aLevel() && type.get_pLevel() == 0){	
-				auto destMemReg = ctx.getCurrStorage();
-				std::string destReg = "v0";
+			//	auto destMemReg = ctx.getCurrStorage();
+			//	std::string destReg = "v0";
 				expr->to_mips(dst,ctx);
 			}
 			else{
-				auto destMemReg = ctx.getCurrStorage();
-				std::string destReg = "v0";
+			//	auto destMemReg = ctx.getCurrStorage();
+			//	std::string destReg = "v0";
 				expr->to_mips(dst,ctx);
 			}
 		}
@@ -770,7 +774,7 @@ class LessThanExpression : public BinaryExpression{
 		virtual void to_mips_getOperation(std::ostream &dst, Context& ctx,std::string left,std::string right, Type type) const override{
 			if(type.isPointer() || type.isIntegral()){
 				if(type.isSigned()){
-					dst <<"sltu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
+					dst <<"slt  $"<<left<<",$"<<left<<",$"<<right<<std::endl;
 				}
 				else{
 					dst <<"sltu $"<<left<<",$"<<left<<",$"<<right<<std::endl;
@@ -1185,8 +1189,8 @@ class CommaExpression : public BinaryExpression{
 			Type lType = left->exprType(ctx);
 			Type rType = right->exprType(ctx);
 	
-			auto destMemReg = ctx.getCurrStorage();
-			std::string destReg = "v0";
+			//auto destMemReg = ctx.getCurrStorage();
+			//std::string destReg = "v0";
 			left->to_mips(dst,ctx);
 			right->to_mips(dst,ctx);
 		}
@@ -1241,6 +1245,11 @@ class DirectAssignmentExpression : public AssignmentExpression{
 			dst<<"move $"<<destReg<<",$"<<tempReg<<std::endl;
 			ctx.memReg_write(destMemReg, destReg, dst);
 		}
+
+		virtual Type exprType(Context& ctx) const override{
+			return lvalue->exprType(ctx);
+		}
+
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			lvalue->to_c(dst,indent);

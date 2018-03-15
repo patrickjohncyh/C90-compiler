@@ -142,8 +142,7 @@ public:
 			else if(bytes() == 4)
 				return "word";
 		}
-		else
-			return "float";
+		return "float";
 	}
 
 };

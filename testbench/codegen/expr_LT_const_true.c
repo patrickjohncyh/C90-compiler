@@ -1,3 +1,3 @@
 int main(){
-	return 120 < 403;
+	return -2 < 403;
 }

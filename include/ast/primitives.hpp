@@ -34,8 +34,19 @@ private:
 	std::string str_val;
 	unsigned int val;
 public:
-	IntegralConstant(std::string _str_val)
-	:str_val(_str_val),val(std::stoull(str_val)){}
+	IntegralConstant(std::string _str_val):str_val(_str_val){
+		int base = 10;
+		if(str_val.size() > 1){
+			if(str_val.substr(0,2) == "0x" || str_val.substr(0,2) == "0X"){
+				base = 16;
+			}
+			else if(str_val.substr(0,1) == "0"){
+				base = 8;
+			}
+		}
+		val = std::stoull(str_val,0,base);
+		
+	}
 
 	virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 		dst << "##### Constant #####" << std::endl;
@@ -60,6 +71,7 @@ public:
 		return val;
 	}
 };
+
 
 class FloatingConstant : public Primitive{
 private:
@@ -106,9 +118,9 @@ private:
 public:
 	CharacterConstant(std::string _str_val):str_val(_str_val){
 		val = 0;
-		if(str_val.substr(0,1).find("L") == -1){ //normal
+		if(str_val.substr(0,1).find("L") == std::string::npos){ //normal
 			str_val = str_val.substr(1,str_val.length()-2);
-			for(int i=0; i <str_val.length();i++){
+			for(unsigned int i=0; i <str_val.length();i++){
 				val = (val<<8) + (unsigned int)str_val.c_str()[i];
 			}
 		}
