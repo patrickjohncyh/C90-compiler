@@ -367,6 +367,7 @@ public:
 	}
 };
 
+
 class Declaration : public ExternalDeclaration{
 private:
 	Type type;
@@ -414,6 +415,32 @@ public:
 	}
 
 };
+
+
+class FunctionPrototype : public Declarator{
+private:
+	std::string id;
+	std::vector<Declaration*>* p_list;
+
+public:
+	FunctionPrototype(std::string _id, std::vector<Declaration*>* _p_list)
+	:id(_id),p_list(_p_list){}
+
+	virtual void to_mips_declare(std::ostream &dst, Context& ctx, Type funcType) const override{
+		std::vector<Type> sig;
+		if(p_list!=NULL){
+			for(unsigned int i=0;i<p_list->size();i++){
+				Type paramType = (*p_list)[i]->getParam_type();
+				sig.push_back(paramType);
+			}
+		}
+		funcType.setSignature(sig);
+		ctx.assignNewVariable(id,funcType,Function);
+
+	}
+};
+
+
 
 
 class FunctionDefinition : public ExternalDeclaration{

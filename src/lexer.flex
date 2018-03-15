@@ -14,7 +14,6 @@ H	[a-fA-F0-9]
 
 %%
 
-
 int								{ return INT; 	 	}
 unsigned						{ return UNSIGNED; 	}
 signed							{ return SIGNED; 	}
@@ -45,18 +44,11 @@ continue						{ return CONTINUE;	}
 0[xX]{H}+						{ yylval.string = new std::string(yytext); return CONSTANT_I; }
 {D}+							{ yylval.string = new std::string(yytext); return CONSTANT_I; }
 
-
-
 L?'(\\.|[^\\'])+'				{ yylval.string = new std::string(yytext); return CONSTANT_C; }
-
-
-
 
 {D}+{E}?						{ yylval.string = new std::string(yytext); return CONSTANT_F; }
 {D}*"."{D}+({E})?				{ yylval.string = new std::string(yytext); return CONSTANT_F; }
 {D}+"."{D}*({E})?				{ yylval.string = new std::string(yytext); return CONSTANT_F; }
-
-
 
 
 [L]?["](\\.|[^\\"\n])*["]		{ yylval.string = new std::string(yytext);	return LITERAL;		}

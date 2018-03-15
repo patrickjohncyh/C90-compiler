@@ -98,9 +98,10 @@ global_declaration	: 	function_definition						{ $$ = $1; }
 
 function_definition	: 	type_specifier IDENTIFIER '(' parameter_list ')' compound_statement { $$ = new FunctionDefinition($1,*$2,$4,$6); }
 
-declarator			: 	IDENTIFIER 						{ $$ = new IdentifierDeclarator(*$1);				}
-					|   IDENTIFIER '[' expression ']'	{ $$ = new ArrayDeclarator(*$1,$3);					}
-					|   IDENTIFIER '['  ']'				{ $$ = new ArrayDeclarator(*$1,NULL);				}
+declarator			: 	IDENTIFIER 							{ $$ = new IdentifierDeclarator(*$1);		}
+					|   IDENTIFIER '[' expression ']'		{ $$ = new ArrayDeclarator(*$1,$3);			}
+					|   IDENTIFIER '['  ']'					{ $$ = new ArrayDeclarator(*$1,NULL);		}
+					|	IDENTIFIER '(' parameter_list ')'	{ $$ = new FunctionPrototype(*$1,$3);		}
 
 
 initializer_list 	:   assign_expression 							{ $$ = new std::vector<Expression*>(1,$1);	}
@@ -124,7 +125,8 @@ declaration_list	: 	declaration 						{ $$ = new std::vector<Declaration*>(1,$1)
 					| 	declaration_list declaration  		{ $1->push_back($2);	$$ = $1; 			}
 
 
-parameter_declaration:	type_specifier declarator 	{ $$ = new Declaration(*$1,new std::vector<Declarator*>(1,$2)); }		
+parameter_declaration:	type_specifier declarator 	{ $$ = new Declaration(*$1,new std::vector<Declarator*>(1,$2)); }
+					 |	type_specifier				{ $$ = new Declaration(*$1);									}		
 
 
 parameter_list		:	parameter_declaration				     { $$ = new std::vector<Declaration*>(1,$1);	}
