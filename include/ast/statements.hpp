@@ -469,7 +469,7 @@ class JumpStatement : public Statement{
 					ctx.memReg_read(destMemReg,destReg,dst);
 					dst <<"move $2,$"<<destReg<<std::endl;
 				}
-				else{
+				else if(!ctx.returnType.is(Void)){
 					dst << "# ----- Return Float-----#" << std::endl;
 					std::string destReg = "f0";
 					ctx.memReg_read_f(destMemReg,destReg,dst);

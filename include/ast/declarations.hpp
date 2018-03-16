@@ -113,26 +113,25 @@ public:
 		}	
 	}
 
-	virtual void to_mips_declare_init(std::ostream &dst, Context& ctx,Type type, Expression* init) const override{	//some string array 
-		//know to be a string literal...	
+	virtual void to_mips_declare_init(std::ostream &dst, Context& ctx,Type type, Expression* init) const override{	//string
 		int size = 0;
+		int array_size = getSize();
 
 		std::stringstream ss;
 		init->to_c(ss,"");
 		std::string str = ss.str();
-		int array_size = getSize();
-		int str_size = str.size();
+		int str_size = str.size()- 2 + 1;		//size without close inverted commas but with null terminator
+		str = str.substr(0,str.size()-1);		//remove close inveretd comma
+		str = str + "\\000" + "\"";
+		size = str_size;
 
-		if(array_size == -1){
-			size = str_size-2+1; //null termiantor...
-		}
-		else{
+		if(array_size != -1){	//array has been sized..	
 			size = array_size;
-			str = str.substr(0,array_size);
+			if(array_size < str_size){
+				str = str.substr(0,array_size+1); //+1 due to starting open inverted commas
+				str = str + "\"";		
+			}
 		}
-
-		std::string stringConstLabel = ctx.generateLabel("$SL");
-		ctx.labeled_constant[stringConstLabel] = std::make_pair(str,"asciiz");
 
 		Type arrType(type);
 		arrType.inc_aLevel();
@@ -146,6 +145,8 @@ public:
 			dst<<".ascii "<<str<<std::endl;
 		}
 		else if(ctx.getScope() == local){
+			std::string stringConstLabel = ctx.generateLabel("$SL");
+			ctx.labeled_constant[stringConstLabel] = std::make_pair(str,"ascii");
 			dst<<"la $v0,"<<stringConstLabel<<std::endl;
 			for(int i=0;i<size;i++){
 				ctx.memoryOffsetRead(type,"v1","v0", i*type.bytes(),dst);
@@ -215,17 +216,31 @@ public:
 	virtual void to_mips_declare_init(std::ostream &dst, Context& ctx,Type type, Expression* init_exp) const override{ //init identifier
 		Variable var = ctx.assignNewVariable(id,type,Basic,1);
 		if(ctx.getScope() == global){
-			if(type.isPointer()){
-
+			if(type.isIntegral() || type.isPointer()){
+				if(init_exp->exprType(ctx).isPointer()){
+					std::stringstream ss;
+					init_exp->eval_string(ss,"");
+					dst<<".data"<<std::endl;	
+					dst<<".globl "<<id<<std::endl;
+					dst<<id<<":"<<std::endl;
+					dst<<"."<<type.storage_type()<< " "<<ss.str()<<std::endl;
+				}
+				else{
+					int init_val = init_exp->eval(); //global only allows constant init
+					dst<<".data"<<std::endl;	
+					dst<<".globl "<<id<<std::endl;
+					dst<<id<<":"<<std::endl;
+					dst<<"."<<type.storage_type()<< " "<<init_val<<std::endl;
+				}
 			}
 			else{
-				int init_val = init_exp->eval(); //global only allows constant init
+				float init_val = init_exp->eval(); //global only allows constant init
 				dst<<".data"<<std::endl;	
 				dst<<".globl "<<id<<std::endl;
 				dst<<id<<":"<<std::endl;
 				dst<<"."<<type.storage_type()<< " "<<init_val<<std::endl;
-			}
-		
+
+			}		
 		}
 		else if(ctx.getScope() == local){
 			auto tempMemReg = ctx.assignNewStorage();

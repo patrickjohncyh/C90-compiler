@@ -21,11 +21,9 @@ class Expression : public ASTNode{
 		virtual double eval() const{
 			return 0;
 		}
-
-		std::string eval(Context& ctx){
-			exit(1);
+		virtual void eval_string(std::ostream &dst,std::string indent){
+			to_c(dst,indent);
 		}
-
 		virtual Type exprType(Context& ctx) const{
 			return Type(Int);
 		}
@@ -321,6 +319,9 @@ class PrePositiveExpression : public UnaryExpression{
 			dst<< "+";
 			expr->to_c(dst,indent);
 		}
+		virtual double eval() const{
+			return expr->eval();
+		}
 
 };
 
@@ -358,6 +359,11 @@ class PreNegativeExpression : public UnaryExpression{
 			Type thisType = ctx.integralPromotion(type);
 			return thisType;
 		}
+
+		virtual double eval() const{
+			return -expr->eval();
+		}
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst<< "-";
 			expr->to_c(dst,indent);
@@ -386,6 +392,9 @@ class BwNotExpression : public UnaryExpression{
 			Type thisType = ctx.integralPromotion(rType);
 			return thisType;
 		}
+		virtual double eval() const{
+			return ~(int)expr->eval();
+		}
 };
 
 class ReferenceExpression : public UnaryExpression{
@@ -394,8 +403,6 @@ class ReferenceExpression : public UnaryExpression{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			dst<<"# ------- REFERENCE ------- #"<<std::endl;
-			//auto destMemReg = ctx.getCurrStorage();
-			//std::string destReg = "v0";
 			expr->to_mips_getAddr(dst,ctx);		//addr of expression in destReg	
 		}
 
@@ -405,12 +412,15 @@ class ReferenceExpression : public UnaryExpression{
 			return type;
 		}
 
+		virtual void eval_string(std::ostream &dst,std::string indent){
+			expr->eval_string(dst,indent);
+		}
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst<< "&";
 			expr->to_c(dst,indent);
 
 		}
-
 };
 
 class DereferenceExpression : public UnaryExpression{
@@ -419,12 +429,9 @@ class DereferenceExpression : public UnaryExpression{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			dst<<"# ------ DEREFERENCE ------ #"<<std::endl;
-
 			Type type = expr->exprType(ctx);
 			type.dec_pLevel();
-			if(type.get_aLevel() && type.get_pLevel() == 0){	// identifier to an array... return the address i suppose..
-				//auto destMemReg = ctx.getCurrStorage();
-				//std::string destReg = "v0";
+			if(type.get_aLevel() && type.get_pLevel() == 0){// identifier of array
 				expr->to_mips(dst,ctx);
 			}
 			else{
@@ -437,17 +444,13 @@ class DereferenceExpression : public UnaryExpression{
 			}
 		}
 
-		virtual void to_mips_getAddr(std::ostream &dst, Context& ctx) const{ //unsure about this....
+		virtual void to_mips_getAddr(std::ostream &dst, Context& ctx) const{
 			Type type = expr->exprType(ctx);
 			type.dec_pLevel();
 			if(type.get_aLevel() && type.get_pLevel() == 0){	
-			//	auto destMemReg = ctx.getCurrStorage();
-			//	std::string destReg = "v0";
 				expr->to_mips(dst,ctx);
 			}
 			else{
-			//	auto destMemReg = ctx.getCurrStorage();
-			//	std::string destReg = "v0";
 				expr->to_mips(dst,ctx);
 			}
 		}
@@ -458,10 +461,13 @@ class DereferenceExpression : public UnaryExpression{
 			return type;
 		}
 
+		virtual void eval_string(std::ostream &dst,std::string indent){
+			expr->eval_string(dst,indent);
+		}
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst<< "*";
 			expr->to_c(dst,indent);
-
 		}
 };
 
@@ -630,6 +636,9 @@ class MultExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return "*";
 		}
+		virtual double eval() const{
+			return left->eval() * right->eval() ;
+		}
 };
 
 class DivExpression : public BinaryExpression{
@@ -659,6 +668,9 @@ class DivExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return "/";
 		}
+		virtual double eval() const{
+			return left->eval() / right->eval() ;
+		}
 };
 
 class ModuloExpression : public BinaryExpression{
@@ -682,6 +694,10 @@ class ModuloExpression : public BinaryExpression{
 		};
 		virtual const char *getOpcode() const override{
 			return "%";
+		}
+
+		virtual double eval() const{
+			return (int)left->eval() % (int)right->eval() ;
 		}
 };
 
@@ -725,6 +741,10 @@ class SubExpression : public BinaryExpression{
 				ctx.moveFromFloatReg(left,left_f,dst);
 			}
 		};
+
+		virtual double eval() const{
+			return left->eval() - right->eval() ;
+		}
 		virtual const char *getOpcode() const override{
 			return "-";
 		}
@@ -744,6 +764,9 @@ class LeftShiftExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return "<<";
 		}
+		virtual double eval() const{
+			return (int)left->eval() << (int)right->eval() ;
+		}
 };
 
 class RightShiftExpression : public BinaryExpression{
@@ -762,6 +785,9 @@ class RightShiftExpression : public BinaryExpression{
 		}
 		virtual const char *getOpcode() const override{
 			return ">>";
+		}
+		virtual double eval() const{
+			return (int)left->eval() >> (int)right->eval() ;
 		}
 };
 
@@ -802,6 +828,9 @@ class LessThanExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return "<";
 		}
+		virtual double eval() const{
+			return left->eval() < right->eval() ;
+		}
 };
 
 class MoreThanExpression : public BinaryExpression{
@@ -839,6 +868,9 @@ class MoreThanExpression : public BinaryExpression{
 		}
 		virtual const char *getOpcode() const override{
 			return ">";
+		}
+		virtual double eval() const{
+			return left->eval() > right->eval() ;
 		}
 };
 
@@ -881,6 +913,9 @@ class LessThanEqExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return "<=";
 		}
+		virtual double eval() const{
+			return left->eval() <= right->eval() ;
+		}
 };
 
 class MoreThanEqExpression : public BinaryExpression{
@@ -920,6 +955,9 @@ class MoreThanEqExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return ">=";
 		}
+		virtual double eval() const{
+			return left->eval() >= right->eval() ;
+		}
 };
 
 class EqualityExpression : public BinaryExpression{
@@ -954,6 +992,9 @@ class EqualityExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return "==";
 		}
+		virtual double eval() const{
+			return left->eval() == right->eval() ;
+		}
 };
 
 class NotEqualityExpression : public BinaryExpression{
@@ -985,6 +1026,9 @@ class NotEqualityExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return "!=";
 		}
+		virtual double eval() const{
+			return left->eval() != right->eval() ;
+		}
 };
 
 
@@ -1002,6 +1046,9 @@ class BwAndExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return "&";
 		}
+		virtual double eval() const{
+			return (int)left->eval() & (int)right->eval() ;
+		}
 };
 
 class BwXorExpression : public BinaryExpression{
@@ -1016,6 +1063,9 @@ class BwXorExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return "^";
 		}
+		virtual double eval() const{
+			return (int)left->eval() ^ (int)right->eval() ;
+		}
 };
 
 class BwOrExpression : public BinaryExpression{
@@ -1029,6 +1079,9 @@ class BwOrExpression : public BinaryExpression{
 		}
 		virtual const char *getOpcode() const override{
 			return "|";
+		}
+		virtual double eval() const{
+			return (int)left->eval() | (int)right->eval() ;
 		}
 };
 
@@ -1095,14 +1148,15 @@ class LogicalAndExpression : public BinaryExpression{
 			ctx.memReg_write(destMemReg, destReg,dst);	
 			
 		}
-
-
 		virtual Type exprType(Context& ctx) const override{
 			return Type(Int);
 		}
 
 		virtual const char *getOpcode() const override{
 			return "&&";
+		}
+		virtual double eval() const{
+			return left->eval() && right->eval() ;
 		}
 };
 
@@ -1177,6 +1231,9 @@ class LogicalOrExpression : public BinaryExpression{
 		virtual const char *getOpcode() const override{
 			return "||";
 		}
+		virtual double eval() const{
+			return left->eval() || right->eval() ;
+		}
 };
 
 /********* Comma Binary Expressions *********/
@@ -1199,9 +1256,6 @@ class CommaExpression : public BinaryExpression{
 			return right->exprType(ctx);
 		}
 
-		virtual double eval() const override{
-			return right->eval();	
-		}
 		virtual const char *getOpcode() const override{
 			return ",";
 		}

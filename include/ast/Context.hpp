@@ -243,7 +243,9 @@ struct Context{
 			if(targetT.isPointer()){
 				if(origT.isIntegral()){			//double check..
 					memReg_read(Reg,"v0",dst); //load from mem into reg
-					dst<<"sll $v0,$v0,"<<log2(targetT.bytes())<<std::endl;
+					Type baseType(targetT);
+					baseType.dec_pLevel();
+					dst<<"sll $v0,$v0,"<<log2(baseType.bytes())<<std::endl;
 					memReg_write(Reg, "v0",dst); //store from float_reg into mem
 				}
 			}
@@ -293,9 +295,6 @@ struct Context{
 			}
 		}
 	}
-
-
-
 
 
 			

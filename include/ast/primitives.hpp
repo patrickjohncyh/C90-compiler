@@ -4,6 +4,8 @@
 #include <iomanip>
 #include <string>
 
+extern int labelCount;
+
 class Primitive : public Expression{};
 
 class StringLiteral : public Primitive{
@@ -26,9 +28,17 @@ public:
 		strType.inc_pLevel();
 		return strType;
 	}
+	virtual void eval_string(std::ostream &dst,std::string indent){
+			std::string stringConstLabel = "$SL" + std::to_string(labelCount++);
+			dst << stringConstLabel <<std::endl; 
+			dst<<".rdata"<<std::endl;
+			dst<<stringConstLabel<< ":\n";
+   			dst<<".asciiz"<<" "<<str<<"\n";
+	}
 	virtual void to_c(std::ostream &dst,std::string indent) const override{
 		dst << indent << str;
 	}
+
 	virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 		dst << indent << str;
 	}
@@ -55,7 +65,7 @@ public:
 	}
 
 	virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-		dst << "##### Constant #####" << std::endl;
+		dst << "# ----- Constant ------ #" << std::endl;
 		auto destMemReg = ctx.getCurrStorage();
 		std::string destReg = "v0";
 		dst <<"li $"<<destReg<<","<<val<<std::endl;
