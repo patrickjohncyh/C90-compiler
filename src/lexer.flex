@@ -74,8 +74,9 @@ L?'(\\.|[^\\'])+'				{ yylval.string = new std::string(yytext); return CONSTANT_
 [~]				{ return ('~'); }
 [!]				{ return ('!'); }
 [&]				{ return ('&'); }
-[\^]				{ return ('^'); }
-[|]				{ return ('|'); }		
+[\^]			{ return ('^'); }
+[|]				{ return ('|'); }
+[?]				{ return ('?'); }	
 
 
 \==				{ return EQ_OP;	}

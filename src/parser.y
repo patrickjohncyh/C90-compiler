@@ -196,21 +196,22 @@ equality_expression	: 	compare_expression
 
 
 bitwise_and_expression	:	equality_expression
-						|	bitwise_and_expression '&' equality_expression		{$$ = new BwAndExpression($1,$3);}
+						|	bitwise_and_expression '&' equality_expression		{$$ = new BwAndExpression($1,$3);	}
 
 bitwise_xor_expression	:	bitwise_and_expression
-						|	bitwise_xor_expression  '^' bitwise_and_expression	{$$ = new BwXorExpression($1,$3);}
+						|	bitwise_xor_expression  '^' bitwise_and_expression	{$$ = new BwXorExpression($1,$3);	}
 
 bitwise_or_expression	: 	bitwise_xor_expression
-						|	bitwise_or_expression '|' bitwise_xor_expression 	{$$ = new BwOrExpression($1,$3);}
+						|	bitwise_or_expression '|' bitwise_xor_expression 	{$$ = new BwOrExpression($1,$3);	}
 
 logical_and_expression	: 	bitwise_or_expression
-						|   logical_and_expression AND_OP bitwise_or_expression {$$ = new LogicalAndExpression($1,$3);}
+						|   logical_and_expression AND_OP bitwise_or_expression {$$ = new LogicalAndExpression($1,$3);	}
 
 logical_or_expression	:	logical_and_expression
-						|	logical_or_expression OR_OP logical_and_expression	{$$ = new LogicalOrExpression($1,$3);}
+						|	logical_or_expression OR_OP logical_and_expression	{$$ = new LogicalOrExpression($1,$3);	}
 
-ternary_expression 	: 	logical_or_expression /* to implement conidtional expression */
+ternary_expression 		: 	logical_or_expression 
+						|	logical_or_expression '?' expression ':' ternary_expression {$$ = new TernaryExpression($1,$3,$5);	}
 
 
 assign_expression	: 	ternary_expression 

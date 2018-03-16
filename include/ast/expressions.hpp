@@ -1319,7 +1319,75 @@ class DirectAssignmentExpression : public AssignmentExpression{
 
 /********************** Ternary Expressions ************************/
 
-// TO IMPLMENET CONDITIONAL EXPRESSION
+class TernaryExpression : public Expression{
+	private:
+		Expression* cond_expr;
+		Expression* true_expr;
+		Expression* false_expr;
+
+	public:
+		TernaryExpression(Expression* _cond_expr, Expression* _true_expr ,Expression* _false_expr)
+		:cond_expr(_cond_expr),true_expr(_true_expr),false_expr(_false_expr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+
+			dst << "# ----- Ternary Expression -----#" << std::endl;
+
+			std::string mid_label = ctx.generateLabel("$tern_true_bottom");
+			std::string bottom_label = ctx.generateLabel("$tern_false_bottom");
+
+			auto condMemReg = ctx.getCurrStorage();
+			cond_expr->to_mips(dst,ctx);
+
+			std::string condReg = "v0";
+			ctx.memReg_read(condMemReg, condReg,dst);	
+
+			if(cond_expr->exprType(ctx).isIntegral() || cond_expr->exprType(ctx).isPointer()){
+				dst << "beq $0,$"<<condReg<<","<<mid_label<<std::endl;
+				dst << "nop" << std::endl;	
+			}
+			else{	//float...
+				std::string condReg_f = "f0";
+				std::string zero_f = "f2";
+				ctx.moveToFloatReg(condReg,condReg_f,dst);
+				ctx.moveToFloatReg("0",zero_f,dst);
+				dst<<"c.eq.s  $"<<condReg_f<<",$"<<zero_f<<std::endl;
+				dst<<"bc1t "    <<mid_label<<std::endl;
+				dst<<"nop  "	<<std::endl;
+			}
+
+			true_expr->to_mips(dst,ctx);
+
+			dst<<"b  "<<bottom_label<<std::endl;
+			dst<<"nop"<<std::endl;
+			
+			dst << mid_label << ":" << std::endl;
+
+			false_expr->to_mips(dst,ctx);
+
+			dst << bottom_label << ":" << std::endl;
+		}
+
+		virtual Type exprType(Context& ctx) const override{
+			Type trueType  = true_expr->exprType(ctx);
+			Type falseType = false_expr->exprType(ctx);
+			if(trueType.isIntegral() && !trueType.isPointer() && falseType.isIntegral() && !falseType.isPointer()){
+				return ctx.arithmeticConversion(trueType,falseType);
+			}
+			else{	
+				
+			}
+
+			return Type(Int);
+		}
+
+		virtual void to_c(std::ostream &dst,std::string indent) const override{;
+		}
+};
+
+
+
+
 
 
 #endif
