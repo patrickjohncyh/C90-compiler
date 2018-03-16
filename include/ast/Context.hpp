@@ -175,11 +175,12 @@ struct Context{
 	}
 
 	Type integralPromotion(Type t){
-		if(t.is(Char) || t.is(UChar) || t.is(Short) ||  t.is(UShort)){
-			return Type(Int);
+		if(t.isIntegral()){
+			if(t.is(Char) || t.is(UChar) || t.is(Short) ||  t.is(UShort)){
+				return Type(Int);
+			}
 		}
-		else
-			return t;
+		return t;
 	}
 
 	Type arithmeticConversion(Type t1, Type t2){

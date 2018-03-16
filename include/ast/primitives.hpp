@@ -15,10 +15,16 @@ public:
 	virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 		auto destMemReg = ctx.getCurrStorage();
 		std::string destReg = "v0";
-		std::string stringConstLabel = ctx.generateLabel("$SC");
-	//	ctx.labeled_constant[stringConstLabel] = std::make_pair(str,"string");
-		dst<<"la   $"<<destReg<<","<<stringConstLabel<<std::endl;	 //load address of string label
+		std::string stringConstLabel = ctx.generateLabel("$SL");
+		ctx.labeled_constant[stringConstLabel] = std::make_pair(str,"asciiz");
+		dst<<"la   $"<<destReg<<","<<stringConstLabel<<std::endl;
 		ctx.memReg_write(destMemReg, destReg,dst);						 
+	}
+
+	virtual Type exprType(Context& ctx) const override{
+		Type strType(Char);
+		strType.inc_pLevel();
+		return strType;
 	}
 	virtual void to_c(std::ostream &dst,std::string indent) const override{
 		dst << indent << str;

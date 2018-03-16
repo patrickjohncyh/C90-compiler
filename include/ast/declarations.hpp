@@ -121,17 +121,16 @@ public:
 		init->to_c(ss,"");
 		std::string str = ss.str();
 		int array_size = getSize();
-		str = str.substr(1,str.size()-2); //remove " "
 		int str_size = str.size();
 
 		if(array_size == -1){
-			size = str_size+1; //null termiantor...
+			size = str_size-2+1; //null termiantor...
 		}
 		else{
 			size = array_size;
 			str = str.substr(0,array_size);
 		}
-		
+
 		std::string stringConstLabel = ctx.generateLabel("$SL");
 		ctx.labeled_constant[stringConstLabel] = std::make_pair(str,"asciiz");
 

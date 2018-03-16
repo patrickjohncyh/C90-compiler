@@ -29,8 +29,9 @@ int main(int argc, char* argv[]){
 			root->to_mips(outfile,c);
 			for(auto it = c.labeled_constant.cbegin(); it !=  c.labeled_constant.cend(); ++it){
 				if(it->second.second == "asciiz"){
+					outfile<<".rdata"<<std::endl;
 					outfile<<it->first<< ":\n";
-   				 	outfile<<"."<<it->second.second<<" \""<<it->second.first<<"\"\n";
+   				 	outfile<<"."<<it->second.second<<" "<<it->second.first<<"\n";
 				}
 				else{
 					outfile<<it->first<<":\n";
@@ -54,8 +55,9 @@ int main(int argc, char* argv[]){
 			root->to_mips(std::cout,c);
 			for(auto it = c.labeled_constant.cbegin(); it !=  c.labeled_constant.cend(); ++it){
 				if(it->second.second == "asciiz"){
+					std::cout<<".rdata"<<std::endl;
 					std::cout<<it->first<< ":\n";
-   				 	std::cout<<"."<<it->second.second<<" \""<<it->second.first<<"\"\n";
+   				 	std::cout<<"."<<it->second.second<<" "<<it->second.first<<"\n";
 				}
 				else{
 					std::cout<<it->first<<":\n";
