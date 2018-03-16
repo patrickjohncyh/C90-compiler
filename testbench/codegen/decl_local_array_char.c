@@ -8,5 +8,5 @@ int main(){
 	a[3] = 123;
 
 
-	return a[3] + c + d + e;
+	return a[2] + c + d + e;
 }

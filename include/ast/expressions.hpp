@@ -133,7 +133,7 @@ class ArrayAccessExpression : public UnaryExpression{
 		}
 
 		virtual void to_mips_getAddr(std::ostream &dst, Context& ctx) const override{
-			Type lType = expr->exprType(ctx);
+			Type lType = exprType(ctx);
 
 			auto destMemReg = ctx.getCurrStorage();
 			std::string destReg = "v0";

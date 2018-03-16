@@ -28,8 +28,15 @@ int main(int argc, char* argv[]){
 			Context c;
 			root->to_mips(outfile,c);
 			for(auto it = c.labeled_constant.cbegin(); it !=  c.labeled_constant.cend(); ++it){
-   				 outfile << it->first << ":\n";
-   				 outfile << ".float " << it->second << "\n";
+				if(it->second.second == "asciiz"){
+					outfile<<it->first<< ":\n";
+   				 	outfile<<"."<<it->second.second<<" \""<<it->second.first<<"\"\n";
+				}
+				else{
+					outfile<<it->first<<":\n";
+   				 	outfile<<"."<<it->second.second<<" "<<it->second.first<< "\n";
+				}
+   			
 			}
 		}
 	}
@@ -46,8 +53,15 @@ int main(int argc, char* argv[]){
 			Context c;
 			root->to_mips(std::cout,c);
 			for(auto it = c.labeled_constant.cbegin(); it !=  c.labeled_constant.cend(); ++it){
-   				 std::cout << it->first << ":\n";
-   				 std::cout << ".float " << it->second << "\n";
+				if(it->second.second == "asciiz"){
+					std::cout<<it->first<< ":\n";
+   				 	std::cout<<"."<<it->second.second<<" \""<<it->second.first<<"\"\n";
+				}
+				else{
+					std::cout<<it->first<<":\n";
+   				 	std::cout<<"."<<it->second.second<<" "<<it->second.first<< "\n";
+				}
+   			
 			}
 
 
@@ -55,3 +69,8 @@ int main(int argc, char* argv[]){
 	}
 	return 0;
 }
+
+
+
+
+

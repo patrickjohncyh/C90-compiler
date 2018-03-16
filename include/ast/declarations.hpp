@@ -65,8 +65,9 @@ public:
 
 	virtual void to_mips_declare(std::ostream &dst, Context& ctx,Type type) const override{ //normal non init array
 		int size = getSize();
-		type.inc_aLevel();	//1D ARRAY..
-		Variable var = ctx.assignNewVariable(id,type,Array,size);
+		Type arrType(type);
+		arrType.inc_aLevel();
+		Variable var = ctx.assignNewVariable(id,arrType,Array,size);
 		if(size ==-1){
 			std::cout << "Erorr : Array Size Missing" << std::endl;
 			exit(1);
@@ -88,8 +89,9 @@ public:
 	}
 	virtual void to_mips_declare_init(std::ostream &dst, Context& ctx,Type type, std::vector<Expression*>* init) const override{ //normal init array
 		int size = init->size();
-		type.inc_aLevel();	//1D ARRAY..
-		Variable var = ctx.assignNewVariable(id,type,Array,size);
+		Type arrType(type);
+		arrType.inc_aLevel();
+		Variable var = ctx.assignNewVariable(id,arrType,Array,size);
 		if(ctx.getScope() == global){
 			dst<<".data"<<std::endl;	
 			dst<<".globl "<<id<<std::endl;
@@ -110,6 +112,7 @@ public:
 			}
 		}	
 	}
+
 	virtual void to_mips_declare_init(std::ostream &dst, Context& ctx,Type type, Expression* init) const override{	//some string array 
 		//know to be a string literal...	
 		int size = 0;
@@ -121,17 +124,20 @@ public:
 		str = str.substr(1,str.size()-2); //remove " "
 		int str_size = str.size();
 
-
 		if(array_size == -1){
 			size = str_size+1; //null termiantor...
-			str = str + "\0";
 		}
 		else{
 			size = array_size;
 			str = str.substr(0,array_size);
 		}
+		
+		std::string stringConstLabel = ctx.generateLabel("$SL");
+		ctx.labeled_constant[stringConstLabel] = std::make_pair(str,"asciiz");
 
-		ctx.assignNewVariable(id,type,Array,size);
+		Type arrType(type);
+		arrType.inc_aLevel();
+		ctx.assignNewVariable(id,arrType,Array,size);
 		Variable var = ctx.getVariable(id);
 
 		if(ctx.getScope() == global){
@@ -141,14 +147,11 @@ public:
 			dst<<".ascii "<<str<<std::endl;
 		}
 		else if(ctx.getScope() == local){
+			dst<<"la $v0,"<<stringConstLabel<<std::endl;
 			for(int i=0;i<size;i++){
-				auto tempMemReg = ctx.assignNewStorage();
-				std::string tempReg = "v0";
-				init->to_mips(dst,ctx);
-				ctx.deAllocStorage();
-				ctx.memReg_read(tempMemReg,tempReg,dst);
+				ctx.memoryOffsetRead(type,"v1","v0", i*type.bytes(),dst);
 				int offset = var.getAddr()+(i*type.bytes());
-				ctx.memoryOffsetWrite(type,tempReg,"fp", offset,dst);
+				ctx.memoryOffsetWrite(type,"v1","fp", offset,dst);
 			}
 		}	
 	}
@@ -194,10 +197,8 @@ public:
 class IdentifierDeclarator  : public Declarator{
 private:
 	std::string id;
-
 public:
 	IdentifierDeclarator(std::string _id):id(_id){}
-
 
 	virtual void to_mips_declare(std::ostream &dst, Context& ctx,Type type) const override{ //normal identifier, un-init
 		Variable var = ctx.assignNewVariable(id,type,Basic,1);

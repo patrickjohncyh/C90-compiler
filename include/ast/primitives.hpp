@@ -16,7 +16,7 @@ public:
 		auto destMemReg = ctx.getCurrStorage();
 		std::string destReg = "v0";
 		std::string stringConstLabel = ctx.generateLabel("$SC");
-		ctx.labeled_constant[stringConstLabel] = str;
+	//	ctx.labeled_constant[stringConstLabel] = std::make_pair(str,"string");
 		dst<<"la   $"<<destReg<<","<<stringConstLabel<<std::endl;	 //load address of string label
 		ctx.memReg_write(destMemReg, destReg,dst);						 
 	}
@@ -86,7 +86,7 @@ public:
 		std::string destReg = "v0";
 		std::string addrReg = "v1";
 		std::string floatConstLabel = ctx.generateLabel("$FC");
-		ctx.labeled_constant[floatConstLabel] = str_val;
+		ctx.labeled_constant[floatConstLabel] = std::make_pair(str_val,"float");
 		dst<<"la   $"<<addrReg<<","<< floatConstLabel << std::endl;	 //address of float label
 		ctx.memoryOffsetRead(exprType(ctx),destReg,addrReg,0,dst);	 //read from address into v0
 		ctx.memReg_write(destMemReg, destReg,dst);					 //write from f0 into mem...
