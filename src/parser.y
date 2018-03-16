@@ -148,8 +148,14 @@ base_expression		: 	CONSTANT_I			{ $$ = new IntegralConstant(*$1);	}
 					
 
 postfix_expression	:	base_expression	
-					|	postfix_expression	INC_OP					{ $$ = new PostIncrementExpression($1); 	}
-					|	postfix_expression	DEC_OP					{ $$ = new PostDecrementExpression($1); 	}
+					|	postfix_expression	INC_OP	
+					{ $$ = new PostIncrementExpression($1, new DirectAssignmentExpression($1, new AddExpression($1,new IntegralConstant("1"))));}
+					|	postfix_expression	DEC_OP	
+					{ $$ = new PostDecrementExpression($1, new DirectAssignmentExpression($1, new SubExpression($1,new IntegralConstant("1"))));}
+
+
+
+
 					|	postfix_expression	'(' ')'					{ $$ = new FunctionCallExpression($1) ;		}
 					|	postfix_expression 	'(' argument_list ')'	{ $$ = new FunctionCallExpression($1,$3);	}
 					|	postfix_expression 	'[' expression ']'		{ $$ = new ArrayAccessExpression($1,$3); 	}

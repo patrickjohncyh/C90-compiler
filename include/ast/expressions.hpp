@@ -68,21 +68,23 @@ class UnaryExpression : public Expression{
 /********************** Post Fix Expressions *********/
 
 class PostIncrementExpression : public UnaryExpression{
+	private:
+		Expression* inc_expr;
 	public:
-		PostIncrementExpression(Expression* _expr):UnaryExpression(_expr){}
+		PostIncrementExpression(Expression* _expr, Expression* _inc_expr)
+		:UnaryExpression(_expr),inc_expr(_inc_expr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			auto destMemReg = ctx.getCurrStorage();
-			std::string destReg = "v0";
-			expr->to_mips_getAddr(dst,ctx);								//addr of expression in destReg	
-			std::string tempReg = "v1";
-			ctx.memReg_read(destMemReg, destReg, dst);
-			dst<<"lw    $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//value of expr now in tempReg
-			dst<<"addiu $"<<tempReg<<",$"<<tempReg<<",1"<<std::endl;	//increment
-			dst<<"sw	$"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//save incremented value to mem
-			dst<<"addiu	$"<<destReg<<",$"<<tempReg<<",-1"<<std::endl;	//place old value into destReg
-			ctx.memReg_write(destMemReg, destReg, dst);
+			expr->to_mips(dst,ctx);
+			ctx.assignNewStorage();
+			inc_expr->to_mips(dst,ctx);
+			ctx.deAllocStorage();
 		}
+
+		virtual Type exprType(Context& ctx) const override{
+			return expr->exprType(ctx);
+		}
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			expr->to_c(dst,indent);
 			dst<< "++";
@@ -91,20 +93,20 @@ class PostIncrementExpression : public UnaryExpression{
 };
 
 class PostDecrementExpression : public UnaryExpression{
+	private:
+		Expression* dec_expr;
 	public:
-		PostDecrementExpression(Expression* _expr):UnaryExpression(_expr){}
+		PostDecrementExpression(Expression* _expr, Expression* _dec_expr)
+		:UnaryExpression(_expr),dec_expr(_dec_expr){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-			auto destMemReg = ctx.getCurrStorage();
-			std::string destReg = "v0";
-			expr->to_mips_getAddr(dst,ctx);								//addr of expression in destReg	
-			std::string tempReg = "v1";
-			ctx.memReg_read(destMemReg, destReg, dst);
-			dst<<"lw    $"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//value of expr now in tempReg
-			dst<<"addiu $"<<tempReg<<",$"<<tempReg<<",-1"<<std::endl;	//decrement
-			dst<<"sw	$"<<tempReg<<",0($"<<destReg<<")"<<std::endl;	//save incremented value to mem
-			dst<<"addiu	$"<<destReg<<",$"<<tempReg<<",1"<<std::endl;	//place old value into destReg
-			ctx.memReg_write(destMemReg, destReg, dst);
+			expr->to_mips(dst,ctx);
+			ctx.assignNewStorage();
+			dec_expr->to_mips(dst,ctx);
+			ctx.deAllocStorage();
+		}
+		virtual Type exprType(Context& ctx) const override{
+			return expr->exprType(ctx);
 		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			expr->to_c(dst,indent);
