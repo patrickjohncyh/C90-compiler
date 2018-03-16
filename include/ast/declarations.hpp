@@ -491,6 +491,8 @@ public:
 		ctx.scopeLocal();
 		ctx.returnType = *type;//set return type...
 		ctx.return_label = ctx.generateLabel("RETURN");
+
+		ctx.goto_label.clear();
 			
 		dst<<"# Start Prologue #"<<std::endl;
 		dst<<".text"<<std::endl;	

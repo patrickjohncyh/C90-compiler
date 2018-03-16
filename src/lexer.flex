@@ -35,6 +35,7 @@ case							{ return CASE;	 	}
 break 							{ return BREAK; 	}
 default 						{ return DEFAULT; 	}
 continue						{ return CONTINUE;	}
+goto							{ return GOTO;		}
 
 
 {L}({L}|{D})*					{ yylval.string = new std::string(yytext); return IDENTIFIER;	}

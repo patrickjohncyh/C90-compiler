@@ -45,6 +45,7 @@ void yyerror(const char *);
 %token BREAK
 %token DEFAULT
 %token CONTINUE
+%token GOTO
 
 
 %token IDENTIFIER LITERAL CONSTANT_I CONSTANT_F CONSTANT_C
@@ -167,8 +168,6 @@ cast_expression 	: prefix_expression
 					| '(' type_specifier ')' cast_expression	{$$ = new CastExpression($2,$4); }
 
 
-
-
 mult_expression		:	cast_expression 				 	   { $$ = $1; }
 					| 	mult_expression '*' cast_expression   { $$ = new MultExpression($1,$3);	}
 					| 	mult_expression '/' cast_expression   { $$ = new DivExpression($1,$3);		}
@@ -257,10 +256,11 @@ compound_statement  : 	'{' '}'										{ $$ = new CompoundStatement();	  		}
 					
 
 				
-jump_statement		: 	RETURN ';'				{ $$ = new JumpStatement()		; 	}
+jump_statement		: 	RETURN 	 ';'			{ $$ = new JumpStatement()		; 	}
 					| 	RETURN expression ';'	{ $$ = new JumpStatement($2)	;	}
-					|	BREAK ';'				{ $$ = new JumpBreakStatement()	;	}
+					|	BREAK 	 ';'			{ $$ = new JumpBreakStatement()	;	}
 					|	CONTINUE ';'			{ $$ = new ContinueStatement()	;	}
+					|	GOTO IDENTIFIER ';' 	{ $$ = new GotoStatement(*$2)	;	}
 
 
 expr_statement		:  expression ';'			{ $$ = new ExprStatement($1);	}
@@ -279,9 +279,9 @@ iteration_statement	:	WHILE '(' expression ')' statement 								{ $$ = new Whil
 
 
 
-labeled_statement	:	CASE expression ':' statement 	{ $$ = new LabeledCaseStatement($2,$4); }
-					| 	DEFAULT 		':' statement 	{ $$ = new LabeledDefaultStatement($3); }
-					| 	IDENTIFIER 		':' statement 	{ ; }
+labeled_statement	:	CASE expression ':' statement 	{ $$ = new LabeledCaseStatement($2,$4);  }
+					| 	DEFAULT 		':' statement 	{ $$ = new LabeledDefaultStatement($3);  }
+					| 	IDENTIFIER 		':' statement 	{ $$ = new LabeledGotoStatement(*$1,$3);}
 
 
 /*---------------------------------------------------------------------------------------------------------------------*/

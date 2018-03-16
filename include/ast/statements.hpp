@@ -535,6 +535,29 @@ class JumpBreakStatement : public Statement{
 		}
 };
 
+
+class GotoStatement : public Statement{
+	private:
+		std::string id;
+	public:
+		GotoStatement(std::string _id):id(_id){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			dst << "#---- GOTO ----#" << std::endl;
+			std::string gotoLabel;
+			if(!ctx.goto_label.count(id)){	//label does not exist yet
+				gotoLabel = ctx.generateLabel("$GOTO_" + id );
+				ctx.goto_label[id] = gotoLabel;
+			}
+			else{
+				gotoLabel = ctx.goto_label[id];
+			}
+
+			dst << "j " << gotoLabel << std::endl;
+		}
+};
+
+
 class ContinueStatement : public Statement{
 	private:
 		Expression* expr;
@@ -543,9 +566,7 @@ class ContinueStatement : public Statement{
 		ContinueStatement(){}
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
-
-			dst << "##### Continue #####" << std::endl;
-
+			dst << "# ---- Continue ---- #" << std::endl;
 			if(!ctx.cont_label.empty()){
 				std::string contLabel = ctx.cont_label.top();
 				dst << "b " << contLabel << std::endl;
@@ -557,11 +578,6 @@ class ContinueStatement : public Statement{
 			}
 		}
 };
-
-
-
-
-
 
 class ConditionSwitchStatement : public Statement{
 	private:
@@ -670,6 +686,30 @@ class LabeledDefaultStatement : public Statement{
 
 };
 
+class LabeledGotoStatement : public Statement{
+	private:
+		std::string id;
+		Statement* s_ptr;
+
+	public:
+		LabeledGotoStatement( std::string _id, Statement* _s_ptr )
+		:id(_id),s_ptr(_s_ptr){}
+
+		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
+			std::string gotoLabel;
+			if(!ctx.goto_label.count(id)){	//label does not exist yet
+				gotoLabel = ctx.generateLabel("$GOTO_" + id );
+				ctx.goto_label[id] = gotoLabel;
+			}
+			else{
+				gotoLabel = ctx.goto_label[id];
+			}
+
+			dst << gotoLabel << ":" << std::endl;
+			s_ptr->to_mips(dst,ctx);
+		}
+
+};
 
 
 

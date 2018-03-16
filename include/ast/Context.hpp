@@ -42,6 +42,7 @@ struct Context{
 	std::string return_label;
 	Type returnType;
 
+	std::map<std::string,std::string> goto_label;
 	std::map<std::string,std::pair<std::string,std::string> > labeled_constant;
 
 
