@@ -3,6 +3,8 @@
 
 #include <iomanip>
 #include <string>
+#include <cstring>
+#include <sstream>
 
 extern int labelCount;
 
@@ -131,18 +133,21 @@ private:
 	std::string str_val;
 	unsigned int val;
 	bool wide;
+	std::vector<char> v;
 public:
 	CharacterConstant(std::string _str_val):str_val(_str_val){
-		val = 0;
+
+		
 		if(str_val.substr(0,1).find("L") == std::string::npos){ //normal
-			str_val = str_val.substr(1,str_val.length()-2);
-			for(unsigned int i=0; i <str_val.length();i++){
-				val = (val<<8) + (unsigned int)str_val.c_str()[i];
+			
+			for(unsigned int i=0; i <v.size();i++){
+				val = (val<<8) + (unsigned int)v[i];
 			}
 		}
 		else{
-			str_val = str_val.substr(str_val.length()-2,1);
-			val = (unsigned int)str_val.c_str()[0];
+			str_val = str_val.substr(1,str_val.length()-2); //remove ' '
+			parseCharSeq(str_val, v);
+			val = (unsigned int)v[0];
 			wide = true;
 		}
 	}

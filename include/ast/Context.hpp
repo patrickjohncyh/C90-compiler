@@ -8,6 +8,7 @@
 #include <cassert>
 #include <sstream>
 #include <cmath>
+#include <cstring>
 
 
 
@@ -296,12 +297,107 @@ struct Context{
 			}
 		}
 	}
-
-
-			
 };
 
 
+inline void parseCharSeq(std::string str_val, std::vector<char>& v){
+	const char* str = str_val.c_str();
+	std::stringstream ss;
+	int escMode = 0;
+	int octMode = 0;
+	int hexMode = 0;
+	int simMode = 0;
+	int tmpVal = 0;
+	for(int i =0; i<strlen(str);i++){
+		if(str[i] == '\\' && ! escMode){
+			escMode = 1;
+			continue; //skip the slash
+		}
+		if(escMode){
+			escMode = 0;
+			if(str[i] == 'x'){
+				hexMode = 1;
+				continue;	//skip the x
+			}
+			else if(str[i] == '0'){
+				octMode = 1;
+			}
+			else{
+				simMode = 1;
+			}
+		}
+		if(simMode){
+			if(str[i] == 'a')
+				v.push_back('\a');
+			else if(str[i] == 'b')
+				v.push_back('\b');
+			else if(str[i] == 'f')
+				v.push_back('\f');
+			else if(str[i] == 'n')
+				v.push_back('\n');
+			else if(str[i] == 'r')
+				v.push_back('\r');
+			else if(str[i] == 't')
+				v.push_back('\t');
+			else if(str[i] == 'v')
+				v.push_back('\v');
+			else if(str[i] == '\'')
+				v.push_back('\'');
+			else if(str[i] == '?')
+				v.push_back('\?');
+			else if(str[i] == '"')
+				v.push_back('\"');
+			else if(str[i] == '\\')
+				v.push_back('\\');
+			simMode = 0;
+		}
+		else if(hexMode){
+			bool conv = 0;
+			if(isxdigit(str[i])){
+				ss << str[i];
+				if(i == strlen(str)-1){	//last char
+					i = i + 1;
+					conv = 1;
+				}
+			}
+			else{
+				conv = 1;
+			}
+			if(conv){
+				tmpVal = std::stoull(ss.str(),0,16);
+				v.push_back(tmpVal);
+				ss.str("");
+				hexMode = 0;
+				i = i -1;
+			}
+		}
+		else if(octMode){
+			bool conv = 0;
+			std::string temp; temp = (char)str[i];
+			if(isdigit(str[i]) && std::stoull(temp,0,10) < 8){
+				ss << str[i];
+				octMode++;
+				if(i == strlen(str)-1 || octMode == 4){	//last char or 3rd oct num
+					i = i + 1;
+					conv = 1;
+				}
+			}
+			else{
+				conv = 1;
+			}
+			if(conv){
+				tmpVal = std::stoull(ss.str(),0,8);
+				v.push_back(tmpVal);
+				ss.str("");
+				octMode = 0;
+				i = i-1;
+			}
+		}
+		else{
+			v.push_back(str[i]);
+		}
+	}
+}
 
 
 
