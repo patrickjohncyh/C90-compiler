@@ -132,14 +132,15 @@ class CharacterConstant : public Primitive{
 private:
 	std::string str_val;
 	unsigned int val;
-	bool wide;
+	bool wide = false;
 	std::vector<char> v;
 public:
 	CharacterConstant(std::string _str_val):str_val(_str_val){
 
 		
 		if(str_val.substr(0,1).find("L") == std::string::npos){ //normal
-			
+			str_val = str_val.substr(1,str_val.length()-2); //remove ' '
+			parseCharSeq(str_val, v);
 			for(unsigned int i=0; i <v.size();i++){
 				val = (val<<8) + (unsigned int)v[i];
 			}
@@ -147,7 +148,7 @@ public:
 		else{
 			str_val = str_val.substr(1,str_val.length()-2); //remove ' '
 			parseCharSeq(str_val, v);
-			val = (unsigned int)v[0];
+			val = (unsigned int)str_val.c_str()[0];
 			wide = true;
 		}
 	}

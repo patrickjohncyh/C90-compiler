@@ -120,17 +120,16 @@ public:
 		std::stringstream ss;
 		init->to_c(ss,"");
 		std::string str = ss.str();
-		int str_size = str.size()- 2 + 1;		//size without close inverted commas but with null terminator
-		str = str.substr(0,str.size()-1);		//remove close inveretd comma
-		str = str + "\\000" + "\"";
+		std::vector<char> v;
+
+		str = str.substr(1,str.size()-2);		//remove " "
+		str = str + "\\000";
+		parseCharSeq(str, v);
+		int str_size = v.size();
 		size = str_size;
 
 		if(array_size != -1){	//array has been sized..	
 			size = array_size;
-			if(array_size < str_size){
-				str = str.substr(0,array_size+1); //+1 due to starting open inverted commas
-				str = str + "\"";		
-			}
 		}
 
 		Type arrType(type);
@@ -142,11 +141,11 @@ public:
 			dst<<".data"<<std::endl;	
 			dst<<".globl "<<id<<std::endl;
 			dst<<id<<":"<<std::endl;
-			dst<<".ascii "<<str<<std::endl;
+			dst<<".ascii "<<"\""<<str<<"\""<<std::endl;
 		}
 		else if(ctx.getScope() == local){
 			std::string stringConstLabel = ctx.generateLabel("$SL");
-			ctx.labeled_constant[stringConstLabel] = std::make_pair(str,"ascii");
+			ctx.labeled_constant[stringConstLabel] = std::make_pair("\""+str+"\"","ascii");
 			dst<<"la $v0,"<<stringConstLabel<<std::endl;
 			for(int i=0;i<size;i++){
 				ctx.memoryOffsetRead(type,"v1","v0", i*type.bytes(),dst);

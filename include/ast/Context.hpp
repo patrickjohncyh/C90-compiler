@@ -130,8 +130,11 @@ struct Context{
 
 	Variable assignNewVariable(std::string name,Type type, dType dtype, int size = 1){
 		if(scope == local){
+			//std::cout << name << std::endl;
 			mem_fp_offset_count-= size *  type.bytes();
-			mem_fp_offset_count-= (-mem_fp_offset_count)%4;	//make aligned
+			//std::cout << mem_fp_offset_count << std::endl;
+			mem_fp_offset_count-= (4-(-mem_fp_offset_count)%4);	//make aligned
+			//std::cout << mem_fp_offset_count << std::endl;
 		}
 		(*var_location)[name] = new Variable(scope,type,dtype,mem_fp_offset_count);
 		return *( (*var_location)[name] );
@@ -308,7 +311,7 @@ inline void parseCharSeq(std::string str_val, std::vector<char>& v){
 	int hexMode = 0;
 	int simMode = 0;
 	int tmpVal = 0;
-	for(int i =0; i<strlen(str);i++){
+	for(unsigned int i =0; i<strlen(str);i++){
 		if(str[i] == '\\' && ! escMode){
 			escMode = 1;
 			continue; //skip the slash

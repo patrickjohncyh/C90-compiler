@@ -222,7 +222,7 @@ ternary_expression 		: 	logical_or_expression
 assign_expression	: 	ternary_expression 
 				|	prefix_expression '=' 			assign_expression { $$ = new DirectAssignmentExpression($1,$3); }
 				|	prefix_expression RIGHT_ASSIGN assign_expression  { $$ = new DirectAssignmentExpression($1, new RightShiftExpression($1,$3));}
-				|	prefix_expression LEFT_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new LeftShiftExpression($1,$3)); }
+				|	prefix_expression LEFT_ASSIGN	assign_expression { $$ = new DirectAssignmentExpression($1, new LeftShiftExpression($1,$3)); }
 				|	prefix_expression ADD_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new AddExpression($1,$3));		 }
 				|	prefix_expression SUB_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new SubExpression($1,$3)); 		 }
 				|	prefix_expression MUL_ASSIGN 	assign_expression { $$ = new DirectAssignmentExpression($1, new MultExpression($1,$3)); 	 }
