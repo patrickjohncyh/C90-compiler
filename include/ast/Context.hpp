@@ -11,9 +11,11 @@
 #include <cstring>
 
 
+struct TranslateContext{
+	std::vector<std::string> global_var;
+};
 
 class Expression; //forward declaration
-class Declaration;
 
 typedef std::tuple <int,std::string,std::string,std::string> var_pair;	// loc, scope (global,local), primitive_type, derived_type ;
 typedef std::pair <Expression*,std::string> case_pair;
@@ -25,9 +27,6 @@ extern int labelCount;
 
 typedef std::map<std::string,Variable*> mapType;
 typedef mapType* mapPtr;
-
-
-
 
 
 struct Context{
@@ -401,7 +400,6 @@ inline void parseCharSeq(std::string str_val, std::vector<char>& v){
 		}
 	}
 }
-
 
 
 

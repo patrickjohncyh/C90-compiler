@@ -274,9 +274,7 @@ public:
 		dst << indent << id;
 	}
 	virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-		dst << indent << id << "=";
-		dst << "0";;
-		dst << std::endl;
+		dst<<indent<<id<<"=0"<< std::endl;
 		tc.global_var.push_back(id);
 	}
 };

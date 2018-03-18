@@ -17,7 +17,6 @@
 #include "ast/primitives.hpp"
 
 
-//extern const Expression *parseAST();
 extern const ASTNode* parse();
 extern FILE * yyin;		  //modify yyin to point to input file
 

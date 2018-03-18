@@ -5,14 +5,7 @@
 
 class ASTNode;
 
-
 typedef const ASTNode* astNodePtr;
-
-struct TranslateContext{
-	std::vector<std::string> global_var;
-};
-
-
 
 class ASTNode{
 	public:

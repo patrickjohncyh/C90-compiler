@@ -22,7 +22,7 @@ public:
 		std::string stringConstLabel = ctx.generateLabel("$SL");
 		ctx.labeled_constant[stringConstLabel] = std::make_pair(str,"asciiz");
 		dst<<"la   $"<<destReg<<","<<stringConstLabel<<std::endl;
-		ctx.memReg_write(destMemReg, destReg,dst);						 
+		ctx.memReg_write(destMemReg, destReg,dst);		 
 	}
 
 	virtual Type exprType(Context& ctx) const override{
@@ -32,7 +32,7 @@ public:
 	}
 	virtual void eval_string(std::ostream &dst,std::string indent){
 			std::string stringConstLabel = "$SL" + std::to_string(labelCount++);
-			dst << stringConstLabel <<std::endl; 
+			dst<<stringConstLabel<<std::endl; 
 			dst<<".rdata"<<std::endl;
 			dst<<stringConstLabel<< ":\n";
    			dst<<".asciiz"<<" "<<str<<"\n";
@@ -62,8 +62,7 @@ public:
 				base = 8;
 			}
 		}
-		val = std::stoull(str_val,0,base);
-		
+		val = std::stoull(str_val,0,base);	
 	}
 
 	virtual void to_mips(std::ostream &dst, Context& ctx) const override{
@@ -79,15 +78,19 @@ public:
 			return Type(UInt);
 		return Type(Int);
 	}
-	virtual void to_c(std::ostream &dst,std::string indent) const override{
-		dst << indent << val;
-	}
-	virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-		dst << indent << val;
-	}
+
 	virtual double eval() const{
 		return val;
 	}
+
+	virtual void to_c(std::ostream &dst,std::string indent) const override{
+		dst << indent << val;
+	}
+
+	virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
+		dst<<indent<<val;
+	}
+
 };
 
 
@@ -119,11 +122,7 @@ public:
 		return val;
 	}
 
-
 	virtual void to_c(std::ostream &dst,std::string indent) const override{
-		dst << indent << val;
-	}
-	virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 		dst << indent << val;
 	}
 };
@@ -135,9 +134,7 @@ private:
 	bool wide = false;
 	std::vector<char> v;
 public:
-	CharacterConstant(std::string _str_val):str_val(_str_val){
-
-		
+	CharacterConstant(std::string _str_val):str_val(_str_val){		
 		if(str_val.substr(0,1).find("L") == std::string::npos){ //normal
 			str_val = str_val.substr(1,str_val.length()-2); //remove ' '
 			parseCharSeq(str_val, v);
@@ -170,9 +167,7 @@ public:
 	virtual void to_c(std::ostream &dst,std::string indent) const override{
 		dst << indent << val;
 	}
-	virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-		dst << indent << val;
-	}
+
 	virtual double eval() const{
 		return val;
 	}
@@ -214,23 +209,22 @@ public:
 		ctx.memReg_write(destMemReg, destReg,dst);
 	}
 
-
 	virtual std::string to_mips_getId() const{
 		return id;
 	}
+
 	virtual Type exprType(Context& ctx) const override{
 		Variable var = ctx.getVariable(id);
 		return var.getType();
 	}
 
 	virtual void to_c(std::ostream &dst,std::string indent) const override{
-		dst << indent << id;
+		dst<<indent<< id;
 	}
+
 	virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-		dst << indent << id;
+		dst<<indent<< id;
 	}
-
-
 };
 
 #endif

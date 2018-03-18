@@ -12,12 +12,7 @@ class ExprStatement : public Statement{
 
 	public:
 		ExprStatement( Expression* _expr = NULL):expr(_expr){}
-
-
-		Expression* getExpr(){
-			return expr;
-		}
-
+		
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			if(expr!=NULL){
 				ctx.assignNewStorage();
@@ -25,6 +20,11 @@ class ExprStatement : public Statement{
 				ctx.deAllocStorage();
 			}	
 		}
+
+		Expression* getExpr(){
+			return expr;
+		}
+		
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			if(expr!=NULL){
 				expr->to_c(dst,indent);
@@ -35,6 +35,9 @@ class ExprStatement : public Statement{
 			if(expr!=NULL){
 				expr->to_python(dst,indent,tc);
 				dst << std::endl;
+			}
+			else{
+				dst<<indent<<"pass"<<std::endl;
 			}
 		}
 };
@@ -51,7 +54,6 @@ class CompoundStatement : public Statement{
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			ctx.open_scope();
-
 			if(d_list != NULL){
 				for(auto it=d_list->begin();it!=d_list->end();it++){
 					(*it)->to_mips(dst,ctx);
@@ -62,7 +64,6 @@ class CompoundStatement : public Statement{
 					(*it)->to_mips(dst,ctx);
 				}
 			}
-
 			ctx.close_scope();
 		}
 
@@ -92,7 +93,9 @@ class CompoundStatement : public Statement{
 				for(auto it=s_list->begin();it!=s_list->end();it++){
 					(*it)->to_python(dst,indent,tc);
 				}
-			//	dst << std::endl;
+			}
+			if(d_list == NULL && s_list == NULL){
+				dst<<indent<<"pass"<<std::endl;
 			}
 		}
 };
@@ -105,7 +108,6 @@ class ConditionIfStatement : public Statement{
 	public:
 		ConditionIfStatement(Expression* _cond_expr, Statement* _s_true)
 		:cond_expr(_cond_expr),s_true(_s_true){}
-
 
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			auto condMemReg = ctx.assignNewStorage();
@@ -121,20 +123,18 @@ class ConditionIfStatement : public Statement{
 				dst << "beq $0,$"<<condReg<<","<<bottom_label<<std::endl;
 				dst << "nop" << std::endl;	
 			}
-			else{	//float...
+			else{
 				std::string condReg_f = "f0";
-				std::string zero_f = "f2";
+				std::string zero_f	  = "f2";
 				ctx.moveToFloatReg(condReg,condReg_f,dst);
 				ctx.moveToFloatReg("0",zero_f,dst);
 				dst<<"c.eq.s  $"<<condReg_f<<",$"<<zero_f<<std::endl;
 				dst<<"bc1t "    <<bottom_label<<std::endl;
 				dst<<"nop  "	<<std::endl;
 			}
-
 			s_true->to_mips(dst,ctx);
 			dst << bottom_label << ":" << std::endl;
 		}
-
 
 		virtual void to_c(std::ostream &dst, std::string indent) const override{
 			dst << indent << "if (";
@@ -144,9 +144,9 @@ class ConditionIfStatement : public Statement{
 			dst << std::endl;
 		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-			dst << indent << "if(";
+			dst<<indent<<"if(";
 			cond_expr->to_python(dst,"",tc);
-			dst << "):" << std::endl;
+			dst<<"):"<< std::endl;
 			s_true->to_python(dst,indent+"  ",tc);
 			dst << std::endl;
 		}	
@@ -208,11 +208,11 @@ class ConditionIfElseStatement : public Statement{
 			dst << std::endl;
 		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-			dst << indent << "if(";
+			dst<<indent<<"if(";
 			cond_expr->to_python(dst,"",tc);
-			dst << "):" << std::endl;
+			dst<<"):"<< std::endl;
 			s_true->to_python(dst,indent+"  ",tc);
-			dst << indent << "else:" << std::endl;
+			dst<<indent<<"else:"<<std::endl;
 			s_false->to_python(dst,indent+"  ",tc);
 		}	
 };
@@ -258,9 +258,6 @@ class WhileStatement : public Statement{
 				dst<<"bc1t "    <<whileEndLabel<<std::endl;
 				dst<<"nop  "	<<std::endl;
 			}
-
-
-
 			s_true->to_mips(dst,ctx);
 
 			dst << "b "<<whileStartLabel<<std::endl;
@@ -278,11 +275,11 @@ class WhileStatement : public Statement{
 			s_true->to_c(dst,indent);
 		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-			dst << indent << "while (";
+			dst<<indent<<"while (";
 			cond_expr->to_python(dst,"",tc);
-			dst << "):" << std::endl;
+			dst<<"):"<< std::endl;
 			s_true->to_python(dst,indent+"  ",tc);
-			dst << std::endl;
+			dst<<std::endl;
 		}
 };
 
@@ -304,9 +301,8 @@ class DoWhileStatement : public Statement{
 			ctx.break_label.push(whileEndLabel);
 			ctx.cont_label.push(doWhileCondLabel);
 
-
 			dst<<whileStartLabel<<":"<<std::endl;
-
+			
 			s_true->to_mips(dst,ctx);
 
 			dst<<doWhileCondLabel<<":"<<std::endl;
@@ -343,13 +339,6 @@ class DoWhileStatement : public Statement{
 			cond_expr->to_c(dst,"");
 			dst << ")" << std::endl;
 			s_true->to_c(dst,indent);*/
-		}
-		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-			/*dst << indent << "while (";
-			cond_expr->to_python(dst,"",tc);
-			dst << "):" << std::endl;
-			s_true->to_python(dst,indent+"  ",tc);
-			dst << std::endl;*/
 		}
 };
 
@@ -506,9 +495,9 @@ class JumpStatement : public Statement{
 			dst << ";";
 		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-			dst << indent << "return";
+			dst<<indent<<"return";
 			if(expr != NULL) expr->to_python(dst," ",tc);
-			dst << std::endl;
+			dst<<std::endl;
 		}
 };
 

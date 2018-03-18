@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <vector>
 #include <cmath>
+#include <cstring>
 
 
 class Expression : public ASTNode{
@@ -18,14 +19,17 @@ class Expression : public ASTNode{
 			exit(1);
 			return "";
 		}
+
+		virtual Type exprType(Context& ctx) const{
+			return Type(Int);
+		}
+
 		virtual double eval() const{
 			return 0;
 		}
+
 		virtual void eval_string(std::ostream &dst,std::string indent){
 			to_c(dst,indent);
-		}
-		virtual Type exprType(Context& ctx) const{
-			return Type(Int);
 		}
 };
 
@@ -105,9 +109,11 @@ class PostDecrementExpression : public UnaryExpression{
 			dec_expr->to_mips(dst,ctx);
 			ctx.deAllocStorage();
 		}
+
 		virtual Type exprType(Context& ctx) const override{
 			return expr->exprType(ctx);
 		}
+		
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			expr->to_c(dst,indent);
 			dst<< "--";
@@ -174,15 +180,14 @@ class FunctionCallExpression : public UnaryExpression{
 			Type fType;
 			std::vector<Type> sig;
 
-			//check if function is declared...
-			if(ctx.isFunctionDeclared(id)){		//function has been decalred already...
+			if(ctx.isFunctionDeclared(id)){			//check if function is declared... yes...
 				fVar = ctx.getVariable(id);
 				fType = fVar.getType();
 				sig   = fType.getSignature();
 			}
 			else{
 				//build a declaration for the function.
-				fType = Type(Int); // default type...
+				fType = Type(Int); 					// default type...
 				int numArgs=0;
 				if(a_list!=NULL) numArgs = a_list->size();
 				for(int i =0; i < numArgs; i++){
@@ -200,11 +205,11 @@ class FunctionCallExpression : public UnaryExpression{
 				totalSize +=   ( ctx.integralPromotion(sig[i]) ).bytes();
 			}
 			if(totalSize<16){
-				totalSize = 16;	//4 guaranteed.
+				totalSize = 16;					//4 words guaranteed
 			}
 
 			auto destMemReg = ctx.getCurrStorage();
-			std::string destReg = "v0";		//result of function call stored here
+			std::string destReg = "v0";			//result of function call stored here
 			int funcStackTop;
 			for(int i =0; i < totalSize/4;i++){ //assign enough memory for arguments
 				funcStackTop = (int)ctx.assignNewStorage();
@@ -222,18 +227,17 @@ class FunctionCallExpression : public UnaryExpression{
 				offset = offset + size;
 			}
 
-
 			int mode = 1; //default use floating reg first..
 			std::string areg[4]  = {"a0","a1","a2","a3"};
 			offset = 0;
-			for(unsigned int i =0; i < sig.size(); i++){	 //based on signature.. put argumnets into correct palce
+			for(unsigned int i =0; i < sig.size(); i++){				//based on signature, put argumnets into correct palce
 				int size =  ( ctx.integralPromotion(sig[i]) ).bytes();
 				if(sig[i].isIntegral() || sig[i].isPointer()) mode = 0; //switch to int register mode..
-				if(offset + size <= 16){ //can fit into registers
+				if(offset + size <= 16){ 								//can fit into registers
 					std::string reg = "";
 					if(mode == 1){	//f12,f14
 						if(offset < 4)  reg = "f12";
-						else 		  { reg = "f14";mode=0; }
+						else 		  { reg = "f14";mode=0; } 			//switch to int register mode..
 						dst<<"lwc1 $"<<reg<<","<< funcStackTop + offset <<"($fp)"<<std::endl;
 					}
 					else{	
@@ -247,16 +251,16 @@ class FunctionCallExpression : public UnaryExpression{
 
 			dst << "addiu $sp,$sp," << ctx.getCurrStorage() << std::endl;		//sp to correct position
 			dst << "la   $2,"<<id<<std::endl;
-			dst << "jalr $2"<< std::endl; 									//call function, Assumes that it is an Identifier
+			dst << "jalr $2"<< std::endl; 										//call function, Assumes that it is an Identifier
 			dst << "nop   "<<std::endl;
 			dst << "addiu $sp,$sp," << -ctx.getCurrStorage() << std::endl;		//sp to original position
 	
-			for(int i =0; i < totalSize/4;i++){ //dealloc argument memory
+			for(int i =0; i < totalSize/4;i++){ 								//dealloc argument memory
 				ctx.deAllocStorage();
 			}
 
 			Variable var = ctx.getVariable(id);
-			if(var.getType().isIntegral() || var.getType().isPointer()){ 	//check type of return ....
+			if(var.getType().isIntegral() || var.getType().isPointer()){		//check type of return ....
 				dst << "move $"<<destReg<<",$2" << std::endl;
 				ctx.memReg_write(destMemReg,destReg,dst);			
 			}
@@ -317,13 +321,21 @@ class PrePositiveExpression : public UnaryExpression{
 			Type thisType = ctx.integralPromotion(type);
 			return thisType;
 		}
+
+		virtual double eval() const{
+			return expr->eval();
+		}
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst<< "+";
 			expr->to_c(dst,indent);
 		}
-		virtual double eval() const{
-			return expr->eval();
+
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
+			dst<<indent<<"+";
+			expr->to_python(dst,"",tc);
 		}
+
+
 
 };
 
@@ -369,6 +381,11 @@ class PreNegativeExpression : public UnaryExpression{
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			dst<< "-";
 			expr->to_c(dst,indent);
+		}
+
+		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
+			dst<<indent<<"-";
+			expr->to_python(dst,"",tc);
 		}
 	
 };
@@ -602,7 +619,9 @@ class BinaryExpression : public Expression{
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			dst << "(";
 			left->to_python(dst,indent,tc);
-			dst << getOpcode();
+			if(!strcmp(getOpcode(),"&&")) 		dst<<" and ";
+			else if(!strcmp(getOpcode(),"||"))  dst<<" or " ;
+			else								dst << getOpcode();
 			right->to_python(dst,"",tc);
 			dst <<")";
 		}
@@ -862,7 +881,6 @@ class MoreThanExpression : public BinaryExpression{
 				dst <<"move   $"<<left  <<",$0"<<std::endl;
 				dst <<condTrue<< ":" << std::endl;
 			}
-			
 		}
 
 		virtual Type exprType(Context& ctx) const override{
@@ -1032,7 +1050,6 @@ class NotEqualityExpression : public BinaryExpression{
 			return left->eval() != right->eval() ;
 		}
 };
-
 
 /********* Bitwise Binary Expressions *********/
 
@@ -1334,7 +1351,6 @@ class TernaryExpression : public Expression{
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 
 			dst << "# ----- Ternary Expression -----#" << std::endl;
-
 			std::string mid_label = ctx.generateLabel("$tern_true_bottom");
 			std::string bottom_label = ctx.generateLabel("$tern_false_bottom");
 
@@ -1379,7 +1395,6 @@ class TernaryExpression : public Expression{
 			else{	
 				
 			}
-
 			return Type(Int);
 		}
 
