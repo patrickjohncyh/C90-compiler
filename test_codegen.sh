@@ -63,7 +63,7 @@ for i in ${input_dir}/*.driver.c ; do
     else
         if [[ ${SLAVE_COMP} -eq 1 ]] ; then
         Status="Fail"
-        printf  "%-5s %-35s \e[31m %-10s \e[0m  Error in driver source .c\n" $count $base $Status
+        printf  "%-5s %-35s \e[31m %-10s \e[0m  Error in slave source .c\n" $count $base $Status
         else
             if [[ $OUT_RET -ne 0 ]] ; then
                 Status="Fail"
@@ -76,9 +76,6 @@ for i in ${input_dir}/*.driver.c ; do
         fi
     fi
 done
-
-
-
 
 
 

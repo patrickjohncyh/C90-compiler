@@ -523,6 +523,7 @@ public:
 					}
 					else{
 						reg = "f14";
+						mode = 0;
 					}
 					ctx.memReg_write_f((memReg)(offset+8),reg,dst);
 				}

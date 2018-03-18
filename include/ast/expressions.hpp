@@ -232,8 +232,8 @@ class FunctionCallExpression : public UnaryExpression{
 				if(offset + size <= 16){ //can fit into registers
 					std::string reg = "";
 					if(mode == 1){	//f12,f14
-						if(offset < 4) reg = "f12";
-						else 		   reg = "f14";
+						if(offset < 4)  reg = "f12";
+						else 		  { reg = "f14";mode=0; }
 						dst<<"lwc1 $"<<reg<<","<< funcStackTop + offset <<"($fp)"<<std::endl;
 					}
 					else{	
