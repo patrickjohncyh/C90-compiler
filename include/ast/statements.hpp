@@ -114,7 +114,7 @@ class ConditionIfStatement : public Statement{
 			cond_expr->to_mips(dst,ctx);
 			ctx.deAllocStorage();
 
-			std::string bottom_label = ctx.generateLabel("if_bottom");
+			std::string bottom_label = ctx.generateLabel("$IF_BOT");
 
 			std::string condReg = "v0";
 			ctx.memReg_read(condMemReg, condReg,dst);	
@@ -166,8 +166,8 @@ class ConditionIfElseStatement : public Statement{
 			cond_expr->to_mips(dst,ctx);
 			ctx.deAllocStorage();
 
-			std::string if_bottom_label = ctx.generateLabel("if_bottom");
-			std::string else_bottom_label = ctx.generateLabel("else_bottom");
+			std::string if_bottom_label = ctx.generateLabel("$IF_BOT");
+			std::string else_bottom_label = ctx.generateLabel("$ELSE_BOT");
 
 			std::string condReg = "v0";
 			ctx.memReg_read(condMemReg,condReg,dst);
