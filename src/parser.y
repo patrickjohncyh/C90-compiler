@@ -292,6 +292,7 @@ labeled_statement	:	CASE expression ':' statement 	{ $$ = new LabeledCaseStateme
 
 /*---------------------------------------------------------------------------------------------------------------------*/
 
+enum_specifier		:	ENUM '{' '}'
 
 
 type_specifier		:	VOID				{ $$ = new Type(Void);		}
