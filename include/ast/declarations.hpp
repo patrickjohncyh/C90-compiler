@@ -517,7 +517,7 @@ public:
 				else{	// a0,a1,a2,a3
 					int regNum = offset/4;
 					reg = areg[regNum];
-					ctx.memReg_write((memReg)(offset+8),reg,dst);
+					ctx.memoryOffsetWrite(sig[i], reg, "fp",offset+8, dst);
 				}
 			}
 			else{	//params in stack

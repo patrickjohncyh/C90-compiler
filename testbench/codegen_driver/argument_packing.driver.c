@@ -17,3 +17,7 @@ float i(int a, float b, float c, int d, float e){
 float j(float a, float b, float c, float d, float e){
 	return a+b+c+d+e;
 }
+
+int k(unsigned char a, int b, short c){
+	return a*b/c;
+}
