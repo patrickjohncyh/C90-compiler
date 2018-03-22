@@ -113,7 +113,7 @@ class PostDecrementExpression : public UnaryExpression{
 		virtual Type exprType(Context& ctx) const override{
 			return expr->exprType(ctx);
 		}
-		
+
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
 			expr->to_c(dst,indent);
 			dst<< "--";
@@ -222,6 +222,7 @@ class FunctionCallExpression : public UnaryExpression{
 				(*a_list)[i]->to_mips(dst,ctx); //eval expression
 				ctx.deAllocStorage();
 				std::string tempReg = "v1";
+				ctx.convertMemRegType((*a_list)[i]->exprType(ctx), sig[i], tempMemReg, dst);
 				ctx.memReg_read(tempMemReg,tempReg,dst);
 				dst<<"sw $"<<tempReg<<","<< funcStackTop + offset <<"($fp)"<<std::endl;	
 				offset = offset + size;

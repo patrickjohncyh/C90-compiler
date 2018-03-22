@@ -30,10 +30,16 @@ int main(){
 	if(i(c,a,a,c,b) !=  c*2+a/3+a-4+c*1.5+b/2 ){
 		return 1;
 	}
+	if(i(a,a,a,c,b) !=  1*2+a/3+a-4+c*1.5+b/2 ){
+		return 1;
+	}
 	if(j(a,b,x,y,z) != a+b+x+y+z){
 		return 1;
 	}
 	if(k(d,c,e) != d*c/e){
+		return 1;
+	}
+	if(k(d,c,y) != d*c/(short)y){
 		return 1;
 	}
 	if(l(c,c,c,d,c,e) != d*c/e){

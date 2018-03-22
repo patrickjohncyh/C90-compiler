@@ -393,7 +393,14 @@ public:
 		return (*dec_list)[0]->getDtype();
 	}
 	Type getParam_type(){
-		return type;
+		if(getParam_dtype() == Array){
+			Type newType(type);
+			newType.inc_aLevel();
+			return newType;
+		}
+		else{
+			return type;
+		}
 	}
 
 	virtual void to_c(std::ostream &dst,std::string indent) const override{
