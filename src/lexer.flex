@@ -110,7 +110,7 @@ L?'(\\.|[^\\'])+'				{ yylval.string = new std::string(yytext); return CONSTANT_
 \|\|			{ return OR_OP;}
 
 
-
+"#"[^\n]*								{/*printf("%s",yytext)*/;}
 "/*"([^\*]*[\*]+[^\*/])*[^\*]*[\*]+"/"	{/*printf("%s",yytext)*/;}
 
 "//".*			{;}
