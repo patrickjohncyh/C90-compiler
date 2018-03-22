@@ -73,12 +73,7 @@ public:
 			exit(1);
 		}
 		if(ctx.getScope() == global){
-			dst<<".data"<<std::endl;	
-			dst<<".globl "<<id<<std::endl;
-			dst<<id<<":"<<std::endl;
-			for(int i=0;i<size;i++){
-				dst<<"."<<type.storage_type()<<" 0"<<std::endl;
-			}	
+			dst<<".comm "<<id<<","<<type.bytes()*size<<","<<type.bytes()<<std::endl;
 		}
 		else if(ctx.getScope() == local){
 			for(int i=0;i<size;i++){
@@ -93,8 +88,8 @@ public:
 		arrType.inc_aLevel();
 		Variable var = ctx.assignNewVariable(id,arrType,Array,size);
 		if(ctx.getScope() == global){
-			dst<<".data"<<std::endl;	
 			dst<<".globl "<<id<<std::endl;
+			dst<<".data"<<std::endl;	
 			dst<<id<<":"<<std::endl;
 			for(auto it=init->begin();it!=init->end();it++){
 				dst<<"."<<type.storage_type()<< " "<<(*it)->eval()<<std::endl;
@@ -138,8 +133,8 @@ public:
 		Variable var = ctx.getVariable(id);
 
 		if(ctx.getScope() == global){
-			dst<<".data"<<std::endl;	
 			dst<<".globl "<<id<<std::endl;
+			dst<<".data"<<std::endl;	
 			dst<<id<<":"<<std::endl;
 			dst<<".ascii "<<"\""<<str<<"\""<<std::endl;
 		}
@@ -165,8 +160,8 @@ public:
 		}
 		
 		if(ctx.getScope() == global){
-			dst<<".data"<<std::endl;	
 			dst<<".globl "<<id<<std::endl;
+			dst<<".data"<<std::endl;	
 			dst<<id<<":"<<std::endl;
 			for(int i=0;i<size;i++){
 				dst<<"."<<type.storage_type()<< " 0"<<std::endl;
@@ -202,10 +197,7 @@ public:
 	virtual void to_mips_declare(std::ostream &dst, Context& ctx,Type type) const override{ //normal identifier, un-init
 		Variable var = ctx.assignNewVariable(id,type,Basic,1);
 		if(ctx.getScope() == global){
-			dst<<".data"<<std::endl;	
-			dst<<".globl "<<id<<std::endl;
-			dst<<id<<":"<<std::endl;
-			dst<<"."<<type.storage_type()<< " 0"<<std::endl;
+			dst<<".comm "<<id<<","<<type.bytes()<<","<<type.bytes()<<std::endl;
 		}
 		else if(ctx.getScope() == local){
 			ctx.memoryOffsetWrite(type,"0","fp",var.getAddr(),dst);	
@@ -219,23 +211,23 @@ public:
 				if(init_exp->exprType(ctx).isPointer()){
 					std::stringstream ss;
 					init_exp->eval_string(ss,"");
-					dst<<".data"<<std::endl;	
 					dst<<".globl "<<id<<std::endl;
+					dst<<".data"<<std::endl;	
 					dst<<id<<":"<<std::endl;
 					dst<<"."<<type.storage_type()<< " "<<ss.str()<<std::endl;
 				}
 				else{
 					int init_val = init_exp->eval(); //global only allows constant init
+					dst<<".globl "<<id<<std::endl;					
 					dst<<".data"<<std::endl;	
-					dst<<".globl "<<id<<std::endl;
 					dst<<id<<":"<<std::endl;
 					dst<<"."<<type.storage_type()<< " "<<init_val<<std::endl;
 				}
 			}
 			else{
 				float init_val = init_exp->eval(); //global only allows constant init
-				dst<<".data"<<std::endl;	
 				dst<<".globl "<<id<<std::endl;
+				dst<<".data"<<std::endl;	
 				dst<<id<<":"<<std::endl;
 				dst<<"."<<type.storage_type()<< " "<<init_val<<std::endl;
 
@@ -257,10 +249,7 @@ public:
 		Type type = var.getType();
 
 		if(ctx.getScope() == global){
-			dst<<".data"<<std::endl;	
-			dst<<".globl "<<id<<std::endl;
-			dst<<id<<":"<<std::endl;
-			dst<<"."<<type.storage_type()<< " 0"<<std::endl;
+			dst<<".comm "<<id<<","<<type.bytes()<<","<<type.bytes()<<std::endl;
 		}
 		else if(ctx.getScope() == local){
 			ctx.memoryOffsetWrite(type,"0","fp",var.getAddr(),dst);	

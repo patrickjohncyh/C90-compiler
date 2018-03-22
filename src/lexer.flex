@@ -23,7 +23,7 @@ char							{ return CHAR;		}
 short							{ return SHORT;		}
 float							{ return FLOAT;		}
 double							{ return DOUBLE;	}
-enum							{ return ENUM;		}
+
 
 do 								{ return DO;		}
 return							{ return RETURN;	}
