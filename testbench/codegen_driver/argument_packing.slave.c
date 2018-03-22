@@ -4,6 +4,7 @@ float h(float a,int b, float c);
 float i(int a, float b, float c, int d, float e);
 float j(float a, float b, float c, float d, float e);
 int k(char a, int b, short c);
+int l(int d,int e, int f,unsigned char a, int b, short c);
 
 
 int main(){
@@ -33,6 +34,9 @@ int main(){
 		return 1;
 	}
 	if(k(d,c,e) != d*c/e){
+		return 1;
+	}
+	if(l(c,c,c,d,c,e) != d*c/e){
 		return 1;
 	}
 	return 0;

@@ -32,6 +32,11 @@ int k_ref(unsigned char a, int b, short c){
 	return a*b/c;
 }
 
+int l_ref(int d,int e, int f,unsigned char a, int b, short c){
+	return a*b/c;
+}
+
+
 int main(){
 
 	float a = 1.23;
@@ -59,6 +64,9 @@ int main(){
 		return 1;
 	}
 	if(k(d,c,e) != k_ref(d,c,e) ){
+		return 1;
+	}
+	if(l(c,c,c,d,c,e) != k_ref(d,c,e) ){
 		return 1;
 	}
 

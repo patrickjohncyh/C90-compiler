@@ -520,7 +520,10 @@ public:
 					ctx.memoryOffsetWrite(sig[i], reg, "fp",offset+8, dst);
 				}
 			}
-			else{	//params in stack
+			else{	//params in stack, convert
+				if(sig[i].bytes()<4){
+					ctx.convertMemRegType(Type(Int),sig[i], (memReg)offset+8, dst);
+				}
 			}
 			ctx.assignNewArgument( (*p_list)[i]->getParam(),sig[i],Basic,offset+8);
 			offset = offset + size;
