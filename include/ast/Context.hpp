@@ -256,6 +256,7 @@ struct Context{
 			else{
 				if(origT.isIntegral() && targetT.isIntegral()){	//both integral
 					memReg_read(Reg,"v0",dst); //load from mem into reg
+					//memoryOffsetRead(origT, "v0", "fp", (int)Reg, dst);
 					if(targetT.is(UChar)){
 						dst<<"andi $v0,$v0,0x000000ff"<<std::endl;
 					}
@@ -275,7 +276,8 @@ struct Context{
 					}
 					else if(targetT.is(Int) || targetT.is(Long)){
 					}
-					memoryOffsetWrite(targetT, "v0", "fp", (int)Reg, dst); //store  into mem
+					//memoryOffsetWrite(targetT, "v0", "fp", (int)Reg, dst);
+					memReg_write(Reg, "v0",dst); //store  into mem
 				}
 				else if(!origT.isIntegral() && !targetT.isIntegral()){	//both float
 					//assume single float only so do nothing

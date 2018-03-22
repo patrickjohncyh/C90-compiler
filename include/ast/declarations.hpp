@@ -522,7 +522,9 @@ public:
 			}
 			else{	//params in stack, convert
 				if(sig[i].bytes()<4){
-					ctx.convertMemRegType(Type(Int),sig[i], (memReg)offset+8, dst);
+					//ctx.convertMemRegType(Type(Int),sig[i], (memReg)offset+8, dst);
+					ctx.memReg_read((memReg)offset+8,"v0",dst); //load from mem into reg
+					ctx.memoryOffsetWrite(sig[i], "v0", "fp", offset+8, dst);
 				}
 			}
 			ctx.assignNewArgument( (*p_list)[i]->getParam(),sig[i],Basic,offset+8);
