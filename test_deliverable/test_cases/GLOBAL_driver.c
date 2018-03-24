@@ -1,10 +1,11 @@
-int f();
+void f(int x);
 extern int a;
 
 int main(){
-	if(f() != 1)
+	f(938);
+	if(a != 938){
 		return 1;
-	if(a != 0)
-		return 2;
+	} 
+
 	return 0;
 }
