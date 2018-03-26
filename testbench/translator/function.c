@@ -10,6 +10,16 @@ void f1(int a){
 int f3(int a, int b, int c){
 	return 1 + 2 * 3;
 }
+int f4(){
+	/*empty */
+}
+
+void f5(){
+	if(x == 15)
+		return;
+	else
+		x = x - 10;
+}
 
 int main(){
 	f1(20);
