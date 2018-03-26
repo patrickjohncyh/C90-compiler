@@ -132,7 +132,9 @@ struct Context{
 			//std::cout << name << std::endl;
 			mem_fp_offset_count-= size *  type.bytes();
 			//std::cout << mem_fp_offset_count << std::endl;
-			mem_fp_offset_count-= (4-(-mem_fp_offset_count)%4);	//make aligned
+			if(mem_fp_offset_count%4){
+				mem_fp_offset_count-= (4-(-mem_fp_offset_count)%4);	//make aligned
+			}
 			//std::cout << mem_fp_offset_count << std::endl;
 		}
 		(*var_location)[name] = new Variable(scope,type,dtype,mem_fp_offset_count);

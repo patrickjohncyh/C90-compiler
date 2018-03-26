@@ -83,7 +83,16 @@ public:
 		}
 	}
 	virtual void to_mips_declare_init(std::ostream &dst, Context& ctx,Type type, std::vector<Expression*>* init) const override{ //normal init array
-		int size = init->size();
+		int size_init = init->size();
+		int size_dec = getSize();
+		int size = size_dec;
+		int count =0;
+		if(size_dec == -1){	//no size provided;
+			size = size_init;
+		}
+		else if(size_dec > size_init){ //initializer has less elements
+			size = size_dec;
+		}
 		Type arrType(type);
 		arrType.inc_aLevel();
 		Variable var = ctx.assignNewVariable(id,arrType,Array,size);
@@ -92,18 +101,29 @@ public:
 			dst<<".data"<<std::endl;	
 			dst<<id<<":"<<std::endl;
 			for(auto it=init->begin();it!=init->end();it++){
+				count++;
 				dst<<"."<<type.storage_type()<< " "<<(*it)->eval()<<std::endl;
+			}
+			while(count < size){
+				count++;
+				dst<<"."<<type.storage_type()<< " 0"<<std::endl;
 			}				
 		}
 		else if(ctx.getScope() == local){
 			for(int i=0;i<size;i++){
-				auto tempMemReg = ctx.assignNewStorage();
-				std::string tempReg = "v0";
-				(*init)[i]->to_mips(dst,ctx);
-				ctx.deAllocStorage();
-				ctx.memReg_read(tempMemReg,tempReg,dst);
-				int offset = var.getAddr()+(i*type.bytes());
-				ctx.memoryOffsetWrite(type,tempReg,"fp", offset,dst);
+				if(i<size_init){
+					auto tempMemReg = ctx.assignNewStorage();
+					std::string tempReg = "v0";
+					(*init)[i]->to_mips(dst,ctx);
+					ctx.deAllocStorage();
+					ctx.memReg_read(tempMemReg,tempReg,dst);
+					int offset = var.getAddr()+(i*type.bytes());
+					ctx.memoryOffsetWrite(type,tempReg,"fp", offset,dst);
+				}
+				else{ //0
+					int offset = var.getAddr()+(i*type.bytes());
+					ctx.memoryOffsetWrite(type,"0","fp", offset,dst);
+				}
 			}
 		}	
 	}

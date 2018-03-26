@@ -109,9 +109,10 @@ initializer_list 	:   assign_expression 							{ $$ = new std::vector<Expression
 					|	initializer_list ',' assign_expression 		{ $1->push_back($3); $$=$1;					}
 
 
-init_declarator		: 	declarator 								{ $$ = $1;									}
-					| 	declarator '=' assign_expression 		{ $$ = new InitIdentifierDeclarator($1,$3);	}
-					|	declarator '=' '{' initializer_list '}'	{ $$ = new InitArrayDeclarator($1,$4);		}
+init_declarator		: 	declarator 								{ $$ = $1;															}
+					| 	declarator '=' assign_expression 		{ $$ = new InitIdentifierDeclarator($1,$3);							}
+					|	declarator '=' '{' initializer_list '}'	{ $$ = new InitArrayDeclarator($1,$4);								}
+					|	declarator '=' '{' '}'					{ $$ = new InitArrayDeclarator($1,new std::vector<Expression*> );	}
 
 
 init_declarator_list: 	init_declarator 							{ $$ = new std::vector<Declarator*>(1,$1);	}
