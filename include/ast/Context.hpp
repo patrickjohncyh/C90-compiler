@@ -129,8 +129,15 @@ struct Context{
 
 	Variable assignNewVariable(std::string name,Type type, dType dtype, int size = 1){
 		if(scope == local){
-			//std::cout << name << std::endl;
-			mem_fp_offset_count-= size *  type.bytes();
+			if(dtype == Array){
+				Type temp(type);
+				temp.dec_pLevel();
+				mem_fp_offset_count-= size *  temp.bytes();
+			}
+			else{
+				mem_fp_offset_count-= size *  type.bytes();
+			}
+			
 			//std::cout << mem_fp_offset_count << std::endl;
 			if(mem_fp_offset_count%4){
 				mem_fp_offset_count-= (4-(-mem_fp_offset_count)%4);	//make aligned
