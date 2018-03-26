@@ -618,8 +618,8 @@ class BinaryExpression : public Expression{
 			dst <<")";
 		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-			dst << "(";
-			left->to_python(dst,indent,tc);
+			dst <<indent<< "(";
+			left->to_python(dst,"",tc);
 			if(!strcmp(getOpcode(),"&&")) 		dst<<" and ";
 			else if(!strcmp(getOpcode(),"||"))  dst<<" or " ;
 			else								dst << getOpcode();

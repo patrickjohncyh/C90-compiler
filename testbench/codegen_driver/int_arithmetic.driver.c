@@ -2,58 +2,58 @@
 #include <stdlib.h>
 #include <time.h>
 
-float add();
-float sub();
-float divi();
-float mult();
-float comma();
-float logicalOr();
-float logicalOr2();
-float logicalOr3();
-float logicalAnd();
-float logicalAnd2();
-float logicalAnd3();
-float logicalNot();
-float logicalNotT();
-float directAssign();
-float addAssign();
-float subAssign();
-float divAssign();
-float mulAssign();
-float ternary();
-float equality();
-float equalityF();
-float notEquality();
-float notEqualityF();
-float lt();
-float gt();
-float lte();
-float ltee();
-float gte();
-float gtee();
-float preinc();
-float predec();
-float postinc();
-float postdec();
-float array();
+int add();
+int sub();
+int divi();
+int mult();
+int comma();
+int logicalOr();
+int logicalOr2();
+int logicalOr3();
+int logicalAnd();
+int logicalAnd2();
+int logicalAnd3();
+int logicalNot();
+int logicalNotT();
+int directAssign();
+int addAssign();
+int subAssign();
+int divAssign();
+int mulAssign();
+int ternary();
+int equality();
+int equalityF();
+int notEquality();
+int notEqualityF();
+int lt();
+int gt();
+int lte();
+int ltee();
+int gte();
+int gtee();
+int preinc();
+int predec();
+int postinc();
+int postdec();
+int array();
 
 
-extern float a;
-extern float b;
-extern float c;
+extern int a;
+extern int b;
+extern int c;
 
 
 
 
 int main(){
-	float b_pre;
-	float temp = 1.5;
-	float temp2 = 128.1893463134765625;
+	int b_pre;
+	int temp = 1;
+	int temp2 = 128;
 	int r = 10000;
 	int i = 0;
 	for(i = 0; i < 1000;i++){
-		a = (float)( ((float)rand()/(float)(RAND_MAX)) * r);
-		b = (float)( ((float)rand()/(float)(RAND_MAX)) * r);
+		a = rand();
+		b = rand();
 		c = 0;
 
 		if(i%6){
@@ -64,10 +64,10 @@ int main(){
 		}
 
 		fprintf(stderr,"ite : %d\n",i);
-		fprintf(stderr,"a   : %f\n",a);
-		fprintf(stderr,"b   : %f\n",b);
+		fprintf(stderr,"a   : %d\n",a);
+		fprintf(stderr,"b   : %d\n",b);
 
-		if(add() != ( a+b)){
+				if(add() != ( a+b)){
 			return 1;
 		}
 		if(sub() != ( a-b)){

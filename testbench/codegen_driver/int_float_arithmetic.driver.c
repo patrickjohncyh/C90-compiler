@@ -38,9 +38,10 @@ float postdec();
 float array();
 
 
-extern float a;
+extern int a;
 extern float b;
 extern float c;
+extern int g[];
 
 
 
@@ -48,12 +49,12 @@ extern float c;
 int main(){
 	float b_pre;
 	float temp = 1.5;
-	float temp2 = 128.1893463134765625;
+	float temp2 = 128;
 	int r = 10000;
 	int i = 0;
 	for(i = 0; i < 1000;i++){
-		a = (float)( ((float)rand()/(float)(RAND_MAX)) * r);
 		b = (float)( ((float)rand()/(float)(RAND_MAX)) * r);
+		a = rand();
 		c = 0;
 
 		if(i%6){
@@ -65,7 +66,7 @@ int main(){
 
 		fprintf(stderr,"ite : %d\n",i);
 		fprintf(stderr,"a   : %f\n",a);
-		fprintf(stderr,"b   : %f\n",b);
+		fprintf(stderr,"b   : %d\n",b);
 
 		if(add() != ( a+b)){
 			return 1;
@@ -175,10 +176,9 @@ int main(){
 		if(postdec() != ( b_pre )|| b_pre-1!=b){
 			return 1;
 		}
-		if(array() != ( (a+temp2+b))){
+		if(array() != ( (g[0] + g[2] + g[1]))){
 			return 1;
 		}
-
 
 	}
 	return 0;

@@ -23,6 +23,8 @@ function run_log {
 }
 
 
+
+
 input_dir="testbench/codegen_driver"
 working="tmp/codegen_drive_test"
 mkdir -p ${working}
@@ -79,7 +81,6 @@ done
 
 
 
-
 input_dir="testbench/codegen"
 working="tmp/codegen_test"
 mkdir -p ${working}
@@ -129,7 +130,7 @@ for i in ${input_dir}/*.c ; do
             printf  "%-5s %-35s \e[31m %-10s \e[0m REF:%-7s GOT:%-7s \n" $count $base $Status $REF_OUT $GOT_OUT
         else
             Status="Pass"
-            printf  "%-5s %-35s \e[32m %-10s \e[0m \n" $count $base $Status
+            printf  "%-5s %-35s \e[32m %-10s \e[0m REF:%-7s GOT:%-7s \n" $count $base $Status $REF_OUT $GOT_OUT
         fi
     fi
 done

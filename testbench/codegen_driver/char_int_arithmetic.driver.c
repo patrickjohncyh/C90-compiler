@@ -2,58 +2,59 @@
 #include <stdlib.h>
 #include <time.h>
 
-float add();
-float sub();
-float divi();
-float mult();
-float comma();
-float logicalOr();
-float logicalOr2();
-float logicalOr3();
-float logicalAnd();
-float logicalAnd2();
-float logicalAnd3();
-float logicalNot();
-float logicalNotT();
-float directAssign();
-float addAssign();
-float subAssign();
-float divAssign();
-float mulAssign();
-float ternary();
-float equality();
-float equalityF();
-float notEquality();
-float notEqualityF();
-float lt();
-float gt();
-float lte();
-float ltee();
-float gte();
-float gtee();
-float preinc();
-float predec();
-float postinc();
-float postdec();
-float array();
+int add();
+int sub();
+int divi();
+int mult();
+int comma();
+int logicalOr();
+int logicalOr2();
+int logicalOr3();
+int logicalAnd();
+int logicalAnd2();
+int logicalAnd3();
+int logicalNot();
+int logicalNotT();
+int directAssign();
+int addAssign();
+int subAssign();
+int divAssign();
+int mulAssign();
+int ternary();
+int equality();
+int equalityF();
+int notEquality();
+int notEqualityF();
+int lt();
+int gt();
+int lte();
+int ltee();
+int gte();
+int gtee();
+int preinc();
+int predec();
+int postinc();
+int postdec();
+int array();
 
 
-extern float a;
-extern float b;
-extern float c;
+extern int a;
+extern char b;
+extern char c;
+extern char g[];
 
 
 
 
 int main(){
-	float b_pre;
-	float temp = 1.5;
-	float temp2 = 128.1893463134765625;
+	char b_pre;
+	int temp = 1.5;
+	int temp2 = 128;
 	int r = 10000;
 	int i = 0;
 	for(i = 0; i < 1000;i++){
-		a = (float)( ((float)rand()/(float)(RAND_MAX)) * r);
-		b = (float)( ((float)rand()/(float)(RAND_MAX)) * r);
+		a = rand();
+		b =	rand()%128+1;
 		c = 0;
 
 		if(i%6){
@@ -64,8 +65,8 @@ int main(){
 		}
 
 		fprintf(stderr,"ite : %d\n",i);
-		fprintf(stderr,"a   : %f\n",a);
-		fprintf(stderr,"b   : %f\n",b);
+		fprintf(stderr,"a   : %d\n",a);
+		fprintf(stderr,"b   : %d\n",b);
 
 		if(add() != ( a+b)){
 			return 1;
@@ -124,7 +125,7 @@ int main(){
 		if(equality() != ( a==a)){
 			return 1;
 		}
-		if(equalityF()!= (a==b)){
+		if(equalityF() != (a==b)){
 			return 1;
 		}
 		if(notEquality() != ( (a!=b))){
@@ -135,50 +136,54 @@ int main(){
 		}
 
 		b_pre = b;
-
-		if( (logicalOr() != ( (a || b+5)) )|| (b != b_pre) ){
+		if( (logicalOr() != ( (a || b_pre+5)) || (b != b_pre) )){
 			return 1;
 		}
 		b = b_pre;
-		if( (logicalOr2() != ( (c || b+5))) || (b != b_pre+5) ){
+		if( (logicalOr2() != ( (c || (b_pre+=5) ) ) || (b != b_pre) )){
+			return 1;
+		}
+		b_pre-=5;
+		b = b_pre;
+		if( logicalOr3() != ( (c || c))){
 			return 1;
 		}
 		b = b_pre;
-		if( logicalOr3() != ( (c || c))) {
+		if( (logicalAnd() != ( (c && (b_pre+=5))) || (b != b_pre) )){
 			return 1;
 		}
 		b = b_pre;
-		if( (logicalAnd() != ( (c && b+5)))|| (b != b_pre) ){
+		if( (logicalAnd2() != ( (a && (b_pre+=5))) || (b != b_pre) )){
 			return 1;
 		}
-		b = b_pre;
-		if( (logicalAnd2() != ( (a && b+5))) || (b != b_pre+5) ){
-			return 1;
-		}
+		b_pre-=5;
 		b = b_pre;
 		if(logicalAnd3() != ( (c && c))){
 			return 1;
 		}
 		b = b_pre;
-		if(preinc() != ( b_pre+1) || b_pre+1!=b){
+		if(preinc() != ( ++b_pre) || b_pre!=b){
 			return 1;
 		}
+		b_pre--;
 		b = b_pre;
-		if(predec() != ( b_pre-1) || b_pre-1!=b){
+		if(predec() != ( --b_pre) || b_pre!=b){
 			return 1;
 		}
+		b_pre++;
 		b = b_pre;
-		if(postinc() != ( b_pre) || b_pre+1!=b){
+		if(postinc() != ( b_pre++) || b_pre!=b){
 			return 1;
 		}
+		b_pre--;
 		b = b_pre;
-		if(postdec() != ( b_pre )|| b_pre-1!=b){
+		if(postdec() != ( b_pre--) || b_pre!=b){
 			return 1;
 		}
-		if(array() != ( (a+temp2+b))){
+		b_pre++;
+		if(array() != ( (g[0] + g[2] + g[1]))){
 			return 1;
 		}
-
 
 	}
 	return 0;

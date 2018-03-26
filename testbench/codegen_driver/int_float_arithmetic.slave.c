@@ -1,6 +1,7 @@
-float a;
+int a;
 float b;
 float c;
+int g[]={145,128,12304};
 
 float add(){
 	return a+b;
@@ -105,10 +106,10 @@ float postdec(){
 	return b--;
 }
 float array(){
-	float g[]={1.214,128.1893463134765625,12304.5096};
+
 	g[0] = a;
 	g[2] = b;
-	return g[0] + g[1] + g[2];
+	return g[0] + g[2] + g[1] ;
 }
 
 float ternary(){

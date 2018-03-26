@@ -225,7 +225,7 @@ public:
 				}
 			}
 			else{
-				float init_val = init_exp->eval(); //global only allows constant init
+				float init_val = (float)init_exp->eval(); //global only allows constant init
 				dst<<".globl "<<id<<std::endl;
 				dst<<".data"<<std::endl;	
 				dst<<id<<":"<<std::endl;
@@ -577,7 +577,7 @@ public:
 	}
 
 	virtual void to_c(std::ostream &dst,std::string indent) const override{
-	/*	dst << type << " " << id << "(";
+		dst << type << " " << id << "(";
 		if(p_list != NULL){
 			for(auto it=p_list->begin();it!=p_list->end();it++){
 				(*it)->to_c(dst,"");
@@ -587,7 +587,7 @@ public:
 		dst <<")";
 		if(s_ptr != NULL){
 			s_ptr->to_c(dst,indent);
-		}*/
+		}
 	}
 	
 };
