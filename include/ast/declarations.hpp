@@ -6,7 +6,7 @@
 #include <sstream>
 #include <vector>
 
-class Statement : public ASTNode{			//TEMPORARY FIX 
+class Statement : public ASTNode{
 };
 
 class TranslationUnit : public ASTNode{

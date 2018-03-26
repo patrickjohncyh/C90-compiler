@@ -269,13 +269,13 @@ class WhileStatement : public Statement{
 		}
 
 		virtual void to_c(std::ostream &dst, std::string indent) const override{
-			dst << indent << "while (";
+			dst << indent << "while(";
 			cond_expr->to_c(dst,"");
 			dst << ")" << std::endl;
 			s_true->to_c(dst,indent);
 		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
-			dst<<indent<<"while (";
+			dst<<indent<<"while(";
 			cond_expr->to_python(dst,"",tc);
 			dst<<"):"<< std::endl;
 			s_true->to_python(dst,indent+"  ",tc);
@@ -463,27 +463,6 @@ class JumpStatement : public Statement{
 					std::string destReg = "f0";
 					ctx.memReg_read_f(destMemReg,destReg,dst);
 				}
-				
-			/*
-				if(expr->exprType(ctx).isIntegral() || expr->exprType(ctx).isPointer()){
-					auto destMemReg = ctx.assignNewStorage();
-					expr->to_mips(dst,ctx);
-			
-					std::string destReg = "v0";
-					ctx.memReg_read(destMemReg,destReg,dst);
-					dst <<"move $2,$"<<destReg<<std::endl;
-				}
-				else{	//floating
-					auto destMemReg = ctx.assignNewStorage();
-					expr->to_mips(dst,ctx);
-					ctx.deAllocStorage();
-					std::string destReg = "f0";
-					ctx.memReg_read_f(destMemReg,destReg,dst);
-					dst<<".set	macro"<<std::endl;
-					dst<<"trunc.w.s $"<<destReg<<",$"<<destReg<<",$v0"<<std::endl;
-					dst<<".set	nomacro"<<std::endl;
-					dst<<"mfc1	$2,$"<<destReg<<std::endl;
-				}*/
 			}
 			dst <<"b " << ctx.return_label << std::endl; 
 			dst <<"nop"<< std::endl; 
@@ -699,20 +678,5 @@ class LabeledGotoStatement : public Statement{
 		}
 
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #endif

@@ -3,23 +3,20 @@
 
 int labelCount = 0;
 
+void print_labaled_const(std::ostream &dst, Context& ctx);
+void print_python_main(std::ostream &dst);
+
 int main(int argc, char* argv[]){
 
 	if(argc==5){
-
 		yyin = fopen(argv[2],"r");
 		std::ofstream outfile(argv[4]);
-		std::ostream& ostream(outfile);
 		const ASTNode *root = parse();
 
 		if(std::string(argv[1]) == "--translate"){
 			TranslateContext tc;
 			root->to_python(outfile,"",tc);
-
-			ostream << "if __name__ == \"__main__\":" << std::endl;
-		    ostream << "  import sys" << std::endl;
-		    ostream << "  ret=main()" << std::endl;
-		    ostream << "  sys.exit(ret)" << std::endl;	
+			print_python_main(outfile);
 		}
 		else if(std::string(argv[1]) == "--parse"){
 			root->to_c(outfile,"");
@@ -27,18 +24,7 @@ int main(int argc, char* argv[]){
 		else if(std::string(argv[1]) == "-S"){
 			Context c;
 			root->to_mips(outfile,c);
-			for(auto it = c.labeled_constant.cbegin(); it !=  c.labeled_constant.cend(); ++it){
-				if(it->second.second == "asciiz"){
-					outfile<<".rdata"<<std::endl;
-					outfile<<it->first<< ":\n";
-   				 	outfile<<"."<<it->second.second<<" "<<it->second.first<<"\n";
-				}
-				else{
-					outfile<<it->first<<":\n";
-   				 	outfile<<"."<<it->second.second<<" "<<it->second.first<< "\n";
-				}
-   			
-			}
+			print_labaled_const(outfile,c);
 		}
 	}
 	else{
@@ -49,29 +35,37 @@ int main(int argc, char* argv[]){
 		else if(std::string(argv[1]) == "--translate"){
 			TranslateContext tc;
 			root->to_python(std::cout,"",tc);
+			print_python_main(std::cout);
 		}
 		else if(std::string(argv[1]) == "-S"){
 			Context c;
 			root->to_mips(std::cout,c);
-			for(auto it = c.labeled_constant.cbegin(); it !=  c.labeled_constant.cend(); ++it){
-				if(it->second.second == "asciiz"){
-					std::cout<<".rdata"<<std::endl;
-					std::cout<<it->first<< ":\n";
-   				 	std::cout<<"."<<it->second.second<<" "<<it->second.first<<"\n";
-				}
-				else{
-					std::cout<<it->first<<":\n";
-   				 	std::cout<<"."<<it->second.second<<" "<<it->second.first<< "\n";
-				}
-   			
-			}
-
-
+			print_labaled_const(std::cout,c);
 		}
 	}
 	return 0;
 }
 
+void print_python_main(std::ostream &dst){
+	dst << "if __name__ == \"__main__\":" << std::endl;
+	dst << "  import sys" << std::endl;
+	dst << "  ret=main()" << std::endl;
+	dst << "  sys.exit(ret)" << std::endl;	
+}
+
+void print_labaled_const(std::ostream &dst, Context& ctx){
+	for(auto it = ctx.labeled_constant.cbegin(); it !=  ctx.labeled_constant.cend(); ++it){
+		if(it->second.second == "asciiz"){
+			dst<<".rdata"<<std::endl;
+			dst<<it->first<< ":\n";
+			dst<<"."<<it->second.second<<" "<<it->second.first<<"\n";
+		}
+		else{
+			dst<<it->first<<":\n";
+			dst<<"."<<it->second.second<<" "<<it->second.first<< "\n";
+		}
+	}
+}
 
 
 

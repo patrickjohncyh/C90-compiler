@@ -12,9 +12,9 @@ if [[ ! -f bin/c_compiler ]] ; then
     have_compiler=0
 fi
 
-input_dir="testbench/parser"
+input_dir="testbench/translator"
 
-working="tmp/parser_test"
+working="tmp/translator_test"
 mkdir -p ${working}
 
 for i in ${input_dir}/*.c ; do
@@ -22,25 +22,23 @@ for i in ${input_dir}/*.c ; do
 
  	# Compile the reference C version
     gcc -std=c89 $i -o $working/$base
-
     # Run the reference C version
     $working/$base
     REF_C_OUT=$?
 
     if [[ ${have_compiler} -eq 1 ]] ; then
 	    # Parse and output C89
-	    $compiler --parse $i -o ${working}/$base-got.c
+	    $compiler --translate $i -o ${working}/$base-dut.py
 	    
 	    # Run parsed C
-	    gcc -std=c89 ${working}/$base-got.c -o $working/$base-got
-	    $working/$base-got
-	    GOT_C_OUT=$?    
+	    python3 ${working}/$base-dut.py
+	    GOT_PY_OUT=$?    
 	fi
 
-	if [[ $REF_C_OUT -ne $GOT_C_OUT ]] ; then
-		echo "$base, GOT_FAIL, Expected ${REF_C_OUT}, got ${GOT_C_OUT}"
+	if [[ $REF_C_OUT -ne $GOT_PY_OUT ]] ; then
+		echo "$base, GOT_FAIL, Expected ${REF_C_OUT}, got ${GOT_PY_OUT}"
  	else
-        echo "$base, Pass"
+        echo "$base, Pass, Expected ${REF_C_OUT}, got ${GOT_PY_OUT}"
     fi
 
 done
