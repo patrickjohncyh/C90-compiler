@@ -1,3 +1,4 @@
+/* Code is based on code from : "https://www.geeksforgeeks.org/top-algorithms-and-data-structures-for-competitive-programming/" */
 int rand();
 
 int power(int x, unsigned int y, int p)
