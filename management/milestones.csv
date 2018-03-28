@@ -22,11 +22,11 @@ Impl_floating_point,,4,pjc316,51ed08fe3cc1c109679e9ad1ab7046823275db3d,Introduce
 Impl_ternay_tilde,,0.5,pjc316,398d412ecd8767114da799b2b0b890e32ee7adaf,implement ternary expression and tilde
 Impl_dowhile,,0.5,pjc316,5169a465c9eba9fe0daba74fed0858301ce9d94b,implement do while
 Impl_continue_goto_labelled,,1,pjc316,2cd00958382ea4396ad4860735bc3533b9c7ffc3,implement continue goto and labelled
-Impl_float_w_statements,,1.5,pjc316,,integrate floating point with statements
-test_statements,,4,pjc316,,write tests for statements
+Impl_float_w_statements,,1.5,pjc316,14642e60007514dc5926248a09f7a0771e0f0372,integrate floating point with statements
+test_statements,,4,pjc316,5c00160d9145470b18be9ca80c27955695a6dcde,write tests for statements
 Complete_python_translator,,2,pjc316,edc6e90cd1f8059a37a3c6a17e297dabf15dfb2e,complete python translator
-create_testcase_delierables,,1.5,pjc316,,create 10 tests for deliverable
+create_testcase_delierables,,1.5,pjc316,9fcd88cd8a8e349e1f979111e115b17ac76383aa,create 10 tests for deliverable
 impl_strings,,2,pjc316,2ac4f7a20d20339d844788c83d686bb4e3fe767e,Implement regex for matchign multiline comments
 impl_multiline_comments,,0.5,pjc316,34568739b2916ce2a93776cc8bf6364ba81fb0e4,
-impl_preproc,,,,,regex to match #define #include preprocessing elements
-cleanup_code,,,,,tie up loose ends
+impl_preproc,,0.25,pjc316,df15476f7f6ee432b95cec3a3ebad8b8389fedd1,regex to match #define #include preprocessing elements
+cleanup_code,,4,pjc316,7d51b42281f8286b3ec61a43b509dfc850f6d7a0,tie up loose ends
