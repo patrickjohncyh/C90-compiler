@@ -1,4 +1,5 @@
-int f(int x){
+int f(){
+	int x = 5;
 	int a = 0;
 	while(x){
 		a = a + 2;

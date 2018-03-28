@@ -1,11 +1,10 @@
-int f(int x){
-	int a = 0;
-	if(x){
-		a = a + 5;
+int f(){
+	if(0){
+		return 5;
 	}
 	else{
-		a = a + 10;
+		return 10;
 	}
 	
-	return a;
+	return 5;
 }

@@ -1,8 +1,8 @@
-int f(int x);
+int f();
 
 int main(){
 
-	if(f(5) != 10 ){
+	if(f() != 10 ){
 		return 1;
 	}
 	return 0;

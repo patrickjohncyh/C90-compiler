@@ -6,6 +6,5 @@ int f(int x){
 	else{
 		a = 444;
 	}
-	
 	return a;
 }
