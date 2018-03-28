@@ -444,12 +444,10 @@ class JumpStatement : public Statement{
 		virtual void to_mips(std::ostream &dst, Context& ctx) const override{
 			if(expr != NULL){
 				dst << "# ----- Return General  -----#" << std::endl;
-				
+				Type type = expr->exprType(ctx);
 				auto destMemReg = ctx.assignNewStorage();
 				expr->to_mips(dst,ctx);
 				ctx.deAllocStorage();
-
-				Type type = expr->exprType(ctx);	//ok to do after evaluating expression if not doing double
 				ctx.convertMemRegType(type,ctx.returnType, destMemReg, dst);
 
 				if(ctx.returnType.isIntegral() || ctx.returnType.isPointer() ){

@@ -23,6 +23,7 @@ char							{ return CHAR;		}
 short							{ return SHORT;		}
 float							{ return FLOAT;		}
 double							{ return DOUBLE;	}
+const 							{;					}
 
 
 do 								{ return DO;		}

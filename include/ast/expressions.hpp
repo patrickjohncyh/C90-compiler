@@ -90,8 +90,9 @@ class PostIncrementExpression : public UnaryExpression{
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
-			expr->to_c(dst,indent);
-			dst<< "++";
+			dst<<indent<<"(";
+			expr->to_c(dst,"");
+			dst<< "++)";
 		}
 
 };
@@ -272,9 +273,15 @@ class FunctionCallExpression : public UnaryExpression{
 		}
 
 		virtual Type exprType(Context& ctx) const override{
-			std::string id = expr->to_mips_getId();
-			Variable var = ctx.getVariable(id);
-			return var.getType(); //should be the type of the function declared...
+			std::string id = expr->to_mips_getId();	//get id of function...
+			if(ctx.isFunctionDeclared(id)){	
+				std::string id = expr->to_mips_getId();
+				Variable var = ctx.getVariable(id);
+				return var.getType(); //should be the type of the function declared...
+			}
+			else{
+				return Type(Int);
+			}
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
@@ -486,8 +493,9 @@ class DereferenceExpression : public UnaryExpression{
 		}
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
-			dst<< "*";
-			expr->to_c(dst,indent);
+			dst<<indent<<"(*";
+			expr->to_c(dst,"");
+			dst<<")";
 		}
 };
 
@@ -1326,9 +1334,11 @@ class DirectAssignmentExpression : public AssignmentExpression{
 
 
 		virtual void to_c(std::ostream &dst,std::string indent) const override{
+			dst<<"(";
 			lvalue->to_c(dst,indent);
 			dst << "=";
 			expr->to_c(dst," ");
+			dst <<")";
 		}
 		virtual void to_python(std::ostream &dst, std::string indent, TranslateContext &tc) const override{
 			lvalue->to_python(dst,indent,tc);
