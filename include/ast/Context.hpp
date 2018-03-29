@@ -82,6 +82,7 @@ struct Context{
 
 	void memReg_read(memReg loc, std::string reg, std::ostream& dst){
 		dst<<"lw $"<<reg<<","<<loc<<"($fp)"<<std::endl;
+		dst<<"nop"<<std::endl;
 	}
 
 	void memReg_write(memReg loc, std::string reg, std::ostream& dst){
@@ -90,6 +91,7 @@ struct Context{
 
 	void memReg_read_f(memReg loc, std::string reg, std::ostream& dst){
 		dst<<"lwc1 $"<<reg<<","<<loc<<"($fp)"<<std::endl;
+		dst<<"nop"<<std::endl;
 	}
 
 	void memReg_write_f(memReg loc, std::string reg, std::ostream& dst){
@@ -176,6 +178,8 @@ struct Context{
 		else if(type.is(UShort))			dst<<"lhu $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		else if(type.isIntegral()) 			dst<<"lw  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
 		else 								dst<<"lw  $"<<r1<<","<<offset<<"($"<<r2<<")"<<std::endl;
+
+											dst<<"nop"<<std::endl;
 	}
 
 	void memoryOffsetWrite(Type type, std::string r1, std::string r2, int offset, std::ostream& dst){
